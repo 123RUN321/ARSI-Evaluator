@@ -28,6 +28,7 @@ Install and complete one scenario before exploring common operations. `benchmark
 | YAML, profiles, defaults, and environment variables | [Configuration](config.md) |
 | Models, judges, SimpleAgent, AgentBundle, and Dify | [Solvers and model services](solvers.md) |
 | Task selection, resume, reports, trajectories, and full DSH tool output | [Daily operations](usage.md) |
+| Inspect attempt trajectories, performance metrics, and feedback in the browser | [Tracer](tracer.md) |
 | Task concurrency, preparation, pipelines, and timeouts | [Concurrency](concurrency.md) |
 | Recover network failures in the original run | [Retrying network failures](network-retry.md) |
 
