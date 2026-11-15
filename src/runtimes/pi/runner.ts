@@ -19,8 +19,7 @@ import {
 import { InMemoryCredentialStore, type Api, type AssistantMessage } from "@earendil-works/pi-ai";
 import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 
 import type { JsonValue } from "../../core/contracts/task.js";
 import type { SolveResult } from "../../core/contracts/result.js";
@@ -616,4 +615,4 @@ export async function startPiRunner(): Promise<void> {
   }
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url))) await startPiRunner();
+if (import.meta.main) await startPiRunner();
