@@ -7647,7 +7647,7 @@ async function loadNetworkConfig(path, env2 = process.env) {
   return networkDocument(expandNetworkTemplate(template, new Proxy({}, { get: (_target, key) => typeof key === "string" ? `\${${key}}` : void 0 })), env2, absolute);
 }
 function defaultNetworkConfigPath() {
-  return join2(homedir(), ".ember-evaluator", "network.yaml");
+  return join2(homedir(), ".arsi-evaluator", "network.yaml");
 }
 
 // src/infrastructure/network/environment.ts

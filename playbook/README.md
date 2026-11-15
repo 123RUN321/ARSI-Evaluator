@@ -37,8 +37,8 @@ AgentX 的 Trace 数据集公开，现有示例不强制要求 HF_TOKEN；需要
 网络配置放在独立 YAML 中，通过 `--network` 与实验配置一起传入。例如，从 ModelScope 下载 Terminal-Bench 4.0 任务镜像：
 
 ```bash
-ember-evaluator warmup playbook/terminalbench/terminalbench-4.0.yaml --network playbook/network/archives.yaml
-ember-evaluator run playbook/terminalbench/terminalbench-4.0.yaml --network playbook/network/archives.yaml
+arsi-evaluator warmup playbook/terminalbench/terminalbench-4.0.yaml --network playbook/network/archives.yaml
+arsi-evaluator run playbook/terminalbench/terminalbench-4.0.yaml --network playbook/network/archives.yaml
 ```
 
 先准备 Docker 和实验引用的模型配置；示例默认全量选题，镜像是否已发布以远端仓库为准。`archives.yaml` 只修改该题库的任务镜像来源；镜像源、代理、组合配置和默认文件的使用步骤见[网络配置指南](../docs/users/network.zh-CN.md#1-先选一份网络配置)。
@@ -46,14 +46,14 @@ ember-evaluator run playbook/terminalbench/terminalbench-4.0.yaml --network play
 从仓库根目录执行：
 
 ```bash
-ember-evaluator inspect playbook/workbuddy/workbuddy-office-ray.yaml
-ember-evaluator run playbook/deepswe/deepswe-simpleagent.yaml
+arsi-evaluator inspect playbook/workbuddy/workbuddy-office-ray.yaml
+arsi-evaluator run playbook/deepswe/deepswe-simpleagent.yaml
 ```
 
 完成[安装](../docs/users/installation.zh-CN.md)后，可以在任意目录使用 YAML 的绝对路径运行，例如 Terminal-Bench 4.0：
 
 ```bash
-ember-evaluator run '/path/to/ember-evaluator/playbook/terminalbench/terminalbench-4.0.yaml'
+arsi-evaluator run '/path/to/arsi-evaluator/playbook/terminalbench/terminalbench-4.0.yaml'
 ```
 
 Playbook 省略 `output`，使用仓库根目录的 `results/<Benchmark 名>/<YAML 文件名（不含扩展名）>/<runId>/`。例如 `playbook/gsm8k/gsm8k-agentbundle.yaml` 的结果写入 `results/gsm8k/gsm8k-agentbundle/<runId>/`。显式填写 `output.directory` 时，其中的相对路径仍以 YAML 所在目录为基准。模型环境变量需要在实际运行命令的终端中设置。

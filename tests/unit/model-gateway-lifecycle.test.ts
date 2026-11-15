@@ -55,7 +55,9 @@ test("gateway uses an init process and confirms asynchronous removal before dele
     phase: "solve", signal: new AbortController().signal,
   });
   await gateway.dispose();
-  expect(calls.find(args => args[0] === "create")).toContain("--init");
+  const labels = ["arsi-evaluator.run=r", "arsi-evaluator.task=t", "arsi-evaluator.attempt=a", "arsi-evaluator.phase=solve"];
+  expect(calls.find(args => args[0] === "create")).toEqual(expect.arrayContaining(["--init", ...labels]));
+  expect(calls.find(args => args[0] === "volume" && args[1] === "create")).toEqual(expect.arrayContaining(labels));
   expect(calls.findIndex(args => args[0] === "container")).toBeLessThan(calls.findLastIndex(args => args[0] === "volume"));
 });
 

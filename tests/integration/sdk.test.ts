@@ -2,7 +2,7 @@ import { copyFile, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/pro
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, expect, test, vi } from "vitest";
-import { Evaluator, EvaluatorRunError, type EvaluatorRunOptions, type ProgressEvent } from "ember-evaluator";
+import { Evaluator, EvaluatorRunError, type EvaluatorRunOptions, type ProgressEvent } from "arsi-evaluator";
 import { RayJobsDeployment } from "../../src/application/ray/deployment.js";
 import { LocalRunStore } from "../../src/plugins/stores/local.js";
 import * as pluginRegistry from "../../src/application/plugins/open-registry.js";

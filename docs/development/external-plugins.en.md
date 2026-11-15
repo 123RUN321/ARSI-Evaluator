@@ -12,7 +12,7 @@ Install and build Evaluator using the [installation guide](../users/installation
 
 ```text
 work/
-├── Ember-Evaluator/       # Built; contains dist/index.d.ts and dist/cli.js
+├── ARSI-Evaluator/       # Built; contains dist/index.d.ts and dist/cli.js
 └── evaluator-metrics/          # Run all commands below from this plugin project
     ├── package.json
     ├── tsconfig.json
@@ -41,7 +41,7 @@ Create `package.json`:
   "files": ["dist"],
   "scripts": { "build": "tsc -p tsconfig.json" },
   "devDependencies": {
-    "ember-evaluator": "link:../Ember-Evaluator",
+    "arsi-evaluator": "link:../ARSI-Evaluator",
     "@deepseek-ai/cordis": "4.0.2",
     "@types/node": "24.13.5",
     "typescript": "7.0.2"
@@ -81,7 +81,7 @@ Use component types exported from the package root. Cordis's `Context` type does
 
 ```ts
 import type { Context } from "@deepseek-ai/cordis";
-import type { PluginConfigValidator, PluginFactory, PluginRole } from "ember-evaluator";
+import type { PluginConfigValidator, PluginFactory, PluginRole } from "arsi-evaluator";
 
 export type EvaluatorPluginContext = Context & {
   evaluator: {
@@ -98,7 +98,7 @@ export type EvaluatorPluginContext = Context & {
 Create `src/index.ts` with a metric that counts tasks with valid scores.
 
 ```ts
-import type { Metrics } from "ember-evaluator";
+import type { Metrics } from "arsi-evaluator";
 import type { EvaluatorPluginContext } from "./context.js";
 
 export const inject = ["evaluator"];
@@ -138,11 +138,11 @@ pnpm build
 
 Commit the plugin's own `pnpm-lock.yaml` after the first installation; use `pnpm install --frozen-lockfile` thereafter. Rebuild after editing TypeScript. Evaluator rejects `.ts` entry points, and its root build does not compile this independent project.
 
-Other components use the same `register(role, name, validate, factory)` API. Import public types from the package root, not `ember-evaluator/src/...`. Keep `validate` free of resource allocation. Factories can resolve experiment-relative paths with `runtime.resolvePath()`. Register long-lived resources with the plugin scope, for example `ctx.effect(() => () => resource.close())`; release attempt resources through their session contracts. See [component contracts and lifecycles](plugins.en.md).
+Other components use the same `register(role, name, validate, factory)` API. Import public types from the package root, not `arsi-evaluator/src/...`. Keep `validate` free of resource allocation. Factories can resolve experiment-relative paths with `runtime.resolvePath()`. Register long-lived resources with the plugin scope, for example `ctx.effect(() => () => resource.close())`; release attempt resources through their session contracts. See [component contracts and lifecycles](plugins.en.md).
 
 ### Solver in a standalone project
 
-Use the project structure from step 1. Save the [fixed-answer Solver implementation](add-solver.en.md#minimal-example) as `src/fixed-answer.ts` in the standalone project. Change the Solver type import to `import type { Solver } from "ember-evaluator"`. Use this `src/index.ts` and run `pnpm build` in the standalone project.
+Use the project structure from step 1. Save the [fixed-answer Solver implementation](add-solver.en.md#minimal-example) as `src/fixed-answer.ts` in the standalone project. Change the Solver type import to `import type { Solver } from "arsi-evaluator"`. Use this `src/index.ts` and run `pnpm build` in the standalone project.
 
 ```ts
 import type { EvaluatorPluginContext } from "./context.js";
@@ -158,8 +158,8 @@ export function apply(ctx: EvaluatorPluginContext): void {
 Follow step 3 to write a file-based patch with `name` set to `./dist/index.js` and an `id` such as `custom-solver`. Save `experiment.yaml` and `gpqa.csv` from the Solver example in the standalone project. Set `benchmark.solver.name` to `external-fixed-answer` in the YAML and set `EXAMPLE_SOLVER_KEY` as shown in the example. Run these commands in the standalone project.
 
 ```bash
-ember-evaluator inspect experiment.yaml --patch cordis.patch.yaml
-ember-evaluator run experiment.yaml --patch cordis.patch.yaml
+arsi-evaluator inspect experiment.yaml --patch cordis.patch.yaml
+arsi-evaluator run experiment.yaml --patch cordis.patch.yaml
 ```
 
 `inspect` should show that the experiment selects `external-fixed-answer`. Follow the [fixed-answer example](add-solver.en.md#minimal-example) to check the score and artifacts.
@@ -238,12 +238,12 @@ Select the Solver model service through `benchmark.solver.service`; a model-back
 
 ## 5. Validate loading and run
 
-Register `ember-evaluator` using the [installation guide](../users/installation.md#register-the-global-cli), then run from the plugin project:
+Register `arsi-evaluator` using the [installation guide](../users/installation.md#register-the-global-cli), then run from the plugin project:
 
 ```bash
-ember-evaluator inspect experiment.yaml --patch cordis.patch.yaml
-ember-evaluator run experiment.yaml --patch cordis.patch.yaml --dry-run
-ember-evaluator run experiment.yaml --patch cordis.patch.yaml
+arsi-evaluator inspect experiment.yaml --patch cordis.patch.yaml
+arsi-evaluator run experiment.yaml --patch cordis.patch.yaml --dry-run
+arsi-evaluator run experiment.yaml --patch cordis.patch.yaml
 ```
 
 - `inspect` validates the experiment configuration, registered component names, and plugin options. It prints the resolved experiment configuration and redacted network settings.
@@ -255,8 +255,8 @@ ember-evaluator run experiment.yaml --patch cordis.patch.yaml
 Resume with the same explicit patch:
 
 ```bash
-ember-evaluator run experiment.yaml --patch cordis.patch.yaml --resume <run-id>
-ember-evaluator report results/<run-id>
+arsi-evaluator run experiment.yaml --patch cordis.patch.yaml --resume <run-id>
+arsi-evaluator report results/<run-id>
 ```
 
 `report` does not accept `--patch`. It loads the original Metrics/Reporter providers from saved metadata without solving again. Keep the original plugin installation and resolvable paths. Moving results does not copy plugins or rewrite saved plugin paths.
@@ -268,7 +268,7 @@ Local-file plugins currently record only the entry-file digest; package-name plu
 The SDK uses the same experiment and patch through `patchPath`:
 
 ```ts
-import { Evaluator } from "ember-evaluator";
+import { Evaluator } from "arsi-evaluator";
 
 const result = await new Evaluator().run({
   configPath: "./experiment.yaml",

@@ -101,12 +101,12 @@ export function apply(ctx) {
 
 Execution components receive the experiment's `npu` or `gpu` selection through `runtime.hardware`, supplied by bootstrap and Ray workers. Historical SDK callers that omit it mean NPU. Accelerator-dependent plugins select an implementation and reject unsupported hardware before allocating resources; other plugins need not probe devices. Metrics/Reporter keep their reporting context and never probe hardware for offline reports.
 
-TypeScript plugins import HardwareKind/Metrics/Benchmark/Solver/PluginFactoryContext from `ember-evaluator` roots and implement contracts. Released packages only load compiled JavaScript; `pnpm dev` started from source falls back to the matching `.ts` file declared by the manifest.
+TypeScript plugins import HardwareKind/Metrics/Benchmark/Solver/PluginFactoryContext from `arsi-evaluator` roots and implement contracts. Released packages only load compiled JavaScript; `pnpm dev` started from source falls back to the matching `.ts` file declared by the manifest.
 
 
 ## Building and extending repository plugins
 
-`pnpm build` scans `plugins/*/ember-plugin.json`, validates each manifest, builds it, and installs the declared files into `dist/plugins/<id>/`; it also writes `dist/bundled-plugins.patch.yaml` and the `dist/plugins/index.json` catalog. Directories without a manifest are not compiled or copied and can only be imported from source.
+`pnpm build` scans `plugins/*/arsi-evaluator-plugin.json`, validates each manifest, builds it, and installs the declared files into `dist/plugins/<id>/`; it also writes `dist/bundled-plugins.patch.yaml` and the `dist/plugins/index.json` catalog. Directories without a manifest are not compiled or copied and can only be imported from source.
 
 ```json
 {
@@ -130,7 +130,7 @@ Build output:
 ```text
 dist/plugins/
 ├── <id>/
-│   ├── ember-plugin.json  # copied verbatim for runtime provenance
+│   ├── arsi-evaluator-plugin.json  # copied verbatim for runtime provenance
 │   ├── cordis.patch.yaml  # only when the manifest declares patch
 │   └── index.js
 ```
@@ -141,7 +141,7 @@ When a plugin only adds options to an existing command, declare `flags` instead 
 
 Plugins that need esbuild or other custom output may declare `build.script`, executed with the plugin directory as cwd; the script owns the `dist` output. When `build.tsconfig` is also declared, `tsc` runs before the script. Plugins loaded only through `--patch` declare `patch`, and the build copies `cordis.patch.yaml` into the installed directory and rewrites its `./dist/` prefix to `./`.
 
-The CLI module exports `registerCli(cli: PluginCliRegistrar)`, importing types from `ember-evaluator`:
+The CLI module exports `registerCli(cli: PluginCliRegistrar)`, importing types from `arsi-evaluator`:
 
 ```ts
 export function registerCli(cli: PluginCliRegistrar): void {
@@ -203,7 +203,7 @@ metrics:                       # Explicit lists replace defaults; include built-
 Pass patches explicitly; omission loads built-ins only:
 
 ```bash
-ember-evaluator run experiments/gsm8k.yaml --patch <path>/plugins/cordis.patch.yaml
+arsi-evaluator run experiments/gsm8k.yaml --patch <path>/plugins/cordis.patch.yaml
 ```
 
 dry-run accepts identical --patch. Patch paths use current directory; local modules/npm resolve from patch directory. cacheDir/output/business paths remain YAML-relative.

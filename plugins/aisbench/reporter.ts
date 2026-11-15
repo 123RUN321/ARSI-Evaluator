@@ -1,4 +1,4 @@
-import type { AttemptRecord, JsonValue, MetricResults, ReportContext, Reporter, ResultSnapshot } from "ember-evaluator";
+import type { AttemptRecord, JsonValue, MetricResults, ReportContext, Reporter, ResultSnapshot } from "arsi-evaluator";
 import { AisbenchPerformanceMetrics, readAisbenchMetric } from "./metrics.js";
 
 function escaped(value: string): string {

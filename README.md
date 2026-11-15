@@ -1,5 +1,5 @@
 <h1 align="center">
-  <img src="imgs/ember-evaluator-logo.png" alt="Ember Evaluator" width="520">
+  <img src="imgs/arsi-evaluator-logo.png" alt="ARSI-Evaluator" width="520">
 </h1>
 
 <h3 align="center">Many ways to evaluate. One framework to bring them together.</h3>
@@ -27,13 +27,13 @@
 
 ## ℹ️ Introduction
 
-**Ember Evaluator** is a unified, plugin-based framework for **agent harness capability evaluation, inference engine performance evaluation, and kernel performance evaluation**. It can be extended to support more evaluation scenarios.
+**ARSI-Evaluator** is a unified, plugin-based framework for **agent harness capability evaluation, inference engine performance evaluation, and kernel performance evaluation**. It can be extended to support more evaluation scenarios.
 
 The framework uses YAML configuration and composable components to define evaluation workflows. It supports local, containerized, and distributed execution, records results, helps diagnose failures, and lets you resume interrupted runs.
 
-![Ember Evaluator architecture and evaluation workflow](imgs/01-flowchart-evaluation-architecture.png)
+![ARSI-Evaluator architecture and evaluation workflow](imgs/01-flowchart-evaluation-architecture.png)
 
-*Ember Evaluator architecture overview. For design details, see [Source architecture and execution flow](docs/development/architecture.en.md).*
+*ARSI-Evaluator architecture overview. For design details, see [Source architecture and execution flow](docs/development/architecture.en.md).*
 
 ## ⚙️ Features
 
@@ -46,7 +46,7 @@ The framework uses YAML configuration and composable components to define evalua
 
 ## 🧪 Supported Benchmarks
 
-Ember Evaluator covers three types of evaluation. See the [benchmark list](docs/users/README.md#supported-benchmarks) for the full list and run requirements.
+ARSI-Evaluator covers three types of evaluation. See the [benchmark list](docs/users/README.md#supported-benchmarks) for the full list and run requirements.
 
 | Evaluation area | Representative benchmarks | What it evaluates |
 | --- | --- | --- |
@@ -61,9 +61,9 @@ Ember Evaluator covers three types of evaluation. See the [benchmark list](docs/
 Give your coding agent the following instructions to install and verify the CLI and Skill.
 
 ```text
-Install the Ember Evaluator CLI and the accompanying ember-evaluator Skill from https://github.com/evolving-foundry/ember-evaluator.
+Install the ARSI-Evaluator CLI and the accompanying arsi-evaluator Skill from https://github.com/ARSI-LAB/ARSI-Evaluator.
 Follow the manual installation steps in the README to install the CLI, then install the Skill for yourself in the current project.
-Run ember-evaluator --help to verify the CLI and confirm that you can discover and read the Skill. Stop after verifying both.
+Run arsi-evaluator --help to verify the CLI and confirm that you can discover and read the Skill. Stop after verifying both.
 ```
 
 ### Manual Installation
@@ -73,12 +73,12 @@ Run ember-evaluator --help to verify the CLI and confirm that you can discover a
 You need Node.js 24.x (at least 24.22.1), pnpm 11 or 12, and Git. If pnpm is missing, run `npm install -g pnpm`.
 
 ```bash
-git clone https://github.com/evolving-foundry/ember-evaluator.git
-cd ember-evaluator
+git clone https://github.com/ARSI-LAB/ARSI-Evaluator.git arsi-evaluator
+cd arsi-evaluator
 pnpm install --frozen-lockfile
 pnpm build
 pnpm add -g .
-ember-evaluator --help
+arsi-evaluator --help
 ```
 
 The help output confirms the CLI is installed.
@@ -88,7 +88,7 @@ The help output confirms the CLI is installed.
 Run the following command in your target project to install the Skill for your coding agent.
 
 ```bash
-npx skills add evolving-foundry/ember-evaluator --skill ember-evaluator
+npx skills add ARSI-LAB/ARSI-Evaluator --skill arsi-evaluator
 ```
 
 For other installation methods and troubleshooting, see the [installation guide](docs/users/installation.md).
@@ -102,8 +102,8 @@ export MODEL_NAME="your-model-id"
 export MODEL_ENDPOINT="https://your-model-service.example/v1"
 export MODEL_API_KEY="your-api-key"
 
-ember-evaluator inspect playbook/gsm8k/gsm8k-quick-start.yaml
-ember-evaluator run playbook/gsm8k/gsm8k-quick-start.yaml
+arsi-evaluator inspect playbook/gsm8k/gsm8k-quick-start.yaml
+arsi-evaluator run playbook/gsm8k/gsm8k-quick-start.yaml
 ```
 
 Use `inspect` to check the experiment configuration and `run` to start the evaluation. When it finishes, open `report.md` in the results directory. See the [quick-start guide](docs/users/quick-start.md) for the full walkthrough and command-line examples.
@@ -115,9 +115,9 @@ For other evaluation scenarios, see the [Terminal-Bench 4.0 quick start](docs/us
 For evaluations that need Docker images, you can check the environment and prepare images and runtime dependencies ahead of time to reduce setup time during the evaluation.
 
 ```bash
-ember-evaluator doctor playbook/terminalbench/terminalbench-4.0.yaml
-ember-evaluator warmup playbook/terminalbench/terminalbench-4.0.yaml
-ember-evaluator run playbook/terminalbench/terminalbench-4.0.yaml
+arsi-evaluator doctor playbook/terminalbench/terminalbench-4.0.yaml
+arsi-evaluator warmup playbook/terminalbench/terminalbench-4.0.yaml
+arsi-evaluator run playbook/terminalbench/terminalbench-4.0.yaml
 ```
 
 Use `doctor` to check the environment, `warmup` to prepare images and dependencies, and `run` to start the evaluation. Warmup makes no model calls and performs no scoring. The evaluation can reuse the prepared images. See the [warmup guide](docs/users/usage.md#warm-images-without-evaluation) for details.
@@ -129,7 +129,7 @@ The project publishes benchmark evaluation images in its [ModelScope image repos
 Tracer lets you inspect agent trajectories, performance metrics, and optimization feedback. It shows model calls, tool events, and their timing, and provides rule-based diagnostics and optional LLM analysis. Add `--tracer` to enable it for an evaluation.
 
 ```bash
-ember-evaluator run playbook/gsm8k/gsm8k-quick-start.yaml --tracer
+arsi-evaluator run playbook/gsm8k/gsm8k-quick-start.yaml --tracer
 ```
 
 Tracer starts the local Collector on demand. On the machine running the Collector, open `http://127.0.0.1:8787` in your browser to view trajectories and feedback.
@@ -161,9 +161,9 @@ These runs used **DeepSeek V4.1 Flash 1017**. `tbd` marks a pending evaluation. 
 
 ## 🔗 Related Projects
 
-- [Ember RSI](https://github.com/ARSI-LAB/ARSI) is a plugin-based recursive self-improvement (RSI) framework for agents and AI infrastructure. It uses feedback from Ember Evaluator to generate and refine candidate solutions across iterations.
-- [AgentBundle](https://github.com/ARSI-LAB/agentbundle) packages and manages configurations, skills, and plugins across agent harnesses, making it easier to integrate and evaluate different agents in Ember Evaluator.
+- [RSI](https://github.com/ARSI-LAB/ARSI) is a plugin-based recursive self-improvement (RSI) framework for agents and AI infrastructure. It uses feedback from ARSI-Evaluator to generate and refine candidate solutions across iterations.
+- [AgentBundle](https://github.com/ARSI-LAB/agentbundle) packages and manages configurations, skills, and plugins across agent harnesses, making it easier to integrate and evaluate different agents in ARSI-Evaluator.
 
 ## 🙏 Acknowledgments
 
-Thanks to the maintainers and contributors of [Cordis](https://github.com/cordiverse/cordis) and [Harbor](https://github.com/harbor-framework/harbor). Ember Evaluator uses Cordis to manage plugins and their lifecycles and supports running and verifying evaluation tasks using the Harbor protocol.
+Thanks to the maintainers and contributors of [Cordis](https://github.com/cordiverse/cordis) and [Harbor](https://github.com/harbor-framework/harbor). ARSI-Evaluator uses Cordis to manage plugins and their lifecycles and supports running and verifying evaluation tasks using the Harbor protocol.

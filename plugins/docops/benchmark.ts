@@ -12,7 +12,7 @@ import {
   parseGitTree,
   writeGitFile,
   checkedPath,
-} from "ember-evaluator";
+} from "arsi-evaluator";
 import type {
   Benchmark,
   EnvironmentSession,
@@ -24,7 +24,7 @@ import type {
   TaskRef,
   VerifyResult,
   GitTreeEntry,
-} from "ember-evaluator";
+} from "arsi-evaluator";
 import { expectNonEmptyString, expectRecord, parseRepositoryConfig, rejectUnknown, REPOSITORY_PATTERN } from "./config.js";
 
 const COMMIT_PATTERN = /^[a-f0-9]{40}$/u;

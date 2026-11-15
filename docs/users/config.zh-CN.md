@@ -206,8 +206,8 @@ Web 必须使用裁判模型，最简配置默认绑定默认服务。增加 ser
 ## 查看实际配置
 
 ```bash
-ember-evaluator inspect experiment.yaml
-ember-evaluator inspect experiment.yaml --patch ./patch.yaml
+arsi-evaluator inspect experiment.yaml
+arsi-evaluator inspect experiment.yaml --patch ./patch.yaml
 ```
 
 `inspect` 输出包含实际实验配置与网络设置的 JSON，保留密钥环境变量引用。它校验配置，不启动组件工厂、下载、任务枚举、容器或模型调用。模型设置从 YAML 读取；模型覆盖参数仅由 run 支持。
@@ -283,7 +283,7 @@ SimpleQA/HealthBench 通过 benchmark.config.judgeService 显式选择 services 
 
 ## 网络故障补测
 
-`ember-evaluator retry --run <run-id>` 为原 Run 的当前网络失败任务创建新 Attempt。有效零分、普通阶段超时和非网络错误不补测。网络访问仅在对应操作内有限重试，不自动补测整题；每次显式手动请求可为符合条件的任务追加一个 Attempt。`run.taskRetry` 已删除，旧 YAML 需要移除此字段。Ray Jobs 使用本页的独立 `deployment` 连接原网关，未注册为 Scheduler 插件。详见[网络故障补测](network-retry.zh-CN.md)。
+`arsi-evaluator retry --run <run-id>` 为原 Run 的当前网络失败任务创建新 Attempt。有效零分、普通阶段超时和非网络错误不补测。网络访问仅在对应操作内有限重试，不自动补测整题；每次显式手动请求可为符合条件的任务追加一个 Attempt。`run.taskRetry` 已删除，旧 YAML 需要移除此字段。Ray Jobs 使用本页的独立 `deployment` 连接原网关，未注册为 Scheduler 插件。详见[网络故障补测](network-retry.zh-CN.md)。
 
 [返回用户手册](README.zh-CN.md) · [快速上手](quick-start.zh-CN.md)
 

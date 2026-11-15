@@ -1,5 +1,5 @@
 import type { Context } from "@deepseek-ai/cordis";
-import { readProfileDirectory } from "ember-evaluator";
+import { readProfileDirectory } from "arsi-evaluator";
 import { AisbenchBenchmark } from "./benchmark.js";
 import { parseAisbenchConfig, parseAisbenchSshConfig } from "./config.js";
 import { AisbenchSshSolver } from "./solver.js";

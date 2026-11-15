@@ -239,9 +239,9 @@ export async function modelFor(input: RunnerInput, runtime: ModelRuntime) {
   if (input.model.endpoint !== null) {
     if (input.model.api === null)
       throw new RunnerFailure("CONFIG_INVALID", "an explicit endpoint requires an API protocol");
-    providerId = "ember-runtime";
+    providerId = "arsi-evaluator-runtime";
     runtime.registerProvider(providerId, {
-      name: "Ember runtime provider",
+      name: "ARSI-Evaluator runtime provider",
       baseUrl: input.model.endpoint,
       api: input.model.api as Api,
       ...(input.model.api === "openai-completions" && input.model.maxTokens === undefined

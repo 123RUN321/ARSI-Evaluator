@@ -2,7 +2,7 @@
 
 通过 SSH 在远端 Linux 已有 Python 环境中运行 AISBench，获取吞吐、延迟和 Prefix Cache 测量结果。模型服务、AISBench 和 tokenizer 由使用者提前准备；插件不部署模型或安装远端依赖。
 
-本插件随 Evaluator 构建和发布，由 CLI 和 SDK 默认注册。插件只依赖 `ember-evaluator` 包根公开 API。
+本插件随 Evaluator 构建和发布，由 CLI 和 SDK 默认注册。插件只依赖 `arsi-evaluator` 包根公开 API。
 
 ## 安装和构建
 
@@ -28,11 +28,11 @@ pnpm build
 以下命令在仓库根目录运行：
 
 ```bash
-ember-evaluator benchmark list
-ember-evaluator benchmark info aisbench
-ember-evaluator doctor plugins/aisbench/playbook/01-ssh.yaml
-ember-evaluator run plugins/aisbench/playbook/01-ssh.yaml --dry-run
-ember-evaluator run plugins/aisbench/playbook/01-ssh.yaml
+arsi-evaluator benchmark list
+arsi-evaluator benchmark info aisbench
+arsi-evaluator doctor plugins/aisbench/playbook/01-ssh.yaml
+arsi-evaluator run plugins/aisbench/playbook/01-ssh.yaml --dry-run
+arsi-evaluator run plugins/aisbench/playbook/01-ssh.yaml
 ```
 
 `doctor` 和 `--dry-run` 需要解析配置中的环境变量，但不连接 SSH、不调用模型；真正运行才检查远端依赖、版本和目录权限。默认组合是 `aisbench` benchmark、`aisbench-ssh` solver、`local` environment/scheduler（并发 1）、`aisbench-performance`/`duration`/`usage` metrics、`aisbench-markdown` reporter。
@@ -67,7 +67,7 @@ ember-evaluator run plugins/aisbench/playbook/01-ssh.yaml
 下载 CSV、脱敏日志、原始输出和执行元数据时验证文件大小和 SHA-256。远端目录保留用于恢复。下载失败、证据缺失或校验不完整时，不记为完整测量。`aisbench-performance` 保留原始 CSV 字段、负载、版本和脚本摘要；性能结果没有质量分数，`passed` 为 null。
 
 ```bash
-ember-evaluator report <run-directory>
+arsi-evaluator report <run-directory>
 ```
 
 `report` 根据已保存的 provider 元数据加载插件，不接受 `--patch`，也不需要模型凭据、SSH 或重新压测。需保留原 patch 位置与匹配版本的插件资源；移动或修改插件后应先恢复原位置/版本。缺少 provider、入口版本变化或资源损坏会报错。报告器消费公开快照，不猜测宿主内部产物路径。

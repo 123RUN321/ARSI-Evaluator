@@ -24,11 +24,11 @@ export async function findBash(env: NodeJS.ProcessEnv = process.env): Promise<st
   const windows = process.platform === "win32";
   const variables = new Map(Object.entries(env).map(([name, value]) => [windows ? name.toUpperCase() : name, value]));
   const variable = (name: string) => variables.get(windows ? name.toUpperCase() : name);
-  const override = variable("EMBER_BASH_PATH");
+  const override = variable("ARSI_EVALUATOR_BASH_PATH");
   if (override !== undefined) {
     if (!isAbsolute(override) || !nativeBash(normalize(override)) || !(await executable(override))) {
       throw new Error(
-        "EMBER_BASH_PATH must point to an existing absolute native Bash executable (not a WSL launcher)",
+        "ARSI_EVALUATOR_BASH_PATH must point to an existing absolute native Bash executable (not a WSL launcher)",
       );
     }
     return normalize(override);
@@ -60,6 +60,6 @@ export async function findBash(env: NodeJS.ProcessEnv = process.env): Promise<st
     if (nativeBash(candidate) && (await executable(candidate))) return candidate;
   }
   throw new Error(
-    "Bash was not found; add native Bash to PATH or set EMBER_BASH_PATH to its absolute executable path",
+    "Bash was not found; add native Bash to PATH or set ARSI_EVALUATOR_BASH_PATH to its absolute executable path",
   );
 }

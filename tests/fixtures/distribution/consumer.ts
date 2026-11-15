@@ -1,7 +1,7 @@
 import { Evaluator, bootstrap, loadConfig, runEngine, rebuildReport, DefinedBenchmark, DockerEnvironment, readProfileDirectory,
-  runDockerCommand, parseConfigProfile, DirectoryReceiver } from "ember-evaluator";
+  runDockerCommand, parseConfigProfile, DirectoryReceiver } from "arsi-evaluator";
 import type { EngineInput, PluginFactory, PluginFactoryContext, ConfigProfile, ConfigTransportLookup, BenchmarkDefinition,
-  DatasetRecordSource, EffectiveConfig, Environment, RunComponents, BootstrappedComponents, LoadedConfig } from "ember-evaluator";
+  DatasetRecordSource, EffectiveConfig, Environment, RunComponents, BootstrappedComponents, LoadedConfig } from "arsi-evaluator";
 
 export async function consume(config: LoadedConfig, components: RunComponents, factory: PluginFactory<"environment">,
   runtime: PluginFactoryContext, definition: BenchmarkDefinition, source: DatasetRecordSource) {

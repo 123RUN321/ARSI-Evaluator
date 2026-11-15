@@ -33,8 +33,8 @@ sources:
 修改后检查实际配置，再运行自己的实验：
 
 ```bash
-ember-evaluator inspect experiment.yaml --network network.yaml
-ember-evaluator run experiment.yaml --network network.yaml
+arsi-evaluator inspect experiment.yaml --network network.yaml
+arsi-evaluator run experiment.yaml --network network.yaml
 ```
 
 ## 修改下载地址
@@ -126,7 +126,7 @@ unset HTTPS_PROXY https_proxy
 | --- | --- |
 | 1 | CLI 的 `--network`，或 SDK 的 `networkConfigPath` |
 | 2 | 环境变量 `EVALUATOR_NETWORK_CONFIG` |
-| 3 | Linux/macOS 的 `~/.ember-evaluator/network.yaml`，或 Windows 的 `%USERPROFILE%\.ember-evaluator\network.yaml` |
+| 3 | Linux/macOS 的 `~/.arsi-evaluator/network.yaml`，或 Windows 的 `%USERPROFILE%\.arsi-evaluator\network.yaml` |
 
 相对路径以当前工作目录为基准。选中的文件不会与用户目录的默认文件叠加，未填写的字段使用程序默认值。显式指定的文件不存在或格式错误时直接报错。默认文件不存在时，程序会创建官方源和直连配置；已有文件不会被覆盖。
 

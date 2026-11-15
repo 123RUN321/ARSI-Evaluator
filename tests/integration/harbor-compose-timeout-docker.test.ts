@@ -93,7 +93,7 @@ test.skipIf(!enabled).each(["timeout", "cancel"] as const)("multi-container %s p
     const signal = AbortSignal.timeout(15_000);
     for (const resource of ["ps", "network", "volume"]) {
       const args = resource === "ps" ? ["ps", "--all", "--quiet"] : [resource, "ls", "--quiet"];
-      const remaining = await runDockerCommand(dockerExecutable, [...args, "--filter", `label=ember.run=${runId}`], { signal });
+      const remaining = await runDockerCommand(dockerExecutable, [...args, "--filter", `label=arsi-evaluator.run=${runId}`], { signal });
       expect(remaining.stdout.trim()).toBe("");
     }
   } finally {

@@ -23,7 +23,7 @@ export KERNEL_EVAL_PYTHON=/absolute/path/to/venv/bin/python
 export KERNEL_MANIFEST=/absolute/path/to/cases/tasks.json
 export KERNEL_EVAL_PLACEHOLDER=unused-local-evaluation
 cp playbook/kernel/existing.yaml experiment.yaml
-ember-evaluator run experiment.yaml
+arsi-evaluator run experiment.yaml
 ```
 
 Example services are required placeholders with unusable URLs. The loader requires `api_key` to reference a nonempty variable; set `KERNEL_EVAL_PLACEHOLDER` to the ordinary text above, never a real key. Model usage is zero; offline `report` needs no variable.
@@ -33,7 +33,7 @@ Example services are required placeholders with unusable URLs. The loader requir
 Run every operation through the same experiment YAML:
 
 ```bash
-ember-evaluator run experiment.yaml
+arsi-evaluator run experiment.yaml
 ```
 
 Set `benchmark.config.operation` to select the work:
@@ -258,15 +258,15 @@ Check executionStatus/scoreStatus/verdict.passed for correctness/timing and `pro
 
 ```bash
 # Use the directory printed by run; no model credentials or operator rerun needed.
-ember-evaluator report /absolute/path/to/results/run-id
+arsi-evaluator report /absolute/path/to/results/run-id
 # Resume with identical configuration; referenced environment variables are still required.
-ember-evaluator run experiment.yaml --resume
+arsi-evaluator run experiment.yaml --resume
 ```
 
 dry-run proves only configuration/source parsing, not NPU readiness. Missing torch/torch_npu/NPU during `run` returns nonzero with invalid records, not evidence of candidate correctness.
 
 ## RSI Integration
 
-RSI's `application.kernel` seals candidate source, `proposer.operator` generates changes, and `evaluator.operatorbench` invokes `Evaluator.run()` using the kernel benchmark and kernel-replay solver. RSI installs the pinned `ember-evaluator` SDK and selects the same benchmark operations through experiment configuration. Measurement evidence links to the saved native result and verifier artifacts; evidence availability and calibration label confidence separately from candidate generation.
+RSI's `application.kernel` seals candidate source, `proposer.operator` generates changes, and `evaluator.operatorbench` invokes `Evaluator.run()` using the kernel benchmark and kernel-replay solver. RSI installs the pinned `arsi-evaluator` SDK and selects the same benchmark operations through experiment configuration. Measurement evidence links to the saved native result and verifier artifacts; evidence availability and calibration label confidence separately from candidate generation.
 
 The SDK owns runtime assets, dependencies and prepare/build. Use the SDK package exports for contract and timing validation. An installed-consumer test can prove packaging and software integration without proving NPU correctness or performance; those require a real device run.

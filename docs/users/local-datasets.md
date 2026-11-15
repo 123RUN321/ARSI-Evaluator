@@ -78,10 +78,10 @@ AgentX records a local dataset revision as `local:<content digest>` rather than 
 - Local datasets do not make images, packages, tokenizers or model calls offline. See [network configuration](network.md).
 
 ```bash
-ember-evaluator inspect experiment.yaml
-ember-evaluator run experiment.yaml --dry-run
-ember-evaluator warmup experiment.yaml
-ember-evaluator run experiment.yaml
+arsi-evaluator inspect experiment.yaml
+arsi-evaluator run experiment.yaml --dry-run
+arsi-evaluator warmup experiment.yaml
+arsi-evaluator run experiment.yaml
 ```
 
 `inspect` displays configuration; `--dry-run` reads sources and enumerates tasks; `warmup` prepares actual data, images and dependencies. `doctor experiment.yaml` explicitly probes networks even when local data is configured.

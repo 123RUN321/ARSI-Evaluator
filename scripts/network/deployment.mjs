@@ -29,12 +29,12 @@ export async function deploymentNetwork(configPath) {
       const templateFile = join(directory, "network.json");
       await writeFile(templateFile, JSON.stringify(template), { mode: 0o600 });
       const variables = [...new Set([...JSON.stringify(template).matchAll(/\$\{([A-Za-z_]\w*)\}/gu)].map(match => match[1]))];
-      const definitions = Object.fromEntries(services.map(name => [name, { environment: { EVALUATOR_NETWORK_CONFIG: "/etc/ember/network.json",
+      const definitions = Object.fromEntries(services.map(name => [name, { environment: { EVALUATOR_NETWORK_CONFIG: "/etc/arsi-evaluator/network.json",
         ...Object.fromEntries(variables.map(name => [name, `\${${name}:?Required by network YAML}`])) },
-        volumes: [`${templateFile.replaceAll("\\", "/")}:/etc/ember/network.json:ro`] }]));
+        volumes: [`${templateFile.replaceAll("\\", "/")}:/etc/arsi-evaluator/network.json:ro`] }]));
       const image = await this.acquire("docker:28.5.1-dind", signal);
       for (const name of ["docker-a", "docker-b"]) definitions[name] = { image, pull_policy: "never",
-        labels: { "org.ember.evaluator.network": network.document.digest },
+        labels: { "org.arsi.evaluator.network": network.document.digest },
         environment: { HTTP_PROXY: "${EVALUATOR_DAEMON_HTTP_PROXY}", HTTPS_PROXY: "${EVALUATOR_DAEMON_HTTPS_PROXY}", NO_PROXY: "${EVALUATOR_DAEMON_NO_PROXY}" } };
       const path = join(directory, "network-compose.json");
       await writeFile(path, JSON.stringify({ services: definitions }), { mode: 0o600 });
@@ -58,7 +58,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     await cp(join(root, "scripts/toolbox"), directory, { recursive: true });
     await access.rewriteDockerfile(join(directory, "Dockerfile"));
     await runDockerCommand("docker", ["--host", "unix:///var/run/docker.sock", "build", ...access.build.buildArgs,
-      "--tag", "ember-evaluator-toolbox:local", directory], { signal: controller.signal, env: access.build.environment,
+      "--tag", "arsi-evaluator-toolbox:local", directory], { signal: controller.signal, env: access.build.environment,
       onOutput: (stream, bytes) => process[stream].write(bytes) });
   } finally { process.removeListener("SIGINT", cancel); process.removeListener("SIGTERM", cancel); await access.dispose(); await rm(directory, { recursive: true, force: true }); }
 }

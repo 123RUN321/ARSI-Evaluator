@@ -1,5 +1,5 @@
-import { fingerprintConfig } from "ember-evaluator";
-import type { Benchmark, EffectiveConfig, PreparedTask, SourceLock, TaskRef, SolveResult, VerifyResult } from "ember-evaluator";
+import { fingerprintConfig } from "arsi-evaluator";
+import type { Benchmark, EffectiveConfig, PreparedTask, SourceLock, TaskRef, SolveResult, VerifyResult } from "arsi-evaluator";
 import { expectRecord } from "./validation.js";
 import type { AisbenchConfig } from "./config.js";
 import { bundleDigest, upstreamRevision } from "./ssh/bundle.js";

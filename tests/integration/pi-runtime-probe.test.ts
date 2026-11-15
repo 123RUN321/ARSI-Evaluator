@@ -15,7 +15,7 @@ test.each([
 ])("Pi probe resolves $layout dependencies and checks version $version", async ({ layout, version }) => {
   const root = await mkdtemp(join(tmpdir(), "pi-runtime-probe-"));
   try {
-    const packageRoot = join(root, "node_modules", "ember-evaluator");
+    const packageRoot = join(root, "node_modules", "arsi-evaluator");
     const piRoot = join(layout === "nested" ? packageRoot : root, "node_modules", "@earendil-works", "pi-coding-agent");
     const runnerRoot = join(packageRoot, "dist", "runtimes", "pi");
     await mkdir(join(piRoot, "dist"), { recursive: true });

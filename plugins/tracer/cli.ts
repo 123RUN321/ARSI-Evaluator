@@ -24,7 +24,7 @@ export type TracerIO = { out(text: string): void; error(text: string): void };
 export type TracerCliResult = { ok: true; status: number } | { ok: false; error: unknown; usage: boolean };
 
 const USAGE = [
-  "Usage: ember-evaluator tracer <serve|stop|status|logs> [options]",
+  "Usage: arsi-evaluator tracer <serve|stop|status|logs> [options]",
   "",
   "Commands:",
   "  serve    Start the Collector, or reuse an already healthy instance",

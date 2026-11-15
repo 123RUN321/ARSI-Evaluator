@@ -30,7 +30,7 @@ export async function loadNetworkConfig(path?: string, env: NodeJS.ProcessEnv = 
 }
 
 export function defaultNetworkConfigPath(): string {
-  return join(homedir(), ".ember-evaluator", "network.yaml");
+  return join(homedir(), ".arsi-evaluator", "network.yaml");
 }
 
 export function recommendedNetworkConfigPath(): string {

@@ -3,7 +3,7 @@ import type { ModelConfig } from "../../core/contracts/config.js";
 import { AgentBundleError } from "../agentbundle/cli.js";
 
 /** The environment variable that carries this attempt's API key for Hermes. */
-export const HERMES_AUTH_ENV = "EMBER_EVALUATOR_API_KEY";
+export const HERMES_AUTH_ENV = "ARSI_EVALUATOR_API_KEY";
 
 /**
  * Map the shared Evaluator {@link ModelConfig} to a Hermes `model_aliases`

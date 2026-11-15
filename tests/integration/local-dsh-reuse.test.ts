@@ -30,7 +30,7 @@ async function setup() {
   vi.stubEnv("DSH_BIN", bin);
   const makeBundle = async (name: string, prompt: string) => {
     const bundle = join(root, name); await mkdir(bundle);
-    await writeFile(join(bundle, "settings.yaml"), `system-prompt:\n  personaSuffix: ${prompt}\nllm-pi-ai:\n  providers:\n    ember-evaluator:\n      timeoutMs: 123\n      retryPolicy: { maxRetries: 0 }\n`);
+    await writeFile(join(bundle, "settings.yaml"), `system-prompt:\n  personaSuffix: ${prompt}\nllm-pi-ai:\n  providers:\n    arsi-evaluator:\n      timeoutMs: 123\n      retryPolicy: { maxRetries: 0 }\n`);
     return bundle;
   };
   const model = { name: "test", endpoint: "http://example.invalid", provider: null, api: "openai-completions" };
@@ -74,7 +74,7 @@ else {
   const patches=process.argv.flatMap((arg,i)=>arg==='--patch'?parse(fs.readFileSync(process.argv[i+1],'utf8')):[]);
   const model=patches.find(entry=>entry.id==='agent-default-model')?.config;
   const provider=patches.find(entry=>entry.id==='llm-pi-ai')?.config.providers[model?.provider];
-  if(model?.provider!=='ember-evaluator'||model.model!=='test'||provider?.baseURL!=='http://example.invalid'||process.env[provider?.apiKeyEnv]!=='route-secret')throw Error('Configured model route was not applied');
+  if(model?.provider!=='arsi-evaluator'||model.model!=='test'||provider?.baseURL!=='http://example.invalid'||process.env[provider?.apiKeyEnv]!=='route-secret')throw Error('Configured model route was not applied');
   if(!fs.readFileSync(path.join(process.env.DSH_HOME,'settings.yaml'),'utf8').includes('candidate-a'))throw Error('Candidate settings were replaced');
   const emit=event=>console.log(JSON.stringify(event));
   emit({type:'session',sessionId:'route',cwd:process.cwd()});

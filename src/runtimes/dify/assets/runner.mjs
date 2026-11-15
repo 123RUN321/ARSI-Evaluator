@@ -12,6 +12,8 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { join } from "node:path";
 
+const WORKFLOW_USER = "arsi-evaluator";
+
 class WorkflowError extends Error {
   constructor(code, message, details = {}) { super(message); this.code = code; this.details = details; }
 }
@@ -85,15 +87,15 @@ async function observe(body, apiKey) {
     await mkdir(body.outputDir, { recursive: true });
     const receiptsPath = join(body.outputDir, "dify-files.json");
     const saved = await readFile(receiptsPath, "utf8").then(JSON.parse).catch(() => null);
-    const receipts = saved?.baseUrl === body.baseUrl && saved?.appId === body.appId && saved?.user === "ember-evaluator" ? saved :
-      { baseUrl: body.baseUrl, appId: body.appId, user: "ember-evaluator", files: {} };
+    const receipts = saved?.baseUrl === body.baseUrl && saved?.appId === body.appId && saved?.user === WORKFLOW_USER ? saved :
+      { baseUrl: body.baseUrl, appId: body.appId, user: WORKFLOW_USER, files: {} };
     for (const item of body.media) {
       const bytes = Buffer.from(item.data, "base64");
       const digest = createHash("sha256").update(bytes).digest("hex");
       let id = receipts.files[digest];
       if (typeof id !== "string" || !id) {
         const form = new FormData();
-        form.append("user", "ember-evaluator");
+        form.append("user", WORKFLOW_USER);
         form.append("file", new Blob([bytes], { type: item.mediaType }), item.name);
         const upload = await fetch(`${body.baseUrl}/v1/files/upload`, { method: "POST", headers: { Authorization: `Bearer ${apiKey}` }, body: form });
         if (!upload.ok) throw new WorkflowError(httpFailureCode(upload.status), `Dify attachment upload failed (${upload.status})`);
@@ -110,7 +112,7 @@ async function observe(body, apiKey) {
   const response = await fetch(`${body.baseUrl}/v1/workflows/run`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({ inputs, response_mode: "streaming", user: "ember-evaluator" }),
+    body: JSON.stringify({ inputs, response_mode: "streaming", user: WORKFLOW_USER }),
   });
   if (!response.ok) {
     const text = await response.text().catch(() => "");

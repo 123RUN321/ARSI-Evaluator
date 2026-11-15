@@ -5,7 +5,7 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "paths": {
-      "ember-evaluator": ["../../src/index.ts"]
+      "arsi-evaluator": ["../../src/index.ts"]
     },
     "strict": true,
     "noEmit": true,

@@ -324,7 +324,7 @@ test("builtin local store is selected through Cordis and disposal releases its w
 });
 
 test("run identity is persisted, reopened and validated at the manifest boundary", async () => {
-  const identity = { evaluator: { name: "ember-evaluator", version: "0.1.0" }, runtime: { node: "v24.0.0", platform: "linux", arch: "x64" } };
+  const identity = { evaluator: { name: "arsi-evaluator", version: "0.1.0" }, runtime: { node: "v24.0.0", platform: "linux", arch: "x64" } };
   const root = await mkdtemp(join(tmpdir(), "evaluator-store-identity-")); roots.push(root);
   const store = instance(); await store.create(root, { ...structuredClone(storeRun), identity }, {});
   await store.close(); const reopened = instance(); await reopened.open(join(root, storeRun.runId));

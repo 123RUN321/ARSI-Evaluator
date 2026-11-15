@@ -1,6 +1,6 @@
 # 网络排障
 
-1. 运行 `ember-evaluator doctor experiment.yaml`，记录失败操作、端点和执行位置。宿主机上的探测只证明宿主机这条链路。Docker daemon、Dockerfile 构建、任务运行时及 Ray 节点按实际位置核对。doctor 检查并给出诊断，应用网络配置是独立操作。
+1. 运行 `arsi-evaluator doctor experiment.yaml`，记录失败操作、端点和执行位置。宿主机上的探测只证明宿主机这条链路。Docker daemon、Dockerfile 构建、任务运行时及 Ray 节点按实际位置核对。doctor 检查并给出诊断，应用网络配置是独立操作。
 2. 按问题选择设置。下载地址控制请求发往哪个源，代理控制请求经过哪条路径。针对数据集、镜像或包下载的慢链路，可以选 [network Playbook](../../../playbook/network/) 的方案，或复制一份到本地实验目录，调整对应源或代理。模型 API 按模型服务配置单独排查，doctor 不会调用模型验证 API key。
 3. 在自己的 `network.yaml` 中保留需要的字段。以下示例假设宿主机上运行着可用的代理，地址必须替换为当前环境的实际值。
 

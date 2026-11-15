@@ -55,7 +55,7 @@ test("runtime builds are shared across tasks and remain separate by phase", asyn
     }
     if (args.at(-1) === "{{json .Config.User}}") return { stdout: '""', stderr: "" };
     if (ref === PINNED_NODE_IMAGE) return { stdout: PINNED_NODE_IMAGE.split("@")[1] + " []", stderr: "" };
-    if (ref.startsWith("ember-evaluator/") && !images.has(ref)) throw new Error("No such image");
+    if (ref.startsWith("arsi-evaluator/") && !images.has(ref)) throw new Error("No such image");
     return { stdout: "sha256:" + "a".repeat(64), stderr: "" };
   };
   const scope = { taskId: "terminal-bench/atrx-vep-crispr", phase: "solve" as const };

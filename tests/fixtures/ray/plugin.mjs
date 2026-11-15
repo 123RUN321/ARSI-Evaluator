@@ -1,7 +1,7 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { hostname } from 'node:os';
-import { buildFileManifest, fingerprintConfig } from 'ember-evaluator';
+import { buildFileManifest, fingerprintConfig } from 'arsi-evaluator';
 export const inject = ['evaluator'];
 const source = { source: 'ray-fixture', revision: 'v1', files: [], metadata: {} };
 export function apply(ctx) {

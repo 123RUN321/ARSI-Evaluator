@@ -55,8 +55,8 @@ export async function diagnoseDownloads(options: { config: LoadedConfig; configP
       : probes.some(row => row.status === "not-checked") ? "incomplete" : "passed";
     const experiment = quoteArgument(resolve(options.configPath));
     const patch = options.patchPath ? ` --patch ${quoteArgument(resolve(options.patchPath))}` : "";
-    const retryCommand = `ember-evaluator doctor ${experiment}${patch} --network ${quoteArgument(configPath)}`;
-    const recommendedCommand = `ember-evaluator doctor ${experiment}${patch} --network ${quoteArgument(recommendedConfigPath)}`;
+    const retryCommand = `arsi-evaluator doctor ${experiment}${patch} --network ${quoteArgument(configPath)}`;
+    const recommendedCommand = `arsi-evaluator doctor ${experiment}${patch} --network ${quoteArgument(recommendedConfigPath)}`;
     if (status !== "passed") {
       progress(`Retry after editing the fields above: ${retryCommand}`);
       progress(`To try the bundled mirror configuration: ${recommendedCommand}`);

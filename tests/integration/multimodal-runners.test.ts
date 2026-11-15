@@ -57,9 +57,9 @@ test("Dify uploads image bytes with the workflow user, binds IDs in order, and r
     expect(await execute()).toMatchObject({ code: 0 });
     const upload = requests.find(request => request.url.endsWith("upload"))!;
     expect(upload.body.includes(fixturePNG())).toBe(true);
-    expect(upload.body.toString()).toContain('name="user"\r\n\r\nember-evaluator');
+    expect(upload.body.toString()).toContain('name="user"\r\n\r\narsi-evaluator');
     const workflow = JSON.parse(requests.find(request => request.url.endsWith("run"))!.body.toString());
-    expect(workflow.user).toBe("ember-evaluator");
+    expect(workflow.user).toBe("arsi-evaluator");
     expect(workflow.inputs.images).toEqual(Array(2).fill({ type: "image", transfer_method: "local_file", upload_file_id: "image-id" }));
     expect(await execute()).toMatchObject({ code: 0 });
     expect(requests.filter(request => request.url.endsWith("upload"))).toHaveLength(1);
@@ -215,7 +215,7 @@ test.skipIf(!process.env.EVALUATOR_DSH_TEST_RUNTIME)("pinned DSH preserves image
     await writeFile(patches[2]!, dshSdkPatch("evaluator", root, "danger-full-access"));
     const result = await program(process.execPath, [resolve("src/runtimes/dsh/assets/multimodal-runner.mjs")], {
       moduleBase: join(runtime, "package.json"), dsh, home: root, profile: "evaluator", patches,
-      workdir: root, outputDir: join(root, "logs"), model: "vision", provider: "ember-evaluator", key, prompt: "look", media: [image],
+      workdir: root, outputDir: join(root, "logs"), model: "vision", provider: "arsi-evaluator", key, prompt: "look", media: [image],
     }, root);
     expect(result.code, result.stdout + result.stderr).toBe(0);
     expect(requests).toHaveLength(2);

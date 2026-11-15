@@ -124,7 +124,7 @@ async function checkEvidence(agent: string): Promise<void> {
 }
 
 test.skipIf(!enabled("local"))("ZCode binds three model protocols and uses Bash in the local workspace", async () => {
-  const root = await mkdtemp(join(tmpdir(), "ember-zcode-local-"));
+  const root = await mkdtemp(join(tmpdir(), "arsi-evaluator-zcode-local-"));
   const signal = AbortSignal.timeout(1_800_000);
   const networkPath = process.env.EVALUATOR_ZCODE_TEST_NETWORK;
   const network = networkPath === undefined ? new NetworkRuntime() : new NetworkRuntime(await loadNetworkConfig(networkPath));
@@ -174,7 +174,7 @@ test.skipIf(!enabled("local"))("ZCode binds three model protocols and uses Bash 
 }, 1_830_000);
 
 test.skipIf(!enabled("docker"))("ZCode uses the Docker model gateway and scores a Harbor file task", async () => {
-  const root = await mkdtemp(join(tmpdir(), "ember-zcode-docker-"));
+  const root = await mkdtemp(join(tmpdir(), "arsi-evaluator-zcode-docker-"));
   const mock = await fixture("openai-completions", true, true);
   try {
     const configPath = join(root, "experiment.yaml");

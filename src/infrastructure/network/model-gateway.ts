@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { ContainerPlatform } from "../../core/contracts/environment.js";
 import type { AttemptKey } from "../../core/contracts/result.js";
+import { dockerAttemptLabels } from "../containers/attempt-labels.js";
 import { DOCKER_PLATFORM, PINNED_NODE_IMAGE, type DockerCommand } from "../containers/runtime-contract.js";
 import { removeDockerContainer } from "../containers/cleanup.js";
 import { normalizeAllowedHosts } from "../../core/policies/network-policy.js";
@@ -206,18 +207,11 @@ export function gatewayVolumeName(key: AttemptKey, phase: "solve" | "verify"): s
     .update(JSON.stringify([key.runId, key.taskId, key.attemptId, phase]))
     .digest("hex")
     .slice(0, 24);
-  return `ember-gateway-${identity}`;
+  return `arsi-evaluator-gateway-${identity}`;
 }
 
 function containerLabels(key: AttemptKey, phase: "solve" | "verify"): string[] {
-  return (
-    [
-      ["run", key.runId],
-      ["task", key.taskId],
-      ["attempt", key.attemptId],
-      ["phase", phase],
-    ] as const
-  ).flatMap(([name, value]) => ["--label", `ember.${name}=${value.replaceAll(/[\u0000-\u001f\u007f]/gu, "_")}`]);
+  return Object.entries(dockerAttemptLabels(key, phase)).flatMap(([name, value]) => ["--label", `${name}=${value}`]);
 }
 
 async function probeSocket(command: DockerCommand, containerId: string, signal: AbortSignal): Promise<void> {
@@ -249,7 +243,7 @@ export async function createModelGateway(
   const volume = gatewayVolumeName(options.key, options.phase);
   await command(["volume", "rm", "--force", volume], { signal: options.signal }).catch(() => {});
   await command(["volume", "create", ...containerLabels(options.key, options.phase), volume], { signal: options.signal });
-  const context = await mkdtemp(join(tmpdir(), "ember-gateway-build-"));
+  const context = await mkdtemp(join(tmpdir(), "arsi-evaluator-gateway-build-"));
   let containerId: string | null = null;
   try {
     await writeFile(join(context, "model-gateway.mjs"), gatewaySource, { mode: 0o600 });

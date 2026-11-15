@@ -104,11 +104,11 @@ export class TraeSolver implements Solver {
       `projects.${JSON.stringify(session.workdir)}.trust_level="untrusted"`,
       'shell_environment_policy.inherit="core"',
       'shell_environment_policy.exclude=["EVALUATOR_TRAE_API_KEY"]',
-      'model_provider="ember"',
-      'model_providers.ember.name="Ember Evaluator"',
-      `model_providers.ember.base_url=${JSON.stringify(endpoint)}`,
-      'model_providers.ember.env_key="EVALUATOR_TRAE_API_KEY"',
-      `model_providers.ember.wire_api=${JSON.stringify(this.wireApi)}`,
+      'model_provider="arsi-evaluator"',
+      'model_providers.arsi-evaluator.name="ARSI-Evaluator"',
+      `model_providers.arsi-evaluator.base_url=${JSON.stringify(endpoint)}`,
+      'model_providers.arsi-evaluator.env_key="EVALUATOR_TRAE_API_KEY"',
+      `model_providers.arsi-evaluator.wire_api=${JSON.stringify(this.wireApi)}`,
       ...(local && process.platform === "win32" ? ['windows.sandbox="unelevated"'] : []),
     ];
     const denied = this.policy.tools === "none" ? TRAE_TOOLS : [

@@ -1,5 +1,5 @@
 {
-  "name": "ember-codex-runtime",
+  "name": "arsi-evaluator-codex-runtime",
   "private": true,
   "dependencies": {
     "@openai/codex": "0.167.0"

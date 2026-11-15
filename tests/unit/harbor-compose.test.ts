@@ -95,7 +95,7 @@ test("isolates attempts and preserves shared networks, conditions and labels", a
   const first = new DockerComposeProject(command, "docker", { ...spec, services: spec.services }, paths, { runId: "run", taskId: "task", attemptId: "one" }, "solve");
   const second = new DockerComposeProject(command, "docker", { ...spec, services: spec.services }, paths, { runId: "run", taskId: "task", attemptId: "two" }, "solve");
   expect(first.name).not.toBe(second.name);
-  await first.create({ image: "main:locked", platform: "linux/arm64", command: ["node", "idle.mjs"], environment: { A: "main" } }, { api: "api:locked" }, { "ember.attempt": "one" }, new AbortController().signal);
+  await first.create({ image: "main:locked", platform: "linux/arm64", command: ["node", "idle.mjs"], environment: { A: "main" } }, { api: "api:locked" }, { "arsi-evaluator.attempt": "one" }, new AbortController().signal);
   const document = JSON.parse(await readFile(join(root, "compose-solve.json"), "utf8"));
   expect(document.services.main.network_mode).toBe("service:api");
   expect(document.services.main.depends_on.api.condition).toBe("service_healthy");

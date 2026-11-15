@@ -2,7 +2,7 @@
 
 > English | [中文](./network-retry.zh-CN.md)
 
-`ember-evaluator retry` creates full new attempts for invalid tasks with explicit network failures in the original run. It preserves task set, sources, model, Solver, official limits, and scoring. Zeros, wrong answers, valid agent timeouts, and failures without network evidence are ineligible.
+`arsi-evaluator retry` creates full new attempts for invalid tasks with explicit network failures in the original run. It preserves task set, sources, model, Solver, official limits, and scoring. Zeros, wrong answers, valid agent timeouts, and failures without network evidence are ineligible.
 
 ![Three recovery paths show request retry within the same attempt, automatic reruns after stream truncation and confirmed cleanup, and manual recovery into a new attempt in the same run](imgs/10-flowchart-network-retry.png)
 
@@ -32,13 +32,13 @@ Remove `run.taskRetry` from old YAML. Configure model request limits as above an
 ## Commands
 
 ```bash
-ember-evaluator retry --run <run-id>
-ember-evaluator retry --run <run-directory> --task-id terminal-bench/example --request-id network-fix-1 --reason "registry network restored"
+arsi-evaluator retry --run <run-id>
+arsi-evaluator retry --run <run-directory> --task-id terminal-bench/example --request-id network-fix-1 --reason "registry network restored"
 ```
 
 Repeat `--task-id` to select multiple tasks, or omit it to select all eligible network failures. With no eligible tasks, the command returns normally without starting new attempts. When recovering an ended evaluation, add `--network network.yaml` to change download sources or proxies. A running evaluation keeps its startup network settings.
 
-Select the original evaluation by Run ID or result directory. The ID index defaults to `~/.ember/runs/`, configurable with `EVALUATOR_RUN_INDEX_DIR`. After copying results to another machine, pass the directory directly. Ray Jobs still needs the original gateway and its authentication to operate on the remote run; a downloaded result copy cannot replace it.
+Select the original evaluation by Run ID or result directory. The ID index defaults to `~/.arsi-evaluator/runs/`, configurable with `EVALUATOR_RUN_INDEX_DIR`. After copying results to another machine, pass the directory directly. Ray Jobs still needs the original gateway and its authentication to operate on the remote run; a downloaded result copy cannot replace it.
 
 While the evaluation is running, the command submits recovery to the original process and other tasks continue. After it ends, recovery continues in the same run. `retry` selects eligible network failures; `--resume` handles unfinished tasks according to resume rules.
 
@@ -80,7 +80,7 @@ Each task uses one valid result, never the highest score. If an initial pull fai
 - Explicit resume creates `reports/resume-N/`, preserving initial reports under `reports/initial/` and previous resume reports. If report generation was interrupted, rebuild it with the command below.
 
 ```bash
-ember-evaluator report <run-directory>
+arsi-evaluator report <run-directory>
 ```
 
 The latest report counts current results and unresolved run failures. Historical failures remain in attempt directories. `attempt-accounting` totals known tokens, time, and cost across attempts; missing usage is marked separately, so known costs are not a complete bill.

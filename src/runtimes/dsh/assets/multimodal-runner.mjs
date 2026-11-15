@@ -12,7 +12,7 @@ const input = JSON.parse(Buffer.concat(chunks).toString("utf8"));
 const emit = value => process.stdout.write(JSON.stringify({ schemaVersion: 1, ...value }) + "\n");
 let harness;
 let seq = 0;
-const secret = process.env.EMBER_EVALUATOR_API_KEY ?? "";
+const secret = process.env.ARSI_EVALUATOR_API_KEY ?? "";
 const exportedImages = new Set();
 const safe = value => {
   if (Array.isArray(value)) return value.map(safe);
@@ -77,7 +77,7 @@ try {
   if (result.finishReason === "max-tokens") emit({ type: "warning", code: "SOLVER_OUTPUT_LIMIT", message: "DSH model output was truncated" });
   emit({ type: "result", result: { finalText: result.finalResponse, usage } });
 } catch (error) {
-  const secret = process.env.EMBER_EVALUATOR_API_KEY ?? "";
+  const secret = process.env.ARSI_EVALUATOR_API_KEY ?? "";
   const message = String(error.message);
   record("error", { message });
   emit({ type: "error", code: error.code === "MODULE_NOT_FOUND" ? "BENCHMARK_UNSUPPORTED" : "SOLVER_PROTOCOL_INVALID",

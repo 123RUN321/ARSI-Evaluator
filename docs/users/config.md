@@ -206,8 +206,8 @@ Default metrics: harbor-score, success-rate, duration, usage; DeepSWE adds f2p/p
 ## Inspect Effective Configuration
 
 ```bash
-ember-evaluator inspect experiment.yaml
-ember-evaluator inspect experiment.yaml --patch ./patch.yaml
+arsi-evaluator inspect experiment.yaml
+arsi-evaluator inspect experiment.yaml --patch ./patch.yaml
 ```
 
 `inspect` prints JSON containing the effective experiment and network settings, with credential references preserved. It validates configuration without factories, downloads, task enumeration, containers, or model calls. Model settings come from YAML; model override flags are supported only by run.
@@ -283,7 +283,7 @@ Plugin authors: see [profile publication](../development/benchmarks.en.md#publis
 
 ## Network Failure Recovery
 
-`ember-evaluator retry --run <run-id>` creates attempts for current network failures in the original run. Valid zeros, ordinary phase timeouts, and non-network errors are ineligible. Network operations retry within their own bounds rather than whole tasks; each manual request may add one eligible attempt. Removed `run.taskRetry` must be deleted from old YAML. Ray Jobs connects the original gateway through separate `deployment`, not a Scheduler plugin. See [network recovery](network-retry.md).
+`arsi-evaluator retry --run <run-id>` creates attempts for current network failures in the original run. Valid zeros, ordinary phase timeouts, and non-network errors are ineligible. Network operations retry within their own bounds rather than whole tasks; each manual request may add one eligible attempt. Removed `run.taskRetry` must be deleted from old YAML. Ray Jobs connects the original gateway through separate `deployment`, not a Scheduler plugin. See [network recovery](network-retry.md).
 
 [User guide](README.md) · [Quick start](quick-start.md)
 

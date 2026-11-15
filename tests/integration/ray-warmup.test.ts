@@ -25,7 +25,7 @@ vi.mock("../../src/infrastructure/ray/client.js", () => ({ RayClient: class {
   start = async () => {};
   submit = bridge.submit; cancel = bridge.cancel; close = bridge.close;
 } }));
-vi.mock("../../src/infrastructure/provenance/package.js", () => ({ PACKAGE_RUNTIME_ID: "ember-evaluator:package", loadPackageDigest: async () => `sha256:${"a".repeat(64)}` }));
+vi.mock("../../src/infrastructure/provenance/package.js", () => ({ PACKAGE_RUNTIME_ID: "arsi-evaluator:package", loadPackageDigest: async () => `sha256:${"a".repeat(64)}` }));
 vi.mock("../../src/infrastructure/transfer/https.js", () => ({ startTransferReceiver: async (options: ReceiverServerOptions) => {
   bridge.server(options); return { url: "https://collector.invalid", close: async () => {} };
 } }));
@@ -52,7 +52,7 @@ async function fixture(count = 6) {
     services: { default: { model: { name: "fixture", endpoint: null, provider: null, api: "openai-completions" },
       auth: { value: "", reference: "WARMUP_MODEL_API_KEY" } } } });
   components.scheduler = scheduler;
-  components.pluginVersions = { "ember-evaluator:package": digest };
+  components.pluginVersions = { "arsi-evaluator:package": digest };
   config.auths.default = { value: "", reference: null };
   components.benchmark.enumerate = async function* () { for (let i = 0; i < count; i++) yield { id: `t${i}`, recordKey: i }; };
   components.benchmark.planRun = (refs, source, signal) =>

@@ -66,7 +66,7 @@ test("the verifier build forwards mirrors and proxy settings without model crede
   const calls: string[][] = [];
   const image = createPythonVerifierImage("fixture-docker", async args => { calls.push(args); if (args[0] === "image") throw new Error("No such image"); });
   const tag = await image(new AbortController().signal);
-  expect(tag).toMatch(/^ember-harbor-verifier:[a-f0-9]{24}$/u);
+  expect(tag).toMatch(/^arsi-evaluator-harbor-verifier:[a-f0-9]{24}$/u);
   expect(calls[1]).toEqual(expect.arrayContaining(["PIP_INDEX_URL=https://python.example/simple", "EVALUATOR_GITHUB_MIRROR=https://git.example/https://github.com"]));
   expect(JSON.stringify(calls)).not.toContain("must-not-be-sent");
 });
@@ -122,7 +122,7 @@ test("cancelling the first waiter leaves the build running for another task", as
   await cancelled;
   expect(active.aborted).toBe(false);
   f.gate.resolve();
-  await expect(second).resolves.toMatch(/^ember-harbor-verifier:/u);
+  await expect(second).resolves.toMatch(/^arsi-evaluator-harbor-verifier:/u);
   expect(f.command.mock.calls.filter(([args]) => args[0] === "build")).toHaveLength(1);
 });
 
@@ -146,7 +146,7 @@ test("cancelling every waiter stops the build and a later call can retry", async
   await peerCancelled;
   expect(active.aborted).toBe(true);
   f.gate.resolve();
-  await expect(f.image(AbortSignal.timeout(5000))).resolves.toMatch(/^ember-harbor-verifier:/u);
+  await expect(f.image(AbortSignal.timeout(5000))).resolves.toMatch(/^arsi-evaluator-harbor-verifier:/u);
   expect(f.command.mock.calls.filter(([args]) => args[0] === "build")).toHaveLength(2);
 });
 
@@ -195,7 +195,7 @@ test("failed builds release the lock and can be retried", async () => {
     if (++builds === 1) throw new Error("build failed");
   });
   await expect(image(AbortSignal.timeout(5000))).rejects.toThrow("build failed");
-  await expect(image(AbortSignal.timeout(5000))).resolves.toMatch(/^ember-harbor-verifier:/u);
+  await expect(image(AbortSignal.timeout(5000))).resolves.toMatch(/^arsi-evaluator-harbor-verifier:/u);
   expect(builds).toBe(2);
 });
 

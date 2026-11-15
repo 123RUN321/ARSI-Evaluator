@@ -1,6 +1,6 @@
 # DocOps 插件使用说明
 
-本目录提供独立的本地 package `@ember-evaluator/docops`，包含 DocOps benchmark 和配套的 `docops-docker` 执行环境。它通过 Evaluator 的公共 API 工作，随根项目构建和发布，由 CLI 和 SDK 默认注册。
+本目录提供独立的本地 package `@arsi-evaluator/docops`，包含 DocOps benchmark 和配套的 `docops-docker` 执行环境。它通过 Evaluator 的公共 API 工作，随根项目构建和发布，由 CLI 和 SDK 默认注册。
 
 ## 环境准备
 
@@ -29,7 +29,7 @@ pnpm --dir plugins/docops build
 在仓库根目录启动示例实验：
 
 ```bash
-ember-evaluator run plugins/docops/playbook/docops.yaml
+arsi-evaluator run plugins/docops/playbook/docops.yaml
 ```
 
 DocOps 注册 `benchmark/docops` 和 `environment/docops-docker`。示例配置默认使用 `icip-cas/DocOps` 的 `main` revision，执行一个 task，并将结果写入 `results/docops/`。可按需修改 [Playbook](./playbook/docops.yaml) 中的 repository、revision、task ID、Docker profile 和输出目录。
@@ -41,5 +41,5 @@ Ray 节点上的缓存目录和 Docker 可执行文件由节点配置提供，�
 只需枚举任务并检查 benchmark 数据源时，可加 `--dry-run`：
 
 ```bash
-ember-evaluator run plugins/docops/playbook/docops.yaml --dry-run
+arsi-evaluator run plugins/docops/playbook/docops.yaml --dry-run
 ```

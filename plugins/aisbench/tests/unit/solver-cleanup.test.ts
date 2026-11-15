@@ -6,7 +6,7 @@ import { AisbenchSshSolver } from "../../solver.js";
 import { AisbenchRemoteClient } from "../../ssh/client.js";
 import { parseAisbenchSshConfig, parseWorkload } from "../../config.js";
 import { bundleDigest } from "../../ssh/bundle.js";
-import type { EnvironmentSession } from "ember-evaluator";
+import type { EnvironmentSession } from "arsi-evaluator";
 
 const unused = async (): Promise<never> => { throw new Error("Unexpected local environment call"); };
 const session: EnvironmentSession = { id: "local", workdir: "/unused", agentOutputDir: "/unused", verifierOutputDir: "/unused", metadata: {}, start: unused, upload: unused, download: unused, exportState: unused, restoreState: unused, dispose: unused };

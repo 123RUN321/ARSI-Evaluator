@@ -80,10 +80,10 @@ AgentX 本地数据的 revision 记录为 `local:<内容摘要>`，不伪装成 
 - 本地数据不等于全离线：Docker 镜像、Python/npm 依赖、Tokenizer 和模型接口仍可能联网，见[网络配置](network.zh-CN.md)。
 
 ```bash
-ember-evaluator inspect experiment.yaml
-ember-evaluator run experiment.yaml --dry-run
-ember-evaluator warmup experiment.yaml
-ember-evaluator run experiment.yaml
+arsi-evaluator inspect experiment.yaml
+arsi-evaluator run experiment.yaml --dry-run
+arsi-evaluator warmup experiment.yaml
+arsi-evaluator run experiment.yaml
 ```
 
 `inspect` 查看配置；`--dry-run` 实际读取来源并枚举任务；`warmup` 检查任务、镜像和依赖准备。`doctor experiment.yaml` 仍主动执行网络诊断，不把配置本地数据理解为禁止诊断联网。

@@ -219,7 +219,7 @@ function loadResolvedConfig(
   for (const [key, field] of [["model", "name"], ["endpoint", "endpoint"], ["apiKey", "apiKey"], ["apiKeyEnv", "apiKey"]] as const)
     if (overrides[key] !== undefined) origins[`services.${solverService}.${field}`] = "CLI override";
   const verifierService = normalized.verifier === undefined ? undefined : expectRecord(normalized.verifier, "verifier").service;
-  const variables = { ...env, EVALUATOR_CACHE_DIR: env.EVALUATOR_CACHE_DIR ?? join(env.XDG_CACHE_HOME ?? (process.platform === "win32" ? env.LOCALAPPDATA ?? join(homedir(), "AppData", "Local") : join(homedir(), ".cache")), "ember-evaluator") };
+  const variables = { ...env, EVALUATOR_CACHE_DIR: env.EVALUATOR_CACHE_DIR ?? join(env.XDG_CACHE_HOME ?? (process.platform === "win32" ? env.LOCALAPPDATA ?? join(homedir(), "AppData", "Local") : join(homedir(), ".cache")), "arsi-evaluator") };
   const judgeInput = expectRecord(expectRecord(normalized.benchmark, "benchmark").config, "benchmark.config").judgeService;
   const judgeService = judgeInput === undefined ? undefined : expectNonEmptyString(expandVariables(judgeInput, variables), "benchmark.config.judgeService");
   const services: Record<string, ModelConfig> = {};

@@ -72,7 +72,7 @@ test.each(["direct", "local-launcher", "path-shim", "checkout-ts"])("%s retains 
   ];
   const signal = AbortSignal.timeout(20_000);
   const handle = await startLocalProcess({ executable: process.execPath, args, cwd: root,
-    env: { EVALUATOR_DSH_OUTPUT_DIR: paths.agent, EMBER_EVALUATOR_API_KEY: secret, NODE_OPTIONS: "--stack-trace-limit=17" },
+    env: { EVALUATOR_DSH_OUTPUT_DIR: paths.agent, ARSI_EVALUATOR_API_KEY: secret, NODE_OPTIONS: "--stack-trace-limit=17" },
     input: Buffer.from(JSON.stringify(inputs)) }, signal);
   const result = await consumeDsh(handle, { key: { runId: "run", taskId: mode, attemptId: "one" }, paths, signal }, secret);
   expect(result.finalText).toBe("answer");

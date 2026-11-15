@@ -25,5 +25,5 @@ COPY dist ./dist
 COPY scripts ./scripts
 COPY tests/fixtures/ray/plugin.mjs ./scripts/ray-smoke/controlled.mjs
 ARG EVALUATOR_SOURCE_FINGERPRINT="manual"
-LABEL org.ember.evaluator.source-fingerprint="${EVALUATOR_SOURCE_FINGERPRINT}"
+LABEL org.arsi.evaluator.source-fingerprint="${EVALUATOR_SOURCE_FINGERPRINT}"
 ENTRYPOINT ["node", "scripts/ray-smoke/start.mjs"]

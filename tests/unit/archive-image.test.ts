@@ -80,7 +80,7 @@ function fakeDocker(id: string) {
       } });
       const [{ RepoTags: tags }] = JSON.parse(Buffer.concat(chunks).toString()) as [{ RepoTags: string[] }];
       expect(tags).toHaveLength(1);
-      expect(tags[0]).toMatch(/^ember-evaluator\/staging:/u);
+      expect(tags[0]).toMatch(/^arsi-evaluator\/staging:/u);
       images.add(tags[0]!);
       abort?.abort(new Error("cancelled after load"));
     } else if (args[1] === "tag") {

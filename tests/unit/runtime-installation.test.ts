@@ -141,12 +141,13 @@ describe("named local runtime installation", () => {
   });
 });
 
-test("Windows uses a shorter runtime cache without moving the application cache", () => {
+test("Windows uses a shorter runtime cache and the ARSI-Evaluator application cache", () => {
+  const base = resolve(".scratch/user-cache");
   vi.stubGlobal("process", { ...process, platform: "win32" });
-  vi.stubEnv("LOCALAPPDATA", resolve(".scratch/user-cache"));
+  vi.stubEnv("LOCALAPPDATA", base);
   vi.stubEnv("EVALUATOR_RUNTIME_CACHE_DIR", undefined);
-  expect(runtimeCacheRoot()).toBe(resolve(".scratch/user-cache/ember/r"));
-  expect(applicationCacheRoot()).toBe(resolve(".scratch/user-cache/ember-evaluator"));
+  expect(runtimeCacheRoot()).toBe(join(base, "arsi", "r"));
+  expect(applicationCacheRoot()).toBe(join(base, "arsi-evaluator"));
 });
 
 test("a dedicated runtime cache override must be absolute and does not move application caches", () => {

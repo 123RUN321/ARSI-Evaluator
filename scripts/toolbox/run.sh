@@ -59,7 +59,7 @@ fi
 
 proxy_env=()
 network_file="$(node scripts/network/variables.mjs --path)"
-proxy_env+=(--mount "type=bind,source=$network_file,target=/etc/ember/network.yaml,readonly" --env "EVALUATOR_NETWORK_CONFIG=/etc/ember/network.yaml")
+proxy_env+=(--mount "type=bind,source=$network_file,target=/etc/arsi-evaluator/network.yaml,readonly" --env "EVALUATOR_NETWORK_CONFIG=/etc/arsi-evaluator/network.yaml")
 network_variables="$(node scripts/network/variables.mjs)"
 while IFS= read -r variable; do
   if [[ -n "$variable" ]]; then proxy_env+=(--env "$variable"); fi
@@ -69,12 +69,12 @@ for variable in HTTP_PROXY HTTPS_PROXY NO_PROXY http_proxy https_proxy no_proxy 
 done
 
 docker --host unix:///var/run/docker.sock run --rm -it --init \
-  --name ember-evaluator-toolbox \
+  --name arsi-evaluator-toolbox \
   --network host \
   --mount "type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock" \
   --mount "type=bind,source=$workspace_dir,target=$workspace_dir" \
-  --mount "type=volume,source=ember-evaluator-toolbox-home,target=/toolbox-home" \
-  --mount "type=volume,source=ember-evaluator-toolbox-node-modules,target=$repo_dir/node_modules" \
+  --mount "type=volume,source=arsi-evaluator-toolbox-home,target=/toolbox-home" \
+  --mount "type=volume,source=arsi-evaluator-toolbox-node-modules,target=$repo_dir/node_modules" \
   "${host_env[@]}" "${proxy_env[@]}" \
   --workdir "$repo_dir" \
-  ember-evaluator-toolbox:local
+  arsi-evaluator-toolbox:local

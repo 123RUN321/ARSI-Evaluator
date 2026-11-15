@@ -11,7 +11,7 @@ test("binds agentbundle.maxTokens into the DSH provider patch", () => {
   expect(config).toEqual({ path: "bundle", maxTokens: 131072 });
 
   const patch = parse(dshModelPatch(agentBundleModel(model, config.maxTokens, "default")));
-  expect(patch.find((entry: { id: string }) => entry.id === "llm-pi-ai").config.providers["ember-evaluator"].models).toEqual([
+  expect(patch.find((entry: { id: string }) => entry.id === "llm-pi-ai").config.providers["arsi-evaluator"].models).toEqual([
     { id: "office-model", maxTokens: 131072 },
   ]);
   expect(agentBundleModel(model, undefined, "default")).toBe(model);

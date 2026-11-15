@@ -2,7 +2,7 @@
 
 > [English](./network-retry.md) | 中文
 
-`ember-evaluator retry` 为原 Run 中因明确网络故障而无效的题目创建新的完整 Attempt。它不改变任务集合、数据来源、模型、Solver、官方时限或评分规则。零分、正常答错和有效的 Agent 超时都禁止补测；没有网络证据的失败也不会被选中。
+`arsi-evaluator retry` 为原 Run 中因明确网络故障而无效的题目创建新的完整 Attempt。它不改变任务集合、数据来源、模型、Solver、官方时限或评分规则。零分、正常答错和有效的 Agent 超时都禁止补测；没有网络证据的失败也不会被选中。
 
 ![图中区分原 Attempt 内的请求重试、响应截断且确认清理后的自动重跑，以及在原 Run 中创建新 Attempt 的手动补测](imgs/10-flowchart-network-retry.png)
 
@@ -32,13 +32,13 @@ Evaluator 另提供模型断流的任务级兜底：Harness 返回失败，且�
 ## 命令
 
 ```bash
-ember-evaluator retry --run <run-id>
-ember-evaluator retry --run <run-directory> --task-id terminal-bench/example --request-id network-fix-1 --reason "registry network restored"
+arsi-evaluator retry --run <run-id>
+arsi-evaluator retry --run <run-directory> --task-id terminal-bench/example --request-id network-fix-1 --reason "registry network restored"
 ```
 
 重复传入 `--task-id` 可选择多道题；省略时筛选全部符合条件的网络失败任务。没有符合条件的题目时，命令正常返回，不创建新的执行记录。补测已结束的评测时，可传入 `--network network.yaml` 更换下载源或代理。仍在运行的评测继续使用启动时的网络配置。
 
-可用 Run ID 或结果目录指定原评测。ID 索引默认保存在 `~/.ember/runs/`，可用 `EVALUATOR_RUN_INDEX_DIR` 修改。跨主机复制结果后，请直接传结果目录。Ray Jobs 需要通过原网关操作远端 run，并保留原网关认证；下载到本机的结果副本不能直接代替远端 run。
+可用 Run ID 或结果目录指定原评测。ID 索引默认保存在 `~/.arsi-evaluator/runs/`，可用 `EVALUATOR_RUN_INDEX_DIR` 修改。跨主机复制结果后，请直接传结果目录。Ray Jobs 需要通过原网关操作远端 run，并保留原网关认证；下载到本机的结果副本不能直接代替远端 run。
 
 原评测仍在运行时，命令向原进程提交补测请求，其他题目继续执行；原评测已结束时，会在同一个 run 中恢复。`retry` 只选择符合条件的网络失败任务，`--resume` 则按续跑规则处理未完成任务。
 
@@ -80,7 +80,7 @@ ember-evaluator retry --run <run-directory> --task-id terminal-bench/example --r
 - 显式 `--resume` 另建 `reports/resume-N/`；首次续跑前的报告保存在 `reports/initial/`，此前的续跑报告保留。报告生成中断时，可用下方命令重新生成。
 
 ```bash
-ember-evaluator report <run-directory>
+arsi-evaluator report <run-directory>
 ```
 
 最新报告只统计当前结果和仍未解决的运行故障，历史失败仍可在各次执行目录查看。`attempt-accounting` 累计所有执行中已知的 Token、耗时和费用；缺失用量会单独标记，不能把已知费用当作完整账单。

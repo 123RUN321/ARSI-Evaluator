@@ -54,7 +54,7 @@ if [[ ! $cache_dir =~ ^/[a-zA-Z0-9_./-]+$ || $cache_dir == *..* ]]; then
 fi
 [[ $entrypoint != null ]] || entrypoint='[]'
 [[ $command != null ]] || command='[]'
-name="ember-public-go-cache-$$-$RANDOM"
+name="arsi-evaluator-public-go-cache-$$-$RANDOM"
 cleanup() {
   local result=$?
   trap - EXIT
@@ -73,7 +73,7 @@ trap 'exit 143' TERM
 started=$SECONDS
 docker create --name "$name" --platform linux/amd64 --init \
   --network none --cpus 2 --memory 8192m \
-  --label ember.purpose=public-go-cache \
+  --label arsi-evaluator.purpose=public-go-cache \
   --env "GOCACHE=$cache_dir" \
   --entrypoint bash "$base_id" -lc '
     set -euo pipefail
@@ -106,9 +106,9 @@ if [[ $status != exited || $exit_code != 0 || $attach_code != 0 ]]; then
 fi
 docker commit \
   --change "ENTRYPOINT $entrypoint" --change "CMD $command" \
-  --change "LABEL ember.cache.source=public-baseline" \
-  --change "LABEL ember.cache.base=$base_id" \
-  --change "LABEL ember.cache.commit=$base_commit" \
+  --change "LABEL arsi-evaluator.cache.source=public-baseline" \
+  --change "LABEL arsi-evaluator.cache.base=$base_id" \
+  --change "LABEL arsi-evaluator.cache.commit=$base_commit" \
   --change "ENV GOCACHE=$cache_dir" \
   "$name" "$new_image"
 echo "[prewarm] Completed in $((SECONDS - started))s; image=$new_image"

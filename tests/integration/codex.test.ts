@@ -59,7 +59,7 @@ for (const environment of ["local", "docker"] as const) {
 
 async function smoke(environment: "local" | "docker"): Promise<void> {
   const docker = environment === "docker";
-  const root = await mkdtemp(join(tmpdir(), "ember-codex-test-"));
+  const root = await mkdtemp(join(tmpdir(), "arsi-evaluator-codex-test-"));
   const fixture = await responsesFixture(docker);
   try {
     const configPath = join(root, "experiment.yaml");

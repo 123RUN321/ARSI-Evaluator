@@ -2,12 +2,12 @@ import assert from "node:assert/strict";
 import { access, mkdir, readFile, writeFile, rm, readdir } from "node:fs/promises";
 import { spawn, spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { join, resolve, dirname } from "node:path";
+import { join, resolve, dirname, relative } from "node:path";
 import { pathToFileURL } from "node:url";
 import { request } from "node:https";
 import { createServer } from "node:http";
 import { setTimeout as delay } from "node:timers/promises";
-import * as api from "ember-evaluator";
+import * as api from "arsi-evaluator";
 import { openPluginRegistry } from "./dist/application/plugins/open-registry.js";
 import { verifyPackageDirectory } from "./dist/infrastructure/provenance/package.js";
 import { createPiRuntimeInstallation } from "./dist/runtimes/pi/package-runtime.js";
@@ -18,6 +18,24 @@ function record(message) { checks.push(message); console.log(message); }
 const dir = join(root, ".validation");
 await mkdir(dir, { recursive: true });
 for (const name of ["src", "scripts"]) await assert.rejects(access(join(root, name)), { code: "ENOENT" });
+const distributedFiles = await readdir(join(root, "dist"), { recursive: true });
+assert.deepEqual(distributedFiles.filter(file => /(?:^|[\\/])__pycache__(?:[\\/]|$)|\.py[co]$/u.test(file)), []);
+const packageFiles = (await readdir(root, { withFileTypes: true }))
+  .filter(entry => entry.isFile() && entry.name !== "check-distribution.mjs");
+for (const directory of ["dist", "playbook"]) {
+  const files = await readdir(join(root, directory), { recursive: true, withFileTypes: true });
+  packageFiles.push(...files.filter(entry => entry.isFile()));
+}
+const archiveUrl = /https:\/\/(?:www\.)?modelscope\.cn\/datasets\/evolving-foundry\/ember-evaluator(?=[/\s)"']|$)/gu;
+const hasObsoleteName = text => /(?<![A-Za-z0-9])ember(?![A-Za-z0-9])/iu.test(text) || /\b[Ee]mber[A-Z]/u.test(text);
+for (const { parentPath, name } of packageFiles) {
+  const file = join(parentPath, name);
+  const packagePath = relative(root, file);
+  const contents = await readFile(file, "utf8");
+  assert.ok(!hasObsoleteName(packagePath), `Obsolete evaluator name in file path ${packagePath}`);
+  assert.ok(!hasObsoleteName(contents.replaceAll(archiveUrl, "")), `Obsolete evaluator name in ${packagePath}`);
+}
+record("installed files use ARSI-Evaluator except for the ModelScope archive URL");
 const paths = ["index.js", "index.d.ts", "cli.js", "cli-runtime.js", "adapters/ray/node-worker.js",
   "adapters/ray/jobs-entry.js", "adapters/ray/jobs-retry-entry.js", "adapters/ray/jobs-gateway.js",
   "adapters/ray/python/requirements.txt", "adapters/harness/pi/runner.js",
@@ -63,10 +81,22 @@ async function run(file, args = [], input = "", env = {}, executable) {
   process.child.stdin.end(input);
   return process.done;
 }
-const help = await run("dist/cli.js", ["--help"]);
+const { name, bin } = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
+assert.equal(name, "arsi-evaluator");
+assert.deepEqual(bin, { "arsi-evaluator": "./dist/cli.js" });
+for (const [runtime, lockFile] of [["claudecode", "package-lock.json"], ["codebuddy", "package-lock.json"],
+  ["codex", "package-lock.json"], ["dsh", "runtime-lock.json"]]) {
+  const assets = join(root, "dist", "runtimes", runtime, "assets");
+  const runtimePackage = JSON.parse(await readFile(join(assets, "package.json"), "utf8"));
+  const runtimeLock = JSON.parse(await readFile(join(assets, lockFile), "utf8"));
+  assert.equal(runtimePackage.name, `arsi-evaluator-${runtime}-runtime`);
+  assert.equal(runtimeLock.name, runtimePackage.name);
+  assert.equal(runtimeLock.packages[""].name, runtimePackage.name);
+}
+const help = await run(bin[name], ["--help"]);
 assert.equal(help.code, 0, help.stderr);
-assert.match(help.stdout, /benchmark|run/);
-record("installed CLI help and exit code");
+assert.match(help.stdout, /^Usage: arsi-evaluator\b/m);
+record("installed CLI name, help and exit code");
 const pi = await run("dist/adapters/harness/pi/runner.js", [], "{}\n");
 assert.equal(pi.code, 1, pi.stderr);
 assert.equal(JSON.parse(pi.stdout.trim().split("\n").at(-1)).type, "error");

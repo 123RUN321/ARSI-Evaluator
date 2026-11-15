@@ -46,7 +46,7 @@ export async function openControlChannel(
   onError: (error: unknown) => void,
 ): Promise<{ endpoint: string; close(): Promise<void> }> {
   const id = randomUUID();
-  const endpoint = process.platform === "win32" ? `\\\\.\\pipe\\ember-retry-${id}`
+  const endpoint = process.platform === "win32" ? `\\\\.\\pipe\\arsi-evaluator-retry-${id}`
     : join(process.env.EVALUATOR_RETRY_SOCKET_DIR ?? tmpdir(), `retry-${id}.sock`);
   // AF_UNIX paths have a small byte limit. Never let the OS silently truncate it.
   if (process.platform !== "win32" && Buffer.byteLength(endpoint) > 103)

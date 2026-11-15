@@ -11,7 +11,7 @@ Evaluator 同时提供 CLI 和 ESM SDK，要求 Node.js 24.22.1 或更新的 24.
 先按[源码安装](installation.zh-CN.md#直接安装)安装并构建 Evaluator，AgentBundle SDK 由 pnpm 自动下载和构建。业务项目使用 ESM 和 pnpm，在其目录执行以下命令。这里的 `pnpm` 读取业务项目自己的 `packageManager` 配置，不会自动沿用 Evaluator 的配置：
 
 ```bash
-pnpm add 'ember-evaluator@link:../ember-evaluator'
+pnpm add 'arsi-evaluator@link:../arsi-evaluator'
 ```
 
 根据实际目录修改路径。`link:` 不会自动编译源码，更新 Evaluator 后重新构建。业务项目需要保留可访问的 Evaluator 目录及其已安装依赖。
@@ -23,7 +23,7 @@ pnpm pack --pack-destination .scratch/packages
 ```
 
 ```bash
-pnpm add '/path/to/ember-evaluator-0.1.0.tgz'
+pnpm add '/path/to/arsi-evaluator-0.1.0.tgz'
 ```
 
 Evaluator 的包清单设置了 `private: true`。上面的命令通过本地链接或 `.tgz` 文件安装 SDK。
@@ -33,7 +33,7 @@ Evaluator 的包清单设置了 `private: true`。上面的命令通过本地链
 业务项目的 `package.json` 设置 `"type": "module"`。例如创建 `evaluate.mjs`：
 
 ```js
-import { Evaluator, EvaluatorRunError } from "ember-evaluator";
+import { Evaluator, EvaluatorRunError } from "arsi-evaluator";
 
 const evaluator = new Evaluator();
 const controller = new AbortController();
@@ -68,7 +68,7 @@ try {
 | 参数 | 含义 |
 | --- | --- |
 | `configPath` | 实验 YAML；相对路径以调用时的当前目录解析 |
-| `networkConfigPath` | 网络 YAML，路径相对当前工作目录；省略时读取 `EVALUATOR_NETWORK_CONFIG`，再读取 `~/.ember-evaluator/network.yaml` |
+| `networkConfigPath` | 网络 YAML，路径相对当前工作目录；省略时读取 `EVALUATOR_NETWORK_CONFIG`，再读取 `~/.arsi-evaluator/network.yaml` |
 | `patchPath` | 在默认注册的随包插件之外追加插件。路径相对当前目录解析 |
 | `overrides` | 与 CLI 相同的模型覆盖项：`model`、`endpoint`、`apiKey`、`apiKeyEnv` |
 | `env` | 用于 YAML 变量展开和模型认证，省略时使用 `process.env`；显式传入时使用该对象，不自动合并 |
@@ -92,7 +92,7 @@ const result = await evaluator.run({
 
 网络 YAML 可写 `proxy: { https: "${DOWNLOAD_PROXY}" }`。省略 `networkConfigPath` 时，先读取 `EVALUATOR_NETWORK_CONFIG`，再使用用户目录中的默认网络文件。空文件使用程序默认值，受支持的环境变量仍可覆盖它们。完整字段见[网络配置字段](reference/network.zh-CN.md)。
 
-本地数据路径写在实验 YAML 中：记录型题库使用 `benchmark.config.localPath`；Harbor 系列使用 `benchmark.config.source: { kind: local, path: ./dataset }`。相对路径按实验 YAML 目录解析，SDK 和 CLI 行为相同；格式和限制见[本地数据集](local-datasets.zh-CN.md)。SDK 不公开 `doctor()` 或 `inspect()` 方法，需要诊断时运行 `ember-evaluator doctor experiment.yaml`。
+本地数据路径写在实验 YAML 中：记录型题库使用 `benchmark.config.localPath`；Harbor 系列使用 `benchmark.config.source: { kind: local, path: ./dataset }`。相对路径按实验 YAML 目录解析，SDK 和 CLI 行为相同；格式和限制见[本地数据集](local-datasets.zh-CN.md)。SDK 不公开 `doctor()` 或 `inspect()` 方法，需要诊断时运行 `arsi-evaluator doctor experiment.yaml`。
 
 ## 取消、续跑与报告
 

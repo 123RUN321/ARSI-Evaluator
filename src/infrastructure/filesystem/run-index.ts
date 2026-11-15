@@ -5,7 +5,7 @@ import { atomic } from "./atomic-json.js";
 import { parsePluginActivations } from "../../core/plugins/activation.js";
 import type { PluginActivation } from "../../core/contracts/plugin-extension.js";
 
-const indexRoot = () => process.env.EVALUATOR_RUN_INDEX_DIR ?? join(homedir(), ".ember", "runs");
+const indexRoot = () => process.env.EVALUATOR_RUN_INDEX_DIR ?? join(homedir(), ".arsi-evaluator", "runs");
 export const safeId = (value: string) => {
   if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/u.test(value) || value.endsWith(".")) throw new TypeError("Unsafe run/request ID");
   return value;

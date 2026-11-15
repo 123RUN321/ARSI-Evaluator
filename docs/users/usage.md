@@ -33,7 +33,7 @@ Identical source/seed repeats selection. After source changes, seed alone cannot
 ### Preview and Save Actual Task IDs
 
 ```bash
-ember-evaluator run first-run.yaml --dry-run > task-ids.json
+arsi-evaluator run first-run.yaml --dry-run > task-ids.json
 ```
 
 dry-run locks sources, checks caches, downloads as needed, and enumerates without Solver execution. Output uses this JSON format; example GSM8K IDs differ from other benchmarks:
@@ -45,7 +45,7 @@ dry-run locks sources, checks caches, downloads as needed, and enumerates withou
 Select those IDs explicitly later:
 
 ```bash
-ember-evaluator run first-run.yaml --task-ids-file task-ids.json
+arsi-evaluator run first-run.yaml --task-ids-file task-ids.json
 ```
 
 CLI ID files replace YAML IDs and clear offset/maxTasks/sampling. YAML `run.taskIds` still undergoes those later filters; omit all three to fix only the listed tasks.
@@ -55,9 +55,9 @@ CLI ID files replace YAML IDs and clear offset/maxTasks/sampling. YAML `run.task
 Use independent `warmup` with production YAML:
 
 ```bash
-ember-evaluator warmup first-run.yaml
+arsi-evaluator warmup first-run.yaml
 # Use plain-text progress output:
-ember-evaluator warmup first-run.yaml --progress plain
+arsi-evaluator warmup first-run.yaml --progress plain
 ```
 
 Selection follows taskIds/sampling/offset/maxTasks. It prepares solve/separate-verification/sidecar images, Evaluator runtimes, and Solver layers, using production pulls/builds/layer composition/network YAML/concurrency/budgets. Temporary build containers may install dependencies. Warmup calls no models, starts no solve/scoring sessions, and creates no evaluation results/metrics/reports.
@@ -67,8 +67,8 @@ Final output contains one ready/failed count line followed by each failed task's
 For fixed IDs/external plugins:
 
 ```bash
-ember-evaluator warmup first-run.yaml --task-ids-file task-ids.json --patch cordis.patch.yaml
-ember-evaluator run first-run.yaml --task-ids-file task-ids.json --patch cordis.patch.yaml
+arsi-evaluator warmup first-run.yaml --task-ids-file task-ids.json --patch cordis.patch.yaml
+arsi-evaluator run first-run.yaml --task-ids-file task-ids.json --patch cordis.patch.yaml
 ```
 
 task-ids-file overrides selection exactly as run. Matching configuration, task versions, platform, and daemon reuse ready image IDs during later evaluations. Each attempt still starts its own container. If cleanup removes a prepared image, resuming triggers a new preparation round. Model keys are unnecessary, but model names/endpoints/bundle paths must be valid. Unlike dry-run's data download/enumeration, warmup accepts neither dry-run nor resume.
@@ -87,15 +87,15 @@ External plugins require benchmark.planRun()/scheduler.prepareTasks(); local env
 
 ```bash
 # Preview task images and dependencies prepared by this configuration
-ember-evaluator cleanup images first-run.yaml
-ember-evaluator cleanup images first-run.yaml --yes
+arsi-evaluator cleanup images first-run.yaml
+arsi-evaluator cleanup images first-run.yaml --yes
 
 # All recognized evaluation images in the current Docker daemon
-ember-evaluator cleanup images --all
-ember-evaluator cleanup images --all --yes
+arsi-evaluator cleanup images --all
+arsi-evaluator cleanup images --all --yes
 
 # Connect to Ray using YAML and clean evaluation images on all target nodes
-ember-evaluator cleanup images first-run.yaml --all --yes
+arsi-evaluator cleanup images first-run.yaml --all --yes
 ```
 
 Supports local Docker/Ray Client/Jobs. Add --patch for external YAML plugins. Cleanup calls no models/downloads/tasks and does not start/rebuild clusters. Jobs still requires gateway authentication/TLS; update all deployment roles together.
@@ -104,7 +104,7 @@ Evaluation/warmup save records on Docker nodes. YAML cleanup matches Benchmark/E
 
 Tasks with identical Docker build inputs reuse the final image. The inventory records each experiment configuration once per reference and removes duplicate associations when it next writes an older inventory.
 
-Cleanup covers managed solve bases, final images, separate verification images, Node, and sidecars. Solver installation stages are kept in BuildKit's cache. Recorded sources actually downloaded by Evaluator may be removed; preexisting references remain. `--all` handles historical ember-evaluator images; external history without download proof stays. Unrecorded third-party images are not guessed from YAML.
+Cleanup covers managed solve bases, final images, separate verification images, Node, and sidecars. Solver installation stages are kept in BuildKit's cache. Recorded sources actually downloaded by Evaluator may be removed; preexisting references remain. `--all` handles historical arsi-evaluator images; external history without download proof stays. Unrecorded third-party images are not guessed from YAML.
 
 Skip images referenced by running/stopped containers, occupied by preparation/evaluation, or with uncertain occupancy. Recheck IDs before deleting selected references only; no force/prune. Ray nodes sharing one daemon must share EVALUATOR_CACHE_DIR/records to combine deletion; mismatched records conflict/skip.
 
@@ -147,7 +147,7 @@ Preparation/cleanup budgets are separate from run.timeoutSeconds. `run.preparati
 ## Inspect Configuration
 
 ```bash
-ember-evaluator inspect first-run.yaml
+arsi-evaluator inspect first-run.yaml
 ```
 
 `inspect` prints JSON with effective experiment and network settings, preserving credential references. Its output is for inspection, not a standalone experiment YAML. Result `config.yaml` remains an internal execution record.
@@ -155,7 +155,7 @@ ember-evaluator inspect first-run.yaml
 The `run` command can override the Solver-bound model service:
 
 ```bash
-ember-evaluator run first-run.yaml --model your-other-model --api-key-env OTHER_MODEL_API_KEY
+arsi-evaluator run first-run.yaml --model your-other-model --api-key-env OTHER_MODEL_API_KEY
 ```
 
 Supports --model/--endpoint/--api-key-env or literal --api-key. Last two are mutually exclusive; prefer variables. Independent judges remain unchanged.
@@ -165,9 +165,9 @@ Supports --model/--endpoint/--api-key-env or literal --api-key. Last two are mut
 ## Resume and Rebuild Reports
 
 ```bash
-ember-evaluator run first-run.yaml --resume
-ember-evaluator run first-run.yaml --resume <RUN_ID>
-ember-evaluator report results/first-run/<RUN_ID>
+arsi-evaluator run first-run.yaml --resume
+arsi-evaluator run first-run.yaml --resume <RUN_ID>
+arsi-evaluator report results/first-run/<RUN_ID>
 ```
 
 Without ID, Evaluator finds resumable history; explicit IDs avoid mistakes. Evaluator code may be updated and rebuilt before resuming, with no extra flag; unfinished or invalid tasks use the updated code. Sources, experiment configuration, external plugins, candidate bundles, and harness versions must still match. Model/selection/preparation/concurrency changes need new runs.
@@ -176,7 +176,7 @@ When running from a source checkout, run `pnpm build` from the repository root a
 
 ```bash
 pnpm build
-ember-evaluator run first-run.yaml --resume <RUN_ID>
+arsi-evaluator run first-run.yaml --resume <RUN_ID>
 ```
 
 Resume no longer compares historical and current digests for the Evaluator package, builtin runtime, solver installation assets, or AgentX bridge code. The original manifest retains its version and solver provenance records; the scheduler receives the current code/runtime identity for this session. With Ray, the client, coordinator, and execution nodes must still deploy the same current version. Saved-result format validation and execution-mode compatibility checks still apply.
@@ -285,9 +285,9 @@ See [Ray config](config.md#ray-and-execution-nodes), [cluster examples](../../pl
 ## Load External Plugins
 
 ```bash
-ember-evaluator benchmark list --patch experiments/plugins/cordis.patch.yaml
-ember-evaluator doctor experiment.yaml --patch experiments/plugins/cordis.patch.yaml
-ember-evaluator run experiment.yaml --patch experiments/plugins/cordis.patch.yaml
+arsi-evaluator benchmark list --patch experiments/plugins/cordis.patch.yaml
+arsi-evaluator doctor experiment.yaml --patch experiments/plugins/cordis.patch.yaml
+arsi-evaluator run experiment.yaml --patch experiments/plugins/cordis.patch.yaml
 ```
 
 Replace paths with actual files. Omitted `--patch` scans nothing. Discovery/init/config/doctor/run must share the patch. Patch paths use current directory; modules use patch directory; business paths use YAML directory.
@@ -307,7 +307,7 @@ See [plugin loading](../development/plugins.en.md), [benchmark development](../d
 | Resume source/version mismatch | Check configuration/source/external-plugin/solver identity changes; Evaluator code updates alone allow resume |
 | `cleanupStatus: unconfirmed` | Recover resources before global cleanup around other evaluations |
 
-Bash debug: EVALUATOR_DEBUG=1 ember-evaluator run first-run.yaml. PowerShell sets `$env:EVALUATOR_DEBUG="1"` first. Progress/errors use stderr; final paths stdout.
+Bash debug: EVALUATOR_DEBUG=1 arsi-evaluator run first-run.yaml. PowerShell sets `$env:EVALUATOR_DEBUG="1"` first. Progress/errors use stderr; final paths stdout.
 
 ### Live Execution Previews
 
@@ -316,8 +316,8 @@ Framework terminal prompts/progress/warnings/actions use English. Task/tool/thir
 run/retry default `--progress auto`: interactive terminals show task steps/elapsed time/up to 10 recent lines. Panels use at most half terminal height and20 lines, prioritizing statuses; small windows/high concurrency reduce previews. Success clears previews/leaves completion; failure retains up to 5 redacted lines. plain disables panels; tty requests them but noninteractive/TERM=dumb uses logs. CI disables panels; `NO_COLOR` only disables colors.
 
 ```bash
-ember-evaluator run first-run.yaml --progress auto
-ember-evaluator retry --run <run-id> --progress plain
+arsi-evaluator run first-run.yaml --progress auto
+arsi-evaluator retry --run <run-id> --progress plain
 ```
 
 Docker uses actual pull/build output. Pi/DSH/DeepAgents show existing model activity/tools/output; Dify workflow/nodes; AgentX harness activity. Hermes/JiuwenSwarm lack live tool details and state this. Reply/reasoning bodies/private verification are excluded. Incomplete lines report activity before displaying complete text to avoid secret leakage across chunks.
@@ -337,19 +337,19 @@ Previews create no files/results/trajectories/Ray logs. Each step stores up to 1
 |`2`|Configuration/arguments|
 |`130`|User cancellation|
 
-See [error codes](reference/errors.md) for full recovery/retry rules. `ember-evaluator --help` lists current arguments.
+See [error codes](reference/errors.md) for full recovery/retry rules. `arsi-evaluator --help` lists current arguments.
 
 [User guide](README.md) · [Quick start](quick-start.md) · [Configuration](config.md)
 
 ## Discover Benchmarks
 
-`ember-evaluator benchmark list` displays a table of names, versions (equivalent definitions grouped in parentheses), default versions, scenarios, default scenarios, and implementations. Plugins without version metadata show `undeclared`. Metadata comes from registered plugins and profiles; listing does not check dataset or image availability.
+`arsi-evaluator benchmark list` displays a table of names, versions (equivalent definitions grouped in parentheses), default versions, scenarios, default scenarios, and implementations. Plugins without version metadata show `undeclared`. Metadata comes from registered plugins and profiles; listing does not check dataset or image availability.
 
 ```bash
-ember-evaluator benchmark list
-ember-evaluator benchmark list --json
-ember-evaluator benchmark info terminalbench
-ember-evaluator benchmark list --patch ./patch.yaml
+arsi-evaluator benchmark list
+arsi-evaluator benchmark list --json
+arsi-evaluator benchmark info terminalbench
+arsi-evaluator benchmark list --patch ./patch.yaml
 ```
 
 `list --json` preserves all version names and alias groups. `info` prints JSON including resolved settings per version. External plugins require an explicit `--patch`. Running `benchmark` without a subcommand shows group help.

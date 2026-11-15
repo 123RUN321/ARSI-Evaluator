@@ -134,7 +134,7 @@ class RegistryClient {
       method = "POST";
       headers["content-type"] = "application/x-www-form-urlencoded";
       body = new URLSearchParams({ grant_type: "refresh_token", refresh_token: credential.identityToken,
-        scope, service: service ?? "", client_id: "ember-evaluator" }).toString();
+        scope, service: service ?? "", client_id: "arsi-evaluator" }).toString();
     } else {
       if (service) url.searchParams.set("service", service);
       url.searchParams.set("scope", scope);

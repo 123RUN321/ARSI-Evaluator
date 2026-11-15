@@ -95,11 +95,11 @@ export class CodexSolver implements Solver {
       'shell_environment_policy.inherit="core"',
       "shell_environment_policy.ignore_default_excludes=false",
       'shell_environment_policy.filters.EVALUATOR_CODEX_API_KEY="exclude"',
-      'model_provider="ember"',
-      'model_providers.ember.name="Ember Evaluator"',
-      `model_providers.ember.base_url=${JSON.stringify(endpoint)}`,
-      'model_providers.ember.env_key="EVALUATOR_CODEX_API_KEY"',
-      'model_providers.ember.wire_api="responses"',
+      'model_provider="arsi-evaluator"',
+      'model_providers.arsi-evaluator.name="ARSI-Evaluator"',
+      `model_providers.arsi-evaluator.base_url=${JSON.stringify(endpoint)}`,
+      'model_providers.arsi-evaluator.env_key="EVALUATOR_CODEX_API_KEY"',
+      'model_providers.arsi-evaluator.wire_api="responses"',
       ...(model.contextWindow === undefined ? [] : [`model_auto_compact_token_limit=${model.contextWindow}`]),
     ];
     const media = await loadAttachments(input, session, context);

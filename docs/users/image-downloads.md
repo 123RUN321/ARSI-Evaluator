@@ -16,8 +16,8 @@ To use ModelScope, keep the default `docker.pull` configuration and add `docker.
 Prepare Docker, model settings, and task selection using the [Terminal-Bench quick start](quick-start/terminalbench.md), then run from the repository root:
 
 ```bash
-ember-evaluator warmup playbook/terminalbench/terminalbench-4.0.yaml --network playbook/network/archives.yaml
-ember-evaluator run playbook/terminalbench/terminalbench-4.0.yaml --network playbook/network/archives.yaml
+arsi-evaluator warmup playbook/terminalbench/terminalbench-4.0.yaml --network playbook/network/archives.yaml
+arsi-evaluator run playbook/terminalbench/terminalbench-4.0.yaml --network playbook/network/archives.yaml
 ```
 
 The contents of `archives.yaml` are:
@@ -80,7 +80,7 @@ docker:
 Warm up the selected tasks to download their images and dependencies:
 
 ```bash
-ember-evaluator warmup experiment.yaml --network network-docker.yaml
+arsi-evaluator warmup experiment.yaml --network network-docker.yaml
 ```
 
 With no benchmark-specific override, this example uses `docker pull` for both task images and shared images such as Node. Add `docker.mirrors` to the same file to use a registry mirror such as DockerProxy; see [changing download URLs](reference/network.md#change-download-urls). For daemon proxies, see [deployment networking](deployment/network.md#docker-builds-and-daemon-proxies).
@@ -97,7 +97,7 @@ docker:
 ```
 
 ```bash
-ember-evaluator warmup experiment.yaml --network network-nodejs.yaml
+arsi-evaluator warmup experiment.yaml --network network-nodejs.yaml
 ```
 
 The built-in Node.js downloader fetches registry content for task and shared images, then imports it into Docker. No skopeo installation is needed, but a working Docker daemon is required. Downloads use the Evaluator process proxy; see [proxy configuration](reference/network.md#set-proxies). Omitting `backend` also selects `nodejs`.
@@ -115,7 +115,7 @@ docker:
 ```
 
 ```bash
-ember-evaluator warmup experiment.yaml --network network-skopeo.yaml
+arsi-evaluator warmup experiment.yaml --network network-skopeo.yaml
 ```
 
 `skopeoExecutable` is optional and defaults to `skopeo` on `PATH`; you can also specify its absolute path on the execution node. skopeo must support `copy --preserve-digests` and is not installed automatically. Images are still imported into Docker. For Ray, install skopeo on every node that performs downloads; see [source bootstrap and deployment](deployment/network.md#source-bootstrap-and-deployment).
@@ -138,7 +138,7 @@ See the opening [ModelScope example](#download-task-images-from-modelscope) for 
 
 Archive URLs combine `baseUrl`, task path, platform, and phase. For `terminal-bench/vf2-speedup-networkx`, the solve image is `<baseUrl>/vf2-speedup-networkx/linux/amd64/solve.tar.gz`; verification uses `verify.tar.gz`. Service images use `<phase>/services/<service>.tar.gz`. For publishing your own archives, follow the [file layout](../development/image-archives.md#文件布局) (Chinese).
 
-For a solve archive, a local tag such as `ember-evaluator/terminalbench4.0/vf2-speedup-networkx:linux-amd64-base` maps to `vf2-speedup-networkx/linux/amd64/solve.tar.gz`. Evaluator assigns local tags from the image ID and reuses any existing reference. Solver images are built on the execution node.
+For a solve archive, a local tag such as `arsi-evaluator/terminalbench4.0/vf2-speedup-networkx:linux-amd64-base` maps to `vf2-speedup-networkx/linux/amd64/solve.tar.gz`. Evaluator assigns local tags from the image ID and reuses any existing reference. Solver images are built on the execution node.
 
 Evaluator checks the archive platform and image ID, then imports it under a temporary reference so publisher tags are never restored. Archives with the same image ID reuse one local reference. To compare an archive with the original registry image, follow the steps below.
 

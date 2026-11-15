@@ -1,6 +1,7 @@
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import type { AttemptKey } from "../../../core/contracts/result.js";
+import { dockerAttemptLabels } from "../../../infrastructure/containers/attempt-labels.js";
 import { runDockerCommand } from "../../../infrastructure/containers/command.js";
 import { removeDockerContainer } from "../../../infrastructure/containers/cleanup.js";
 import { recoverDockerAttempts } from "../../../infrastructure/containers/recovery.js";
@@ -62,12 +63,12 @@ export async function createVerifierContainer(docker: string, image: string, arg
   key: AttemptKey, signal: AbortSignal, inventory?: DockerImageInventory) {
   if (!/^sha256:[a-f0-9]{64}$/u.test(image)) throw new Error("Verifier requires a materialized image ID");
   const name = `evaluator-verifier-${randomUUID()}`;
-  const labels = { run: key.runId, task: key.taskId, attempt: key.attemptId, phase: "verify" };
+  const labels = dockerAttemptLabels(key, "verify");
   const remove = (active: AbortSignal) => removeDockerContainer((argv, options) => runDockerCommand(docker, argv, options), name, active);
   const release = await inventory?.lease(signal);
   try {
     await runDockerCommand(docker, ["create", "--pull", "never", "--name", name, "--interactive",
-      ...Object.entries(labels).flatMap(([field, value]) => ["--label", `ember.${field}=${value.replace(/[\u0000-\u001f\u007f]/gu, "_")}`]),
+      ...Object.entries(labels).flatMap(([field, value]) => ["--label", `${field}=${value}`]),
       ...args, image, ...command], { signal });
     signal.throwIfAborted();
   } catch (error) {

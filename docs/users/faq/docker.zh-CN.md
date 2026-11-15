@@ -20,22 +20,22 @@ Registry API 支持内置 Node.js 下载器和用户预装的 skopeo。代理配
 
 同一 Docker daemon 内，Evaluator 按实际镜像 ID 复用已有引用。新准备的镜像每个 ID 最多保留一个 Evaluator 管理的标签，已有来源引用可以直接复用。每次答题仍用成品镜像 ID 启动独立容器。
 
-Evaluator 生成的引用采用 `ember-evaluator/<仓库路径>:<平台>-<用途>`。以 `ember-evaluator/terminalbench4.0/coq-block-bound:linux-amd64-solver-codex` 为例：
+Evaluator 生成的引用采用 `arsi-evaluator/<仓库路径>:<平台>-<用途>`。以 `arsi-evaluator/terminalbench4.0/coq-block-bound:linux-amd64-solver-codex` 为例：
 
-- `ember-evaluator` 是 Evaluator 的镜像命名空间。
+- `arsi-evaluator` 是 Evaluator 的镜像命名空间。
 - `terminalbench4.0/coq-block-bound` 是题库版本和题目路径。按题提供镜像的 Harbor 题库使用这个结构。题库共用一个镜像时，只写题库名，例如 `officeqa-pro-v2`。使用 Evaluator 默认基础环境时，仓库路径为 `base`。
 - `linux-amd64` 对应 Docker 平台 `linux/amd64`。ARM64 使用 `linux-arm64`。
 - `solver-codex` 表示用 Codex 求解时启动的成品镜像。`base` 表示基础镜像，`verify` 表示独立验证镜像，`solve-service-redis` 表示求解阶段的 Redis Sidecar，验证阶段使用 `verify-service-<服务名>`。
 
 | 保留的镜像 | 引用示例 |
 | --- | --- |
-| 默认解题基础镜像 | `ember-evaluator/base:linux-amd64-base` |
-| Harbor 题目基础镜像 | `ember-evaluator/terminalbench4.0/coq-block-bound:linux-amd64-base` |
-| Solver 成品 | `ember-evaluator/terminalbench4.0/coq-block-bound:linux-amd64-solver-codex` |
-| OfficeQA Pro V2 共享语料镜像 | `ember-evaluator/officeqa-pro-v2:linux-amd64-base` |
-| 独立验证镜像 | `ember-evaluator/officeqa-pro-v2:linux-amd64-verify` |
-| Sidecar | `ember-evaluator/terminalbench4.0/example:linux-amd64-solve-service-redis` |
-| 单独获取的共享 Node 镜像 | `ember-evaluator/node:linux-amd64-base` |
+| 默认解题基础镜像 | `arsi-evaluator/base:linux-amd64-base` |
+| Harbor 题目基础镜像 | `arsi-evaluator/terminalbench4.0/coq-block-bound:linux-amd64-base` |
+| Solver 成品 | `arsi-evaluator/terminalbench4.0/coq-block-bound:linux-amd64-solver-codex` |
+| OfficeQA Pro V2 共享语料镜像 | `arsi-evaluator/officeqa-pro-v2:linux-amd64-base` |
+| 独立验证镜像 | `arsi-evaluator/officeqa-pro-v2:linux-amd64-verify` |
+| Sidecar | `arsi-evaluator/terminalbench4.0/example:linux-amd64-solve-service-redis` |
+| 单独获取的共享 Node 镜像 | `arsi-evaluator/node:linux-amd64-base` |
 
 同名标签已指向另一镜像时，后续镜像使用 `-2`、`-3` 等序号。序号只用于区分同名镜像。多个任务或用途命中同一镜像 ID 时，沿用已登记的引用。例如两道题共用验证镜像时，可能只看到其中一道题的仓库路径。
 
@@ -46,17 +46,25 @@ Solver 安装和 Runtime 辅助程序在一次多阶段构建中加入最终解�
 按题库列出镜像。
 
 ```bash
-docker image ls --filter 'reference=ember-evaluator/terminalbench4.0/*:*'
-docker image ls --filter 'reference=ember-evaluator/officeqa-pro-v2:*'
+docker image ls --filter 'reference=arsi-evaluator/terminalbench4.0/*:*'
+docker image ls --filter 'reference=arsi-evaluator/officeqa-pro-v2:*'
 ```
 
 不同镜像可能共享镜像层。查看磁盘占用请执行 `docker system df`。
 
-除 Docker 中的镜像外，Evaluator 还会保存复用所需的本地记录，位于 `EVALUATOR_CACHE_DIR/docker-images/`；未设置该变量时使用应用缓存目录，管理容器中通常为 `/toolbox-home/.cache/ember-evaluator/docker-images/`。只复制镜像、没有对应记录时，仍可能重新下载。
+除 Docker 中的镜像外，Evaluator 还会保存复用所需的本地记录，位于 `EVALUATOR_CACHE_DIR/docker-images/`；未设置该变量时使用应用缓存目录，管理容器中通常为 `/toolbox-home/.cache/arsi-evaluator/docker-images/`。只复制镜像、没有对应记录时，仍可能重新下载。
 
 本地镜像标签被替换或平台不符时，准备会报错。先确认 Docker context、目标平台和缓存目录是否正确；需要清理后重新准备时，按[删除评测镜像](../usage.zh-CN.md#删除评测镜像)操作，再执行 `warmup`。
 
 预热或运行命中旧标签时，Evaluator 会在容器和其他准备任务未占用该镜像时换成可读标签。缓存仍按构建输入和镜像 ID 查找。旧标签也可以用 `cleanup images --all` 预览。
+
+## 如何按 Run ID 查找容器？
+
+从 `manifest.json` 读取 Run ID，再按标签列出该次评测的容器。任务、尝试和阶段分别使用 `arsi-evaluator.task`、`arsi-evaluator.attempt` 和 `arsi-evaluator.phase`。阶段值为 `solve` 或 `verify`。
+
+```bash
+docker ps -a --filter 'label=arsi-evaluator.run=<RUN_ID>'
+```
 
 ## 中断后重跑会重新下载或构建全部镜像吗？
 
@@ -86,13 +94,13 @@ docker image ls --filter 'reference=ember-evaluator/officeqa-pro-v2:*'
 **镜像复用与任务续跑是两回事。** 普通 `run` 会新建一次评测，复用可用镜像，再为任务创建新的容器和工作区，不会自动跳过上次已完成的题目：
 
 ```bash
-ember-evaluator run playbook/terminalbench/terminalbench-4.0.yaml
+arsi-evaluator run playbook/terminalbench/terminalbench-4.0.yaml
 ```
 
 需要继续上次评测时，使用同一份配置增加 `--resume`：
 
 ```bash
-ember-evaluator run playbook/terminalbench/terminalbench-4.0.yaml --resume
+arsi-evaluator run playbook/terminalbench/terminalbench-4.0.yaml --resume
 ```
 
 续跑同样需要检查和准备环境。已有有效结果会跳过，未完成或无效任务按恢复规则重新执行；Evaluator 代码允许更新并重新构建，配置、来源、外部插件及待评测 Bundle、Harness 版本仍需匹配，详见[续跑与重建报告](../usage.zh-CN.md#续跑与重建报告)。不使用 `--resume` 的新运行也能复用镜像。
@@ -150,7 +158,7 @@ environment:
 ```bash
 bash scripts/prewarm-go-image.sh \
   '公开任务镜像引用' \
-  'ember-evaluator-prewarm:任务名' \
+  'arsi-evaluator-prewarm:任务名' \
   'task.toml 中的完整 base_commit_hash'
 ```
 
@@ -162,7 +170,7 @@ environment:
   config:
     platform: linux/amd64
     imageOverrides:
-      "公开任务镜像引用": "ember-evaluator-prewarm:任务名"
+      "公开任务镜像引用": "arsi-evaluator-prewarm:任务名"
     containerEnv:
       GOGC: "off"
       GOMAXPROCS: "2"

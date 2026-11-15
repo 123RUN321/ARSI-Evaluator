@@ -1,5 +1,5 @@
 {
-  "name": "@ember-evaluator/docops",
+  "name": "@arsi-evaluator/docops",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@iarna/toml": "2.2.5",
-    "ember-evaluator": "link:../.."
+    "arsi-evaluator": "link:../.."
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.2",

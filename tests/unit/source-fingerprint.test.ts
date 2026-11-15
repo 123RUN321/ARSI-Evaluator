@@ -40,7 +40,7 @@ test("source fingerprint tracks plugin sources but ignores generated plugin outp
     for (const name of ["package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", "package-lock.json", "tsconfig.json", "tsconfig.build.json"]) {
       await writeFile(join(root, name), "{}\n");
     }
-    await writeFile(join(root, "plugins/demo/ember-plugin.json"), "{}\n");
+    await writeFile(join(root, "plugins/demo/arsi-evaluator-plugin.json"), "{}\n");
     await writeFile(join(root, "plugins/demo/index.ts"), "export const value = 1;\n");
     const fingerprint = async (): Promise<string> => (await execute(process.execPath, [script])).stdout;
     const initial = await fingerprint();

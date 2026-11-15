@@ -1,6 +1,6 @@
 import { afterEach, expect, test, vi } from "vitest";
 import { mkdtemp, writeFile, readFile, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { createServer } from "node:http";
 import { getGlobalDispatcher } from "undici";
@@ -13,6 +13,7 @@ afterEach(() => vi.unstubAllEnvs());
 
 test("default network YAML is created atomically, reused and overridden only by explicit paths", async () => {
   const path = defaultNetworkConfigPath();
+  expect(path).toBe(join(homedir(), ".arsi-evaluator", "network.yaml"));
   expect(path).toContain("evaluator-test-home-");
   const documents = await Promise.all(Array.from({ length: 8 }, () => loadNetworkConfig(undefined,
     { HTTP_PROXY: "http://user:secret@proxy.test", HF_ENDPOINT: "https://env.test" })));

@@ -5,7 +5,7 @@
 `--network` selects a network YAML for proxies, download sources, and image acquisition. The experiment YAML selects the benchmark, model, tasks, and execution environment:
 
 ```bash
-ember-evaluator run experiment.yaml --network network.yaml
+arsi-evaluator run experiment.yaml --network network.yaml
 ```
 
 Both file paths resolve from the current working directory. Register the CLI using the [installation guide](installation.md#register-the-global-cli) first.
@@ -27,9 +27,9 @@ For example, download task images from ModelScope from the repository root. Repl
 
 ```bash
 # Show effective settings without downloading
-ember-evaluator inspect experiment.yaml --network playbook/network/archives.yaml
+arsi-evaluator inspect experiment.yaml --network playbook/network/archives.yaml
 # Start evaluation
-ember-evaluator run experiment.yaml --network playbook/network/archives.yaml
+arsi-evaluator run experiment.yaml --network playbook/network/archives.yaml
 ```
 
 `--network` selects a file for that invocation only; pass it again in subsequent commands. Without it, Evaluator uses the environment variable or the default file in your user directory. See [set a default network file](reference/network.md#set-a-default-network-file).

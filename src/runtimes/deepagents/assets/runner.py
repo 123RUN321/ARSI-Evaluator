@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ember-evaluator deepagents runner: run one bundle task headlessly.
+"""arsi-evaluator deepagents runner: run one bundle task headlessly.
 
 Launched by the evaluator as ``<venv>/bin/python runner.py --bundle-dir <bundle>``
 with the task prompt on stdin and cwd set to the task workspace. Emits the

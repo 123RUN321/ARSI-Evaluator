@@ -21,7 +21,7 @@ function sourceFile(specifier, parentURL) {
 registerHooks({
   resolve(specifier, context, nextResolve) {
     // Self-reference imports fall back to the package sources in an unbuilt checkout.
-    if (specifier === "ember-evaluator" && !existsSync(PACKAGE_BUILD) && existsSync(PACKAGE_SOURCE)) {
+    if (specifier === "arsi-evaluator" && !existsSync(PACKAGE_BUILD) && existsSync(PACKAGE_SOURCE)) {
       return { url: pathToFileURL(PACKAGE_SOURCE).href, shortCircuit: true };
     }
     const source = sourceFile(specifier, context.parentURL);

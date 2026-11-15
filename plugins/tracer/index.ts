@@ -1,5 +1,5 @@
 import type { Context } from "@deepseek-ai/cordis";
-import type { RunStore } from "ember-evaluator";
+import type { RunStore } from "arsi-evaluator";
 import { TracerClient } from "./client.js";
 import { parseTracerOptions, parseTracerConfig, resolveTracerConfig } from "./config.js";
 import { TracerStore } from "./store.js";

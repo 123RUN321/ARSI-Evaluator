@@ -57,7 +57,7 @@ See [Solver and model service configuration](../solvers.md#model-services-and-in
 | `benchmark.verifier.config` | object | Optional, merged settings or empty object | Options for the selected Verifier. |
 | `benchmark.verifier.service` | non-empty string | Optional, Profile or unset | Bind a model service when the verifier requires one. The explicit value `$default` uses the same default-service lookup as the Solver. |
 
-Run `ember-evaluator benchmark list` to see available Benchmarks, and `ember-evaluator benchmark info <name>` to see the selected Benchmark's versions, scenarios, and resolved settings.
+Run `arsi-evaluator benchmark list` to see available Benchmarks, and `arsi-evaluator benchmark info <name>` to see the selected Benchmark's versions, scenarios, and resolved settings.
 
 ## Environment, Scheduler, Store, Reporter, and Metrics
 
@@ -138,8 +138,8 @@ For an external plugin, use its documentation and validator. Pass the same `--pa
 Run these commands from the repository root. Set the model environment variables referenced in the generated YAML before running `inspect`. The command displays the configuration after framework and Profile defaults are applied and checks the selected component options. For defaults applied inside a plugin at runtime, see that plugin's reference.
 
 ```bash
-ember-evaluator init --benchmark gsm8k --output experiment.yaml
-ember-evaluator inspect experiment.yaml
+arsi-evaluator init --benchmark gsm8k --output experiment.yaml
+arsi-evaluator inspect experiment.yaml
 ```
 
 [Model setup and two-question quick start](../quick-start.md) · [Runnable Playbooks](../../../playbook/README.md) · [CLI command reference](cli.md)

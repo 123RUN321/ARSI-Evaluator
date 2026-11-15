@@ -4,8 +4,7 @@ import { join } from "node:path";
 import { checkedPath } from "../artifacts/artifacts.js";
 import { selectAttemptRecords } from "../results/task-result-resolver.js";
 import { isEvaluationComplete } from "../results/evaluation-outcome.js";
-import { BUILTIN_RUNTIME_ID } from "../results/runtime-identity.js";
-import { PACKAGE_RUNTIME_ID } from "../results/runtime-identity.js";
+import { isEvaluatorRuntimeId } from "../results/runtime-identity.js";
 
 import { ResumeError } from "./resume-error.js";
 export type ResumePlan = { skipTaskIds: string[]; restartTaskIds: string[] };
@@ -13,10 +12,8 @@ export type ResumePlan = { skipTaskIds: string[]; restartTaskIds: string[] };
 export function assertResumePluginVersions(previous: Record<string, string>, current: Record<string, string>): void {
   const names = new Set([...Object.keys(previous), ...Object.keys(current)]);
   // Evaluator code may change between sessions; external plugins and patch metadata stay locked.
-  names.delete(BUILTIN_RUNTIME_ID);
-  names.delete(PACKAGE_RUNTIME_ID);
   for (const name of names)
-    if (previous[name] !== current[name])
+    if (!isEvaluatorRuntimeId(name) && previous[name] !== current[name])
       throw new ResumeError("SOURCE_CHANGED", "Resume plugin versions differ from the original run");
 }
 

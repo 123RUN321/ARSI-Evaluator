@@ -140,9 +140,9 @@ def run_cleanup(node_id, run_id, attempt_id=None):
     # Removes containers leaked by an interrupted attempt on this node. Runs
     # without evaluator_slot so it is never blocked by busy evaluation slots.
     import subprocess
-    command = ["docker", "ps", "--all", "--quiet", "--filter", f"label=ember.run={run_id}"]
+    command = ["docker", "ps", "--all", "--quiet", "--filter", f"label=arsi-evaluator.run={run_id}"]
     if attempt_id is not None:
-        command.extend(["--filter", f"label=ember.attempt={attempt_id}"])
+        command.extend(["--filter", f"label=arsi-evaluator.attempt={attempt_id}"])
     listed = subprocess.run(command,
                             capture_output=True, text=True, timeout=60)
     if listed.returncode != 0:

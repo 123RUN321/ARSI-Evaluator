@@ -298,7 +298,7 @@ class LocalSession implements EnvironmentSession {
     aborted(signal);
     const actual = await existingWorkspacePath(this.workspace, this.workdir, source, "download source");
     await assertNoLinks(actual, "download source");
-    const staging = await mkdtemp(join(tmpdir(), "ember-download-"));
+    const staging = await mkdtemp(join(tmpdir(), "arsi-evaluator-download-"));
     const staged = join(staging, "payload");
     try {
       // Preserve links while staging so a concurrent source replacement can
@@ -321,7 +321,7 @@ class LocalSession implements EnvironmentSession {
     if (spec.kind !== "artifacts")
       throw new LocalEnvironmentError("ENV_CAPABILITY_UNSUPPORTED", "local environment only exports declared artifacts");
     const base = await existingWorkspacePath(this.workspace, this.workdir, spec.workdir, "artifact workdir");
-    const staging = await mkdtemp(join(tmpdir(), "ember-artifacts-"));
+    const staging = await mkdtemp(join(tmpdir(), "arsi-evaluator-artifacts-"));
     const payload = join(staging, "payload");
     const temporary = join(dirname(resolve(target)), `.evaluator-artifacts-${randomUUID()}.tmp`);
     try {
@@ -456,7 +456,7 @@ export class LocalEnvironment implements Environment {
       : undefined;
     aborted(signal);
 
-    const createdWorkspace = await mkdtemp(join(this.temporaryRoot, "ember-local-"));
+    const createdWorkspace = await mkdtemp(join(this.temporaryRoot, "arsi-evaluator-local-"));
     try {
       // Windows temp paths may use an 8.3 alias while realpath returns the long name.
       const workspace = await realpath(createdWorkspace);

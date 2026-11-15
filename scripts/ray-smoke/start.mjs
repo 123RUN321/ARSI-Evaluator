@@ -20,7 +20,7 @@ if (role === "init") {
 } else {
   await mkdir("/experiment", { recursive: true });
   await mkdir("/experiment/node_modules", { recursive: true });
-  try { await symlink("/opt/evaluator", "/experiment/node_modules/ember-evaluator", "dir"); }
+  try { await symlink("/opt/evaluator", "/experiment/node_modules/arsi-evaluator", "dir"); }
   catch (error) { if (error.code !== "EEXIST") throw error; }
   for (const name of ["controlled.mjs", "office-solver.mjs"]) await copyFile(new URL(name, import.meta.url), `/experiment/${name}`);
   await writeFile("/experiment/cordis.patch.yaml", JSON.stringify([{ insert: [{ id: "ray-smoke", name: "./controlled.mjs" }, { id: "office-smoke", name: "./office-solver.mjs" }] }]));

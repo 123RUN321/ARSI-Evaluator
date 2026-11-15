@@ -190,7 +190,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 
-namespace EmberEvaluator {
+namespace ArsiEvaluator {
   public static class JobRunner {
     const uint CREATE_SUSPENDED = 0x00000004;
     const uint CREATE_NEW_PROCESS_GROUP = 0x00000200;
@@ -332,7 +332,7 @@ $json = [IO.File]::ReadAllText($Spec, [Text.Encoding]::UTF8)
 Remove-Item -LiteralPath $Spec -Force
 $decoded = $json | ConvertFrom-Json
 $environment = @($decoded.env.PSObject.Properties | ForEach-Object { "$($_.Name)=$($_.Value)" })
-$result = [EmberEvaluator.JobRunner]::Run([string]$decoded.executable, [string[]]$decoded.args, [string]$decoded.cwd, [string[]]$environment, $Control)
+$result = [ArsiEvaluator.JobRunner]::Run([string]$decoded.executable, [string[]]$decoded.args, [string]$decoded.cwd, [string[]]$environment, $Control)
 exit $result
 `;
 
@@ -347,9 +347,9 @@ async function spawnWindows(command: CommandSpec): Promise<Spawned> {
       throw new TypeError("environment variable names cannot contain '=' or NUL");
   }
   const identifier = randomUUID();
-  const script = join(tmpdir(), `ember-job-${identifier}.ps1`);
-  const spec = join(tmpdir(), `ember-job-${identifier}.json`);
-  const control = join(tmpdir(), `ember-job-${identifier}.control`);
+  const script = join(tmpdir(), `arsi-evaluator-job-${identifier}.ps1`);
+  const spec = join(tmpdir(), `arsi-evaluator-job-${identifier}.json`);
+  const control = join(tmpdir(), `arsi-evaluator-job-${identifier}.control`);
   await writeFile(script, WINDOWS_JOB_RUNNER, { encoding: "utf8", flag: "wx", mode: 0o600 });
   try {
     // Arguments and environment values stay in a user-protected temporary

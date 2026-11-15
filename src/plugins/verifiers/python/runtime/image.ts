@@ -27,7 +27,7 @@ export function createPythonVerifierImage(
     const network = dockerBuildNetwork(access);
     const hash = createHash("sha256").update(JSON.stringify(network.identity));
     for (const file of ["Dockerfile", "worker.py", "workbuddy.py", "build-runtime.py"]) hash.update(await readFile(join(assets, file)));
-    const tag = "ember-harbor-verifier:" + hash.digest("hex").slice(0, 24);
+    const tag = "arsi-evaluator-harbor-verifier:" + hash.digest("hex").slice(0, 24);
     return builds.getImage(docker, tag, signal, async active => {
       const platform = inventory ? await new PlatformCapabilityDetector(inventory.command).nativePlatform(active) : undefined;
       const preferred = platform ? dockerImageReference(platform, "verify", scope) : undefined;
@@ -48,7 +48,7 @@ export function createPythonVerifierImage(
         : Promise.resolve(reference);
       if (existing) return retain(tag, false);
       const context = await mkdtemp(join(tmpdir(), "evaluator-verifier-build-"));
-      const output = inventory ? `ember-evaluator/staging:${randomUUID()}` : tag;
+      const output = inventory ? `arsi-evaluator/staging:${randomUUID()}` : tag;
       try {
         await cp(assets, context, { recursive: true });
         await writeFile(join(context, "Dockerfile"), network.recipe(await readFile(join(assets, "Dockerfile"), "utf8")));

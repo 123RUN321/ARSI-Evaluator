@@ -265,7 +265,7 @@ output:
 
 ## 使用 AgentBundle
 
-先按[源码安装](installation.zh-CN.md#直接安装)准备 Evaluator；pnpm 会自动安装 AgentBundle SDK，无需同级源码仓库。下面的 `AGENT_BUNDLE_PATH` 指向已制作好的 **Agent Bundle 目录**，需要另行准备，不是 SDK 安装路径。Bundle 的概念、CLI 和示例见 [AgentBundle 项目](https://github.com/evolving-foundry/agentbundle)，各 Harness 的目录结构、清单及校验方法见 [Bundle 编写指南](https://github.com/evolving-foundry/agentbundle/blob/master/docs/bundle-formats.zh-CN.md)。
+先按[源码安装](installation.zh-CN.md#直接安装)准备 Evaluator；pnpm 会自动安装 AgentBundle SDK，无需同级源码仓库。下面的 `AGENT_BUNDLE_PATH` 指向已制作好的 **Agent Bundle 目录**，需要另行准备，不是 SDK 安装路径。Bundle 的概念、CLI 和示例见 [AgentBundle 项目](https://github.com/ARSI-LAB/agentbundle)，各 Harness 的目录结构、清单及校验方法见 [Bundle 编写指南](https://github.com/ARSI-LAB/agentbundle/blob/master/docs/bundle-formats.zh-CN.md)。
 
 ```yaml
 services:

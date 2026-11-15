@@ -1,5 +1,5 @@
-import { fingerprintConfig } from "ember-evaluator";
-import type { AttemptRecord, ResultSnapshot } from "ember-evaluator";
+import { fingerprintConfig } from "arsi-evaluator";
+import type { AttemptRecord, ResultSnapshot } from "arsi-evaluator";
 import type { AisbenchSummary } from "../../evidence.js";
 
 /** Public-contract fixtures; no store internals or runtime credentials are required. */
@@ -36,7 +36,7 @@ export function aisbenchSnapshot(): ResultSnapshot {
         files: [], metadata: { bundleDigest: "a".repeat(64) } },
       taskIds: [record.key.taskId], configFingerprint: "fixture-config",
       configSummary: { benchmark: "aisbench", solver: "aisbench-ssh", model: "fixture-model", environment: "local", scheduler: "local" },
-      identity: { evaluator: { name: "ember-evaluator", version: "0.1.0" }, runtime: { node: "v24.22.1", platform: "linux", arch: "x64" } },
+      identity: { evaluator: { name: "arsi-evaluator", version: "0.1.0" }, runtime: { node: "v24.22.1", platform: "linux", arch: "x64" } },
       pluginVersions: { "aisbench-plugin": "fixture-plugin-version" },
       startedAt: record.startedAt, finishedAt: record.finishedAt, durationMs: 2000, status: "completed",
     },

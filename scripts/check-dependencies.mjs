@@ -51,7 +51,7 @@ export function inspectDependencies(directory = root) {
   try { for (const file of files) {
     for (const edge of imports(program.getSourceFile(resolve(src, file)))) {
       const name = edge.specifier;
-      if (name === "ember-evaluator" || name.startsWith("ember-evaluator/")) {
+      if (name === "arsi-evaluator" || name.startsWith("arsi-evaluator/")) {
         violations.add(`boundary:${file} -> ${name}`); continue;
       }
       if (!name.startsWith(".")) continue;

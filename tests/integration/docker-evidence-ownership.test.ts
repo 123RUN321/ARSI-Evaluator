@@ -112,8 +112,8 @@ test.skipIf(!enabled)("Docker recovery hands private logs from an interrupted co
     await mkdir(agent, { recursive: true });
     await chmod(agent, 0o777);
     await docker(["run", "--detach", "--pull", "never", "--name", container, "--network", "none",
-      "--label", "ember.run=" + key.runId, "--label", "ember.task=" + key.taskId,
-      "--label", "ember.attempt=" + key.attemptId, "--label", "ember.phase=solve",
+      "--label", "arsi-evaluator.run=" + key.runId, "--label", "arsi-evaluator.task=" + key.taskId,
+      "--label", "arsi-evaluator.attempt=" + key.attemptId, "--label", "arsi-evaluator.phase=solve",
       "--mount", "type=bind,source=" + agent + ",target=/logs/agent", "--entrypoint", "node",
       PINNED_NODE_IMAGE, "-e", "setInterval(() => {}, 60000)"]);
     await docker(["exec", "--user", "0", container, "node", "-e",

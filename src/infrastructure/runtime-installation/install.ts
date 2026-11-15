@@ -31,7 +31,7 @@ export function applicationCacheRoot(): string {
   if (process.platform === "win32") base = process.env.LOCALAPPDATA ?? join(homedir(), "AppData", "Local");
   else if (process.platform === "darwin") base = join(homedir(), "Library", "Caches");
   else base = process.env.XDG_CACHE_HOME ?? join(homedir(), ".cache");
-  return join(base, "ember-evaluator");
+  return join(base, "arsi-evaluator");
 }
 
 export function runtimeCacheRoot(): string {
@@ -42,7 +42,7 @@ export function runtimeCacheRoot(): string {
     return configured;
   }
   if (process.platform === "win32")
-    return join(process.env.LOCALAPPDATA ?? join(homedir(), "AppData", "Local"), "ember", "r");
+    return join(process.env.LOCALAPPDATA ?? join(homedir(), "AppData", "Local"), "arsi", "r");
   return join(applicationCacheRoot(), "runtimes");
 }
 

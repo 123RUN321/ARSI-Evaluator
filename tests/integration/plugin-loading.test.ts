@@ -175,7 +175,7 @@ describe("bootstrap", () => {
     const loaded = await loadConfig(fixture("valid", "experiment.yaml"), { apiKey: "fixture-secret" }, {});
     const components = await bootstrapWithPatch(loaded, fixture("valid"));
     try {
-      expect(components.pluginVersions["ember-evaluator:builtin-runtime"])
+      expect(components.pluginVersions["arsi-evaluator:builtin-runtime"])
         .toMatch(/^sha256:[a-f0-9]{64}$/u);
     } finally { await components.dispose(); }
   });

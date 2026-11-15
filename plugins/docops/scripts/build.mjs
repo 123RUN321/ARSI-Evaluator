@@ -12,7 +12,7 @@ await build({
   entryPoints: [join(packageRoot, "index.ts")],
   bundle: true,
   packages: "external",
-  external: ["ember-evaluator"],
+  external: ["arsi-evaluator"],
   platform: "node",
   format: "esm",
   target: "node24",

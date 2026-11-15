@@ -33,7 +33,7 @@ run:
 ### 查看并保存实际任务 ID
 
 ```bash
-ember-evaluator run first-run.yaml --dry-run > task-ids.json
+arsi-evaluator run first-run.yaml --dry-run > task-ids.json
 ```
 
 `--dry-run` 会锁定来源、检查缓存、按需下载和枚举题目，不执行 Solver 解题。输出格式为下面的 JSON；GSM8K 的示例 ID 如下，其他 Benchmark 使用自己的 ID：
@@ -45,7 +45,7 @@ ember-evaluator run first-run.yaml --dry-run > task-ids.json
 以后可明确指定这批 ID：
 
 ```bash
-ember-evaluator run first-run.yaml --task-ids-file task-ids.json
+arsi-evaluator run first-run.yaml --task-ids-file task-ids.json
 ```
 
 CLI 文件会替换配置里的选题 ID，并清除原 `offset`、`maxTasks` 和随机抽样限制。也可在 YAML 写 `run.taskIds`；它仍受同一 YAML 中 `sampling`、`offset` 和 `maxTasks` 的后续处理，因此只想固定这些题时请省略这三个参数。
@@ -55,9 +55,9 @@ CLI 文件会替换配置里的选题 ID，并清除原 `offset`、`maxTasks` �
 使用独立的 `warmup` 命令，传入正式评测使用的 YAML：
 
 ```bash
-ember-evaluator warmup first-run.yaml
+arsi-evaluator warmup first-run.yaml
 # 使用纯文本进度输出：
-ember-evaluator warmup first-run.yaml --progress plain
+arsi-evaluator warmup first-run.yaml --progress plain
 ```
 
 命令按 YAML 的 `taskIds`、`sampling`、`offset` 和 `maxTasks` 选择题目，准备解题镜像、独立验证镜像、侧车镜像，以及 Evaluator 运行时和 Solver 安装层。镜像下载、Dockerfile 构建、镜像层拼接和 网络 YAML 使用与正式运行相同的逻辑，准备并发和预算也沿用 YAML。构建需要的临时容器可以执行安装命令；预热不调用模型、不启动解题或评分会话，不创建评测结果目录、指标或报告。
@@ -67,8 +67,8 @@ ember-evaluator warmup first-run.yaml --progress plain
 需要固定题目或加载外部插件时，可以使用：
 
 ```bash
-ember-evaluator warmup first-run.yaml --task-ids-file task-ids.json --patch cordis.patch.yaml
-ember-evaluator run first-run.yaml --task-ids-file task-ids.json --patch cordis.patch.yaml
+arsi-evaluator warmup first-run.yaml --task-ids-file task-ids.json --patch cordis.patch.yaml
+arsi-evaluator run first-run.yaml --task-ids-file task-ids.json --patch cordis.patch.yaml
 ```
 
 `--task-ids-file` 覆盖 YAML 选题的规则与 `run` 相同。预热完成后，使用相同配置、任务版本、平台和 Docker daemon 运行评测，即可复用本机缓存；再次预热会检查并复用已有缓存。预热不要求模型 API key；YAML 引用的模型名称、端点、Bundle 路径等配置仍需有效。它与只下载数据、枚举 ID 的 `run --dry-run` 是两个独立操作，不接受 `--dry-run` 或 `--resume`。
@@ -87,15 +87,15 @@ ember-evaluator run first-run.yaml --task-ids-file task-ids.json --patch cordis.
 
 ```bash
 # 查看同一配置准备过的任务镜像及其依赖
-ember-evaluator cleanup images first-run.yaml
-ember-evaluator cleanup images first-run.yaml --yes
+arsi-evaluator cleanup images first-run.yaml
+arsi-evaluator cleanup images first-run.yaml --yes
 
 # 当前 Docker 中全部可识别的评测镜像
-ember-evaluator cleanup images --all
-ember-evaluator cleanup images --all --yes
+arsi-evaluator cleanup images --all
+arsi-evaluator cleanup images --all --yes
 
 # 按 YAML 连接 Ray，在全部目标节点清理评测镜像
-ember-evaluator cleanup images first-run.yaml --all --yes
+arsi-evaluator cleanup images first-run.yaml --all --yes
 ```
 
 命令支持本机 Docker、Ray Client 和 Ray Jobs；YAML 使用外部插件时加 `--patch cordis.patch.yaml`。清理不调用模型、不下载数据集或镜像、不执行题目，也不会自动启动或重建 Ray 集群。Ray Jobs 仍需网关认证和 TLS。gateway、coordinator 和 worker 需一起更新。
@@ -104,7 +104,7 @@ ember-evaluator cleanup images first-run.yaml --all --yes
 
 构建输入相同的任务共用成品镜像。预热记录构建输入及镜像 ID，正式评测核对 ID 后启动独立容器。镜像已被清理时，续跑进入现有的重新准备流程。镜像清单对每个引用只记录一次同一实验配置，并在写入旧清单时去掉重复关联。
 
-清理包含 Evaluator 管理的解题基础镜像、成品、独立验证镜像、Node 和 Sidecar。Solver 安装阶段保存在 BuildKit 缓存中。评测器实际下载的来源引用有记录时也可删除；评测前已存在的来源引用保留。历史 `ember-evaluator/…` 镜像可通过 `--all` 清理，历史外部来源引用没有下载证明时不会删除。第三方组件在自身实现中获取、且未接入镜像记录的镜像，不会被按 YAML 推断删除。
+清理包含 Evaluator 管理的解题基础镜像、成品、独立验证镜像、Node 和 Sidecar。Solver 安装阶段保存在 BuildKit 缓存中。评测器实际下载的来源引用有记录时也可删除；评测前已存在的来源引用保留。历史 `arsi-evaluator/…` 镜像可通过 `--all` 清理，历史外部来源引用没有下载证明时不会删除。第三方组件在自身实现中获取、且未接入镜像记录的镜像，不会被按 YAML 推断删除。
 
 运行中和已停止的容器仍引用的镜像会跳过。准备和评测期间持有镜像占用记录，清理不会删除这些镜像；占用状态无法确认时同样跳过。删除前再次核对镜像 ID，只删除选中的引用，不强制删除其他引用，不执行全局 prune。多个 Ray 节点连接同一 Docker daemon 时，必须共享 `EVALUATOR_CACHE_DIR` 和镜像记录，才能合并为一次删除；记录不同会报告冲突并跳过。
 
@@ -147,7 +147,7 @@ run:
 ## 查看实际配置
 
 ```bash
-ember-evaluator inspect first-run.yaml
+arsi-evaluator inspect first-run.yaml
 ```
 
 `inspect` 输出实际实验配置和网络设置的 JSON，保留密钥环境变量引用。输出用于检查，不是独立的实验 YAML；结果目录里的 `config.yaml` 仍是内部执行记录。
@@ -155,7 +155,7 @@ ember-evaluator inspect first-run.yaml
 `run` 命令可覆盖当前 Solver 绑定的模型服务：
 
 ```bash
-ember-evaluator run first-run.yaml --model your-other-model --api-key-env OTHER_MODEL_API_KEY
+arsi-evaluator run first-run.yaml --model your-other-model --api-key-env OTHER_MODEL_API_KEY
 ```
 
 支持 `--model`、`--endpoint`、`--api-key-env`，以及直接传值的 `--api-key`；后两者不能同时使用，建议使用环境变量方式。独立 Judge 服务不会随 Solver 的覆盖一起修改。
@@ -165,9 +165,9 @@ ember-evaluator run first-run.yaml --model your-other-model --api-key-env OTHER_
 ## 续跑与重建报告
 
 ```bash
-ember-evaluator run first-run.yaml --resume
-ember-evaluator run first-run.yaml --resume <RUN_ID>
-ember-evaluator report results/first-run/<RUN_ID>
+arsi-evaluator run first-run.yaml --resume
+arsi-evaluator run first-run.yaml --resume <RUN_ID>
+arsi-evaluator report results/first-run/<RUN_ID>
 ```
 
 不填写 ID 时由 Evaluator 查找可续跑的历史运行，明确填写可以避免选错。允许更新 Evaluator 代码并重新构建后续跑，无需增加参数；未完成或无效任务使用更新后的代码执行。来源、实验配置、外部插件、待评测 Bundle 和 Harness 版本仍需匹配；修改模型、选题、准备模式或并发后，应开始新 run。
@@ -176,7 +176,7 @@ ember-evaluator report results/first-run/<RUN_ID>
 
 ```bash
 pnpm build
-ember-evaluator run first-run.yaml --resume <RUN_ID>
+arsi-evaluator run first-run.yaml --resume <RUN_ID>
 ```
 
 续跑不再比较历史运行与当前 Evaluator 发布包、内置运行时、Solver 安装内容和 AgentX 桥接代码的摘要。原 manifest 中的版本与 Solver 身份记录保留；当前续跑向调度器提供当前代码与运行时的身份。使用 Ray 时，客户端、协调端与执行节点仍需部署相同的当前版本；已有结果的格式校验和执行模式兼容检查仍然有效。
@@ -285,9 +285,9 @@ scheduler:
 ## 加载外部插件
 
 ```bash
-ember-evaluator benchmark list --patch experiments/plugins/cordis.patch.yaml
-ember-evaluator doctor experiment.yaml --patch experiments/plugins/cordis.patch.yaml
-ember-evaluator run experiment.yaml --patch experiments/plugins/cordis.patch.yaml
+arsi-evaluator benchmark list --patch experiments/plugins/cordis.patch.yaml
+arsi-evaluator doctor experiment.yaml --patch experiments/plugins/cordis.patch.yaml
+arsi-evaluator run experiment.yaml --patch experiments/plugins/cordis.patch.yaml
 ```
 
 把路径换成实际文件；不传 `--patch` 时不会扫描默认 patch。发现、初始化、配置检查、doctor 和运行要使用同一份 patch。patch 路径相对当前工作目录；模块路径相对 patch；实验里的业务路径相对 YAML。
@@ -307,7 +307,7 @@ ember-evaluator run experiment.yaml --patch experiments/plugins/cordis.patch.yam
 | 续跑报来源或版本不同 | 检查配置、来源、外部插件或 Solver 身份变化；仅更新 Evaluator 代码可续跑 |
 | `cleanupStatus: unconfirmed` | 先恢复本次资源，不要在有其他评测运行时做全局 Docker 清理 |
 
-需要更多诊断时，Bash 使用 `EVALUATOR_DEBUG=1 ember-evaluator run first-run.yaml`；PowerShell 先设置 `$env:EVALUATOR_DEBUG="1"`，再执行原命令。进度和错误写入 stderr，最终结果路径写入 stdout。
+需要更多诊断时，Bash 使用 `EVALUATOR_DEBUG=1 arsi-evaluator run first-run.yaml`；PowerShell 先设置 `$env:EVALUATOR_DEBUG="1"`，再执行原命令。进度和错误写入 stderr，最终结果路径写入 stdout。
 
 ### 实时执行预览
 
@@ -316,8 +316,8 @@ ember-evaluator run experiment.yaml --patch experiments/plugins/cordis.patch.yam
 `run`、`retry` 默认使用 `--progress auto`：交互终端底部显示各任务当前步骤、累计耗时和最近最多 10 行活动。面板最多占终端高度的一半且不超过 20 行，先保留任务状态行，再分配预览空间；窗口较小或并发任务较多时，每个任务实际显示的预览会减少。成功步骤清除预览并留下完成记录；失败保留最多五行脱敏现场。`--progress plain` 关闭动态面板；`--progress tty` 请求动态显示，但非交互终端和 `TERM=dumb` 仍使用普通日志。CI 默认关闭动态面板；`NO_COLOR` 只关闭颜色。
 
 ```bash
-ember-evaluator run first-run.yaml --progress auto
-ember-evaluator retry --run <run-id> --progress plain
+arsi-evaluator run first-run.yaml --progress auto
+arsi-evaluator retry --run <run-id> --progress plain
 ```
 
 Docker 拉取和构建使用实际输出；Pi、DSH、DeepAgents 显示已有模型活动、工具命令和输出；Dify 显示工作流与节点活动；AgentX 显示 Harness 活动。Hermes、JiuwenSwarm 当前不提供实时工具细节，面板会说明这一限制。模型回复和思考正文、验证私有输出不进入预览。没有完整换行的输出先报告收到活动，待完整行到达后再显示文本，避免拆包泄露密钥。
@@ -337,19 +337,19 @@ Docker 拉取和构建使用实际输出；Pi、DSH、DeepAgents 显示已有模
 | `2` | 配置或命令参数错误 |
 | `130` | 用户取消 |
 
-完整错误分类、恢复和重试规则见[错误码](reference/errors.zh-CN.md)。命令参数的当前清单可随时通过 `ember-evaluator --help` 查看。
+完整错误分类、恢复和重试规则见[错误码](reference/errors.zh-CN.md)。命令参数的当前清单可随时通过 `arsi-evaluator --help` 查看。
 
 [返回用户手册](README.zh-CN.md) · [快速上手](quick-start.zh-CN.md) · [完整配置参考](config.zh-CN.md)
 
 ## 查询 Benchmark
 
-`ember-evaluator benchmark list` 默认显示表格，包含名称、版本（括号内为配置相同的别名）、默认版本、场景、默认场景和底层实现。未声明版本的插件显示 `undeclared`。信息来自当前注册表与 Profile，不检查数据集或镜像是否已下载。
+`arsi-evaluator benchmark list` 默认显示表格，包含名称、版本（括号内为配置相同的别名）、默认版本、场景、默认场景和底层实现。未声明版本的插件显示 `undeclared`。信息来自当前注册表与 Profile，不检查数据集或镜像是否已下载。
 
 ```bash
-ember-evaluator benchmark list
-ember-evaluator benchmark list --json
-ember-evaluator benchmark info terminalbench
-ember-evaluator benchmark list --patch ./patch.yaml
+arsi-evaluator benchmark list
+arsi-evaluator benchmark list --json
+arsi-evaluator benchmark info terminalbench
+arsi-evaluator benchmark list --patch ./patch.yaml
 ```
 
 `list --json` 保留全部版本名称及别名分组；`info` 输出 JSON，包含各版本的展开配置。外部插件通过显式 `--patch` 加载。单独输入 `benchmark` 显示该层帮助。

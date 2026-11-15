@@ -52,7 +52,7 @@ terminalbench4.0/
 
 ```bash
 docker image save --platform linux/amd64 --output solve.tar \
-  ember-evaluator/terminalbench4.0/vf2-speedup-networkx:linux-amd64-base
+  arsi-evaluator/terminalbench4.0/vf2-speedup-networkx:linux-amd64-base
 gzip solve.tar
 ```
 
@@ -116,11 +116,11 @@ baseUrl: https://modelscope.cn/datasets/evolving-foundry/ember-evaluator/resolve
 
 ## 在 Evaluator 中使用
 
-以下评测命令使用已注册的 `ember-evaluator`，注册步骤见[安装指南](../users/installation.zh-CN.md#安装全局命令)。
+以下评测命令使用已注册的 `arsi-evaluator`，注册步骤见[安装指南](../users/installation.zh-CN.md#安装全局命令)。
 
 ```bash
-ember-evaluator warmup experiment.yaml --network network.yaml
-ember-evaluator run experiment.yaml --network network.yaml
+arsi-evaluator warmup experiment.yaml --network network.yaml
+arsi-evaluator run experiment.yaml --network network.yaml
 ```
 
 Evaluator 检查归档中镜像的平台和 ID，替换归档标签后通过临时引用加载。相同 Docker 镜像 ID 共用一个本地引用。不同下载地址分别缓存归档，重新发布时使用新的版本路径。需要确认归档是否和原仓库一致时，按[镜像 ID 核验方法](../users/image-downloads.zh-CN.md#核验-modelscope-镜像)检查。
