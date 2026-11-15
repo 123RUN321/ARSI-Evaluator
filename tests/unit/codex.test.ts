@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, expect, test, vi } from "vitest";
@@ -54,6 +54,18 @@ test("Codex accepts an artifact-only turn and records missing usage as unknown",
   const result = await consumeCodex(processWith(chunks(jsonl({ type: "turn.completed" }))), await attempt(), secret);
   expect(result).toEqual({ finalText: "", usage: { inputTokens: null, outputTokens: null, totalTokens: null } });
 });
+
+test("CLI JSONL preserves the final answer and evidence after 64 MiB of valid events", async () => {
+  const context = await attempt();
+  const block = jsonl({ type: "item.completed", item: { type: "command_execution", aggregated_output: "x".repeat(1024 * 1024) } });
+  async function* output() {
+    for (let count = 0; count < 65; count += 1) yield block;
+    yield jsonl(message("<FINAL_ANSWER>42</FINAL_ANSWER>"), complete);
+  }
+  const result = await consumeCodex(processWith(output()), context, secret);
+  expect(result.finalText).toBe("<FINAL_ANSWER>42</FINAL_ANSWER>");
+  expect((await stat(join(context.paths.agent, "session.jsonl"))).size).toBeGreaterThan(64 * 1024 * 1024);
+}, 15_000);
 
 test.each([
   [chunks(jsonl(complete)), 1, "SOLVER_PROCESS_CRASHED"],

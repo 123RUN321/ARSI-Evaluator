@@ -2,6 +2,7 @@ import { execFile } from "node:child_process";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { setTimeout as delay } from "node:timers/promises";
 import { promisify } from "node:util";
 import { expect, test } from "vitest";
 import { DockerRuntime } from "../../src/infrastructure/containers/runtime.js";
@@ -40,6 +41,17 @@ test.skipIf(process.env.EVALUATOR_COMPOSE_DOCKER_TESTS !== "1")("a shadowing tas
     expect(trusted.stdout.trim()).toMatch(/^v24\./u);
     const taskNode = await execute("/bin/sh", ["-c", "node --version"]);
     expect(taskNode.code).toBe(73);
+
+    const size = 2 * 1024 * 1024;
+    const handle = await startDockerProcess({ dockerExecutable: "docker", containerId: container, command }, {
+      executable: "node", cwd: "/", env: {}, input: null,
+      args: ["-e", `process.stdout.write("a".repeat(${size})); process.stderr.write("b".repeat(${size}));`],
+    }, signal);
+    await delay(200, undefined, { signal });
+    const output = await readProcess(handle, signal, size);
+    expect(output.code).toBe(0);
+    expect(output.stdout).toBe("a".repeat(size));
+    expect(output.stderr).toBe("b".repeat(size));
     expect(taskNode.stdout.trim()).toBe("shadow-node");
   } finally {
     if (container) await exec("docker", ["rm", "--force", container]).catch(() => undefined);

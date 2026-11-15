@@ -5,7 +5,6 @@ import type { Readable } from "node:stream";
 import type { CommandSpec, ExitResult, ProcessHandle } from "../../core/contracts/environment.js";
 import { EVALUATOR_NODE_EXECUTABLE, PROCESS_HELPER, type DockerCommand } from "./runtime-contract.js";
 
-const STREAM_BUFFER_BYTES = 1024 * 1024;
 const FORCE_WAIT_MS = 2_000;
 
 function wait(milliseconds: number): Promise<void> {
@@ -24,7 +23,7 @@ class BoundedTail implements AsyncIterable<Uint8Array> {
   private iterated = false;
   constructor(
     stream: Readable,
-    private readonly limit = STREAM_BUFFER_BYTES,
+    private readonly limit: number,
   ) {
     void this.drain(stream);
   }
@@ -115,6 +114,10 @@ export async function startDockerProcess(
 ): Promise<ProcessHandle> {
   if (signal.aborted) throw aborted();
   if (spec.user !== undefined && !/^[a-z_][a-z0-9_-]*$/u.test(spec.user)) throw new TypeError("Invalid exec user");
+  const outputLimit = spec.outputBufferBytes;
+  if (outputLimit != null && (!Number.isSafeInteger(outputLimit) || outputLimit <= 0)) {
+    throw new TypeError("outputBufferBytes must be a positive integer or null");
+  }
   const token = randomUUID();
   const environment = Object.entries(spec.env).flatMap(([key, value]) => {
     if (!key || key.includes("=") || key.includes("\0") || value.includes("\0"))
@@ -145,8 +148,9 @@ export async function startDockerProcess(
     },
   );
   await waitForSpawn(child);
-  const stdout = new BoundedTail(child.stdout);
-  const stderr = new BoundedTail(child.stderr);
+  // Let the pipes apply backpressure while consumers parse events or write evidence.
+  const stdout = outputLimit == null ? child.stdout : new BoundedTail(child.stdout, outputLimit);
+  const stderr = outputLimit == null ? child.stderr : new BoundedTail(child.stderr, outputLimit);
   let settled = false;
   const done = new Promise<ExitResult>((resolve, reject) => {
     child.once("error", reject);

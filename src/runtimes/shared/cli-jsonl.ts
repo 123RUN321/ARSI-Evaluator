@@ -10,7 +10,6 @@ import { redactDiagnostic, redactEvidence } from "../../core/errors/diagnostics.
 import { EvaluatorError } from "../../core/errors/evaluator-error.js";
 import { assertJsonValue } from "../../core/validation/input.js";
 
-const MAX_STDOUT_BYTES = 64 * 1024 * 1024;
 const MAX_STDERR_BYTES = 1024 * 1024;
 
 export function record(value: JsonValue | undefined): { [key: string]: JsonValue } | undefined {
@@ -46,16 +45,23 @@ async function readEvents(
     try { return decoder.decode(chunk, { stream: chunk !== undefined }); }
     catch { throw new EvaluatorError("SOLVER_PROTOCOL_INVALID", `${label} stdout is not valid UTF-8`); }
   };
-  let pending = "";
-  let bytes = 0;
+  const pending: string[] = [];
   for await (const chunk of source) {
-    bytes += chunk.byteLength;
-    if (bytes > MAX_STDOUT_BYTES) throw new EvaluatorError("SOLVER_OUTPUT_LIMIT", `${label} JSONL exceeds 64 MiB`);
-    const lines = (pending + decode(chunk)).split("\n");
-    pending = lines.pop() ?? "";
-    for (const line of lines) await accept(parseEvent(line, label));
+    const lines = decode(chunk).split("\n");
+    const tail = lines.pop();
+    for (const line of lines) {
+      if (pending.length === 0) {
+        await accept(parseEvent(line, label));
+      } else {
+        pending.push(line);
+        const event = parseEvent(pending.join(""), label);
+        pending.length = 0;
+        await accept(event);
+      }
+    }
+    if (tail) pending.push(tail);
   }
-  if (pending + decode() !== "") {
+  if (decode() !== "" || pending.length > 0) {
     throw new EvaluatorError("SOLVER_PROTOCOL_INVALID", `${label} stdout ended with an incomplete JSONL record`);
   }
 }
