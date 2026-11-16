@@ -2,7 +2,8 @@ import { stringify } from "yaml";
 import type { ModelConfig } from "../../core/contracts/config.js";
 import { AgentBundleError } from "../agentbundle/cli.js";
 
-export const DSH_AUTH_ENV = "EMBER_EVALUATOR_API_KEY";
+export const DSH_AUTH_ENV = "ARSI_EVALUATOR_API_KEY";
+export const DSH_ENDPOINT_PROVIDER = "arsi-evaluator";
 
 export function dshModelPatch(model: ModelConfig): string {
   if (model.endpoint === null && (model.provider === "amazon-bedrock" || model.provider === "azure-openai")) {
@@ -34,7 +35,7 @@ export function dshModelPatch(model: ModelConfig): string {
     }
     if (!model.api) throw new AgentBundleError("CONFIG_INVALID", "an explicit endpoint requires an API protocol");
   } else if (!model.provider) throw new AgentBundleError("CONFIG_INVALID", "a provider is required without an endpoint");
-  const provider = model.endpoint !== null ? "ember-evaluator" : model.provider;
+  const provider = model.endpoint !== null ? DSH_ENDPOINT_PROVIDER : model.provider;
   if (!provider) throw new AgentBundleError("CONFIG_INVALID", "a provider is required without an endpoint");
   return stringify([
     { id: "agent-default-model", config: { provider, model: model.name } },

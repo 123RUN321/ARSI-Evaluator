@@ -7,7 +7,8 @@ import { AgentBundleSolver } from "../../src/plugins/solvers/agentbundle.js";
 
 // ── 可配置项（均可被环境变量覆盖，便于复用其它任务/模型）────────────────
 const bundlePath = process.env.HERMES_BUNDLE_PATH ?? resolve("tests/fixtures/agentbundle/hermes");
-const taskDir = process.env.WORKBUDDY_TASK_DIR ?? "/home/chencong/ember-evaluator-fork1/.cache/workbuddy/datasets/89d4480b483ca2e0555ba96cc7d73c16c78802b17cd822044d5f7f27ab0558bf/wb-bench-office-v1.0/tasks/analyst-forecast-extract-L3-018";
+const taskDir = process.env.WORKBUDDY_TASK_DIR ?? resolve(".cache/workbuddy/datasets",
+  "89d4480b483ca2e0555ba96cc7d73c16c78802b17cd822044d5f7f27ab0558bf", "wb-bench-office-v1.0/tasks/analyst-forecast-extract-L3-018");
 const modelName = process.env.MODEL_NAME ?? "qwen3.8-flash";
 const modelEndpoint = process.env.MODEL_ENDPOINT ?? "https://dashscope.aliyuncs.com/compatible-mode/v1";
 

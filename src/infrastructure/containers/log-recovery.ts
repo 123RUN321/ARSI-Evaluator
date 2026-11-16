@@ -1,5 +1,6 @@
 import { posix } from "node:path";
 import type { AttemptKey } from "../../core/contracts/result.js";
+import { DOCKER_ATTEMPT_LABEL, dockerLabelValue } from "./attempt-labels.js";
 import { stopDockerContainer } from "./cleanup.js";
 import { DockerEnvironmentError } from "./error.js";
 import { restoreLogOwnersSource } from "./log-ownership.js";
@@ -45,10 +46,6 @@ function attemptLogMounts(container: InspectedContainer, attemptId: string): { s
   });
 }
 
-function label(value: string): string {
-  return value.replace(/[\u0000-\u001f\u007f]/gu, "_");
-}
-
 async function restoreMounts(
   command: DockerCommand, image: string | undefined, mounts: { source: string; target: string }[], signal: AbortSignal,
 ): Promise<void> {
@@ -68,14 +65,14 @@ async function restoreMounts(
 export async function restoreInterruptedDockerLogs(command: DockerCommand, keys: AttemptKey[], signal: AbortSignal): Promise<void> {
   const runs = new Map<string, Set<string>>();
   for (const key of keys) {
-    const run = label(key.runId);
+    const run = dockerLabelValue(key.runId);
     const attempts = runs.get(run) ?? new Set<string>();
-    attempts.add(JSON.stringify([label(key.taskId), label(key.attemptId)]));
+    attempts.add(JSON.stringify([dockerLabelValue(key.taskId), dockerLabelValue(key.attemptId)]));
     runs.set(run, attempts);
   }
   for (const [run, attempts] of runs) {
     signal.throwIfAborted();
-    const output = await command(["ps", "--all", "--quiet", "--filter", `label=ember.run=${run}`], { signal });
+    const output = await command(["ps", "--all", "--quiet", "--filter", `label=${DOCKER_ATTEMPT_LABEL.run}=${run}`], { signal });
     const ids = output.stdout.trim().split(/\s+/u).filter(Boolean);
     const containers = [];
     for (const id of ids) {
@@ -83,10 +80,10 @@ export async function restoreInterruptedDockerLogs(command: DockerCommand, keys:
       const inspected = JSON.parse((await command(["inspect", id], { signal })).stdout) as InspectedContainer[];
       const container = inspected[0];
       const labels = container?.Config?.Labels;
-      const attempt = labels?.["ember.attempt"];
-      if (!container || !labels || !attempt || labels["ember.run"] !== run ||
-          !["solve", "verify"].includes(labels["ember.phase"] ?? "") ||
-          !attempts.has(JSON.stringify([labels["ember.task"], attempt]))) continue;
+      const attempt = labels?.[DOCKER_ATTEMPT_LABEL.attempt];
+      if (!container || !labels || !attempt || labels[DOCKER_ATTEMPT_LABEL.run] !== run ||
+          !["solve", "verify"].includes(labels[DOCKER_ATTEMPT_LABEL.phase] ?? "") ||
+          !attempts.has(JSON.stringify([labels[DOCKER_ATTEMPT_LABEL.task], attempt]))) continue;
       const mounts = attemptLogMounts(container, attempt);
       if (mounts.length) containers.push({ id, image: container.Image, mounts });
     }

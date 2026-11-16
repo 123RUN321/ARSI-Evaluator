@@ -13,12 +13,12 @@
 ```bash
 pnpm install --frozen-lockfile
 pnpm add -g .
-ember-evaluator --help
+arsi-evaluator --help
 ```
 
-看到帮助信息即安装成功。pnpm 会从公开的 GitHub 仓库下载 AgentBundle SDK 并自动构建。请保留 Evaluator 目录及其依赖。 [AgentBundle 仓库](https://github.com/evolving-foundry/agentbundle)
+看到帮助信息即安装成功。pnpm 会从公开的 GitHub 仓库下载 AgentBundle SDK 并自动构建。请保留 Evaluator 目录及其依赖。 [AgentBundle 仓库](https://github.com/ARSI-LAB/agentbundle)
 
-顶层 `--help` 列出各命令用途。使用 `ember-evaluator run --help` 查看运行参数，使用 `ember-evaluator cleanup images --help` 查看嵌套命令；各命令的帮助会列出位置参数和选项含义。
+顶层 `--help` 列出各命令用途。使用 `arsi-evaluator run --help` 查看运行参数，使用 `arsi-evaluator cleanup images --help` 查看嵌套命令；各命令的帮助会列出位置参数和选项含义。
 
 更新源码后重新执行 `pnpm install --frozen-lockfile`。使用 WSL 时，安装和运行都在同一个 WSL 环境中完成。
 
@@ -30,15 +30,15 @@ ember-evaluator --help
 pnpm setup
 ```
 
-按提示重新打开终端，再回到 Evaluator 仓库重试 `pnpm add -g .` 和 `ember-evaluator --help`。
+按提示重新打开终端，再回到 Evaluator 仓库重试 `pnpm add -g .` 和 `arsi-evaluator --help`。
 
 ## 在任意目录运行
 
 按[快速上手](quick-start.zh-CN.md)准备评测配置和模型变量，再执行：
 
 ```bash
-ember-evaluator doctor '/path/to/config.yaml'
-ember-evaluator run '/path/to/config.yaml'
+arsi-evaluator doctor '/path/to/config.yaml'
+arsi-evaluator run '/path/to/config.yaml'
 ```
 
 YAML 中的相对路径以配置文件所在目录为准；`--patch` 建议使用绝对路径。需要 Docker 等额外环境时，按对应[场景指南](README.zh-CN.md)准备。
@@ -49,11 +49,13 @@ YAML 中的相对路径以配置文件所在目录为准；`--patch` 建议使�
 
 ## 本机运行时缓存与 Windows 路径长度
 
-运行时依赖会自动缓存。Windows 若出现 `WinError 206`，可指定更短的缓存路径后重试：
+Windows 默认运行时缓存位于 `%LOCALAPPDATA%\arsi\r`。若出现 `WinError 206`，可指定更短的缓存路径后重试：
 
 ```powershell
 $env:EVALUATOR_RUNTIME_CACHE_DIR = "D:\ae"
-ember-evaluator run "D:\experiments\config.yaml"
+arsi-evaluator run "D:\experiments\config.yaml"
 ```
+
+Windows 本机运行需要 Bash 时，可以用 `ARSI_EVALUATOR_BASH_PATH` 指定原生 `bash.exe` 的绝对路径，例如 Git for Windows 自带的 `bash.exe`。
 
 其他安装或运行问题见[常见问题](faq/README.zh-CN.md)。

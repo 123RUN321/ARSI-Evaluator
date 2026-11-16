@@ -1,5 +1,5 @@
 <h1 align="center">
-  <img src="imgs/ember-evaluator-logo.png" alt="Ember Evaluator" width="520">
+  <img src="imgs/arsi-evaluator-logo.png" alt="ARSI-Evaluator" width="520">
 </h1>
 
 <h3 align="center">多种评测方法，一个框架统一承载。</h3>
@@ -27,13 +27,13 @@
 
 ## ℹ️ 简介
 
-**Ember Evaluator** 是一个插件化的统一评测框架，支持 **Agent Harness 能力评测、推理引擎性能评测和算子性能评测**，并可扩展至更多评测场景。
+**ARSI-Evaluator** 是一个插件化的统一评测框架，支持 **Agent Harness 能力评测、推理引擎性能评测和算子性能评测**，并可扩展至更多评测场景。
 
 框架通过 YAML 配置和可组合的评测组件组织评测流程，支持本地、容器及分布式执行，提供结果记录、故障诊断与断点续跑等能力。
 
-![Ember Evaluator 评测架构与执行流程](imgs/01-flowchart-evaluation-architecture.png)
+![ARSI-Evaluator 评测架构与执行流程](imgs/01-flowchart-evaluation-architecture.png)
 
-*Ember Evaluator 整体架构概览，详细设计参见 [源码架构与执行流程](docs/development/architecture.md)。*
+*ARSI-Evaluator 整体架构概览，详细设计参见 [源码架构与执行流程](docs/development/architecture.md)。*
 
 ## ⚙️ 功能介绍
 
@@ -46,7 +46,7 @@
 
 ## 🧪 支持的 Benchmark
 
-Ember Evaluator 覆盖以下三类评测场景，完整支持列表及运行条件参见 [Benchmark 列表](docs/users/README.zh-CN.md#现在能测哪些-benchmark)。
+ARSI-Evaluator 覆盖以下三类评测场景，完整支持列表及运行条件参见 [Benchmark 列表](docs/users/README.zh-CN.md#现在能测哪些-benchmark)。
 
 | 评测方向 | 代表性 Benchmark | 评测内容 |
 | --- | --- | --- |
@@ -61,9 +61,9 @@ Ember Evaluator 覆盖以下三类评测场景，完整支持列表及运行条�
 将以下指令交给编程 Agent，自动完成 CLI 和 Skill 的安装与验证。
 
 ```text
-请从 https://github.com/evolving-foundry/ember-evaluator 安装 Ember Evaluator CLI 和配套的 ember-evaluator Skill。
+请从 https://github.com/ARSI-LAB/ARSI-Evaluator 安装 ARSI-Evaluator CLI 和配套的 arsi-evaluator Skill。
 参考 README 中的手动安装步骤完成 CLI 安装，并在当前项目中为自己安装 Skill。
-执行 ember-evaluator --help 验证 CLI，并确认 Skill 可以正常发现和读取。验证完成后结束任务。
+执行 arsi-evaluator --help 验证 CLI，并确认 Skill 可以正常发现和读取。验证完成后结束任务。
 ```
 
 ### 手动安装
@@ -73,12 +73,12 @@ Ember Evaluator 覆盖以下三类评测场景，完整支持列表及运行条�
 需要 Node.js 24.x（至少 24.22.1）、pnpm 11 或 12 和 Git。未安装 pnpm 时，可执行 `npm install -g pnpm`。
 
 ```bash
-git clone https://github.com/evolving-foundry/ember-evaluator.git
-cd ember-evaluator
+git clone https://github.com/ARSI-LAB/ARSI-Evaluator.git arsi-evaluator
+cd arsi-evaluator
 pnpm install --frozen-lockfile
 pnpm build
 pnpm add -g .
-ember-evaluator --help
+arsi-evaluator --help
 ```
 
 成功显示帮助信息即完成安装。
@@ -88,7 +88,7 @@ ember-evaluator --help
 在目标项目目录执行以下命令，为编程 Agent 安装配套的 Skill：
 
 ```bash
-npx skills add evolving-foundry/ember-evaluator --skill ember-evaluator
+npx skills add ARSI-LAB/ARSI-Evaluator --skill arsi-evaluator
 ```
 
 如需了解其他安装方式或排查安装问题，请参阅[安装指南](docs/users/installation.zh-CN.md)。
@@ -102,8 +102,8 @@ export MODEL_NAME="your-model-id"
 export MODEL_ENDPOINT="https://your-model-service.example/v1"
 export MODEL_API_KEY="your-api-key"
 
-ember-evaluator inspect playbook/gsm8k/gsm8k-quick-start.yaml
-ember-evaluator run playbook/gsm8k/gsm8k-quick-start.yaml
+arsi-evaluator inspect playbook/gsm8k/gsm8k-quick-start.yaml
+arsi-evaluator run playbook/gsm8k/gsm8k-quick-start.yaml
 ```
 
 `inspect` 用于检查实验配置，`run` 执行评测。完成后可在结果目录中的 `report.md` 查看评测报告。完整操作步骤及命令行示例参见[快速上手指南](docs/users/quick-start.zh-CN.md)。
@@ -115,9 +115,9 @@ ember-evaluator run playbook/gsm8k/gsm8k-quick-start.yaml
 对于需要准备 Docker 镜像的评测，可提前检查环境并预热镜像及运行时依赖，减少正式评测时的准备开销。
 
 ```bash
-ember-evaluator doctor playbook/terminalbench/terminalbench-4.0.yaml
-ember-evaluator warmup playbook/terminalbench/terminalbench-4.0.yaml
-ember-evaluator run playbook/terminalbench/terminalbench-4.0.yaml
+arsi-evaluator doctor playbook/terminalbench/terminalbench-4.0.yaml
+arsi-evaluator warmup playbook/terminalbench/terminalbench-4.0.yaml
+arsi-evaluator run playbook/terminalbench/terminalbench-4.0.yaml
 ```
 
 `doctor` 检查运行环境，`warmup` 提前准备镜像和依赖，`run` 正式执行评测。预热不会调用模型或执行评分，正式运行可复用已准备的镜像。具体用法参见[预热说明](docs/users/usage.zh-CN.md#只预热镜像不开始测评)。
@@ -129,7 +129,7 @@ ember-evaluator run playbook/terminalbench/terminalbench-4.0.yaml
 Tracer 支持查看 Agent 执行轨迹、性能指标和优化反馈，展示模型调用、工具事件及其耗时，并提供规则诊断与可选的 LLM 分析。运行评测时添加 `--tracer` 即可启用。
 
 ```bash
-ember-evaluator run playbook/gsm8k/gsm8k-quick-start.yaml --tracer
+arsi-evaluator run playbook/gsm8k/gsm8k-quick-start.yaml --tracer
 ```
 
 Tracer 会按需启动本地 Collector。在运行 Collector 的机器上，通过浏览器访问 `http://127.0.0.1:8787`，即可查看轨迹与反馈。
@@ -161,10 +161,10 @@ Tracer 会按需启动本地 Collector。在运行 Collector 的机器上，通�
 
 ## 🔗 相关项目
 
-- [Ember RSI](https://github.com/ARSI-LAB/ARSI)：面向 Agent 和 AI 基础设施的插件化递归自我改进（RSI）框架。以 Ember Evaluator 的评测结果为反馈，持续生成和优化候选方案，实现迭代式自我改进。
-- [AgentBundle](https://github.com/ARSI-LAB/agentbundle)：统一打包和管理不同 Agent Harness 的配置、技能与插件，方便在 Ember Evaluator 中接入和评测不同 Agent。
+- [RSI](https://github.com/ARSI-LAB/ARSI)：面向 Agent 和 AI 基础设施的插件化递归自我改进（RSI）框架。以 ARSI-Evaluator 的评测结果为反馈，持续生成和优化候选方案，实现迭代式自我改进。
+- [AgentBundle](https://github.com/ARSI-LAB/agentbundle)：统一打包和管理不同 Agent Harness 的配置、技能与插件，方便在 ARSI-Evaluator 中接入和评测不同 Agent。
 
 ## 🙏 致谢
 
-感谢 [Cordis](https://github.com/cordiverse/cordis) 和 [Harbor](https://github.com/harbor-framework/harbor) 的维护者与贡献者。Ember Evaluator 使用 Cordis 管理插件及其生命周期，并支持遵循 Harbor 协议执行和验证评测任务。
+感谢 [Cordis](https://github.com/cordiverse/cordis) 和 [Harbor](https://github.com/harbor-framework/harbor) 的维护者与贡献者。ARSI-Evaluator 使用 Cordis 管理插件及其生命周期，并支持遵循 Harbor 协议执行和验证评测任务。
 

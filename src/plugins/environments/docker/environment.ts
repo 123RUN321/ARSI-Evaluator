@@ -29,6 +29,7 @@ import { EGRESS_PROXY_ENV } from "../../../infrastructure/network/egress-proxy.j
 import { buildFileManifest } from "../../../core/artifacts/artifacts.js";
 import { fingerprintConfig } from "../../../core/results/run-manifest.js";
 import { recoverDockerAttempts } from "../../../infrastructure/containers/recovery.js";
+import { dockerAttemptLabels } from "../../../infrastructure/containers/attempt-labels.js";
 import { DockerBuildCache } from "../../../infrastructure/containers/build-cache.js";
 import { DOCKER_PLATFORM, EVALUATOR_NODE_EXECUTABLE, PROCESS_HELPER, type DockerCommand, type PreparedRuntimeImage } from "../../../infrastructure/containers/runtime-contract.js";
 import { DockerRuntime } from "../../../infrastructure/containers/runtime.js";
@@ -457,8 +458,8 @@ export class DockerEnvironment implements Environment {
         return buildTag;
       } catch {}
       buildSignal.throwIfAborted();
-      const staging = await mkdtemp(join(tmpdir(), "ember-docker-context-"));
-      const output = preferred ? `ember-evaluator/staging:${randomUUID()}` : buildTag;
+      const staging = await mkdtemp(join(tmpdir(), "arsi-evaluator-docker-context-"));
+      const output = preferred ? `arsi-evaluator/staging:${randomUUID()}` : buildTag;
       let keepBuildInput = false;
       try {
         const snapshot = join(staging, "context");
@@ -871,12 +872,6 @@ export class DockerEnvironment implements Environment {
       writable(paths.agent, "agent output directory"),
       writable(paths.verifier, "verifier output directory"),
     ]);
-    const labels = [
-      ["run", key.runId],
-      ["task", key.taskId],
-      ["attempt", key.attemptId],
-      ["phase", phase],
-    ] as const;
     const mounts = await prepareLogMounts(paths, phase, agent, verifier, spec.sharedLogs);
     const { forwardedEnv, isolatedGateway, allowlist, modelPolicy, containerEnv } = await this.prepareLaunchEnvironment(spec, launchImage, signal);
     let gateway: GatewayHandle | undefined;
@@ -901,7 +896,7 @@ export class DockerEnvironment implements Environment {
       }
       const launch: DockerContainerLaunch = {
         image: launchImage, platform,
-        labels: Object.fromEntries(labels.map(([name, value]) => [`ember.${name}`, value.replace(/[\u0000-\u001f\u007f]/gu, "_")])),
+        labels: dockerAttemptLabels(key, phase),
         environment: containerEnv, forwardedEnv, isolatedGateway, mounts, volumeMounts,
       };
       signal.throwIfAborted();

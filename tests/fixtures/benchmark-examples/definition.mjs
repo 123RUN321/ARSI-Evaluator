@@ -1,4 +1,4 @@
-import { DefinedBenchmark } from "ember-evaluator";
+import { DefinedBenchmark } from "arsi-evaluator";
 import { questionSource, sourceConfig } from "./source.mjs";
 
 export const inject = ["evaluator"];

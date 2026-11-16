@@ -1,5 +1,5 @@
 {
-  "name": "ember-claudecode-runtime",
+  "name": "arsi-evaluator-claudecode-runtime",
   "private": true,
   "dependencies": {
     "@anthropic-ai/claude-code": "2.1.322"

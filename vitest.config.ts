@@ -5,13 +5,13 @@ import { fileURLToPath } from "node:url";
 
 const pluginRoot = fileURLToPath(new URL("./plugins/", import.meta.url));
 const pluginTests = readdirSync(pluginRoot, { withFileTypes: true })
-  .filter(entry => entry.isDirectory() && existsSync(join(pluginRoot, entry.name, "ember-plugin.json")))
+  .filter(entry => entry.isDirectory() && existsSync(join(pluginRoot, entry.name, "arsi-evaluator-plugin.json")))
   .map(entry => `plugins/${entry.name}/tests/**/*.test.ts`);
 
 export default defineConfig({
   resolve: {
     alias: {
-      "ember-evaluator": fileURLToPath(new URL("./src/index.ts", import.meta.url)),
+      "arsi-evaluator": fileURLToPath(new URL("./src/index.ts", import.meta.url)),
     },
   },
   test: {

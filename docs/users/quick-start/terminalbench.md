@@ -10,11 +10,11 @@ Run terminal tasks in Docker with the default SimpleAgent and inspect results fr
 
 Install and build Evaluator from source. pnpm downloads and builds the AgentBundle SDK automatically. [Source installation](../installation.md#install-from-source)
 
-Register `ember-evaluator` as described in the installation guide, then run these commands from the Evaluator root to use the repository Playbooks. The machine needs Docker Engine and access to the model API, task data, and images.
+Register `arsi-evaluator` as described in the installation guide, then run these commands from the Evaluator root to use the repository Playbooks. The machine needs Docker Engine and access to the model API, task data, and images.
 
 ```bash
 docker version
-ember-evaluator --help
+arsi-evaluator --help
 ```
 
 Official 4.0 prebuilt images use `linux/amd64`, explicitly selected by the example. ARM64 nodes require QEMU/binfmt. See [Docker platform selection](../deployment/docker-platform.md).
@@ -26,14 +26,14 @@ Set `MODEL_NAME`, `MODEL_ENDPOINT`, and `MODEL_API_KEY` in the execution termina
 Use [terminalbench-4.0.yaml](../../../playbook/terminalbench/terminalbench-4.0.yaml) to inspect expanded configuration and prerequisites:
 
 ```bash
-ember-evaluator inspect playbook/terminalbench/terminalbench-4.0.yaml
-ember-evaluator doctor playbook/terminalbench/terminalbench-4.0.yaml
+arsi-evaluator inspect playbook/terminalbench/terminalbench-4.0.yaml
+arsi-evaluator doctor playbook/terminalbench/terminalbench-4.0.yaml
 ```
 
 `doctor` does not call models; it probes dataset archives and performs temporary downloads and image checks. Confirm `not-checked` items through actual execution. The following preview may download task data:
 
 ```bash
-ember-evaluator run playbook/terminalbench/terminalbench-4.0.yaml --dry-run
+arsi-evaluator run playbook/terminalbench/terminalbench-4.0.yaml --dry-run
 ```
 
 ## 3. Run Tasks
@@ -46,7 +46,7 @@ run:
 ```
 
 ```bash
-ember-evaluator run playbook/terminalbench/terminalbench-4.0.yaml
+arsi-evaluator run playbook/terminalbench/terminalbench-4.0.yaml
 ```
 
 Docker prepares the task environment; the agent operates inside the container, and the task verifier checks completion. Initial image pulls may be slow. See [Harbor execution and verification boundaries](../benchmarks/harbor.md#execution-and-verification-boundaries) for environments, networking, and verification materials. Once execution works, remove `run.maxTasks` and start a new full experiment.
@@ -58,7 +58,7 @@ The example writes to `results/terminalbench-4.0/<RUN_ID>/`. Open `report.md` fo
 With configuration, sources, external plugins, candidate bundles, and harness versions unchanged, resume unfinished tasks. Evaluator code may be updated and rebuilt first:
 
 ```bash
-ember-evaluator run playbook/terminalbench/terminalbench-4.0.yaml --resume
+arsi-evaluator run playbook/terminalbench/terminalbench-4.0.yaml --resume
 ```
 
 Switching from two tasks to the full dataset changes configuration and requires a new run. See [daily operations](../usage.md#resume-and-rebuild-reports) for resume and offline reports.
@@ -66,7 +66,7 @@ Switching from two tasks to the full dataset changes configuration and requires 
 After [global CLI registration](../installation.md#register-the-global-cli), run from any directory:
 
 ```bash
-ember-evaluator run '/path/to/ember-evaluator/playbook/terminalbench/terminalbench-4.0.yaml'
+arsi-evaluator run '/path/to/arsi-evaluator/playbook/terminalbench/terminalbench-4.0.yaml'
 ```
 
 See [solvers and model services](../solvers.md) to change agents, or [Harbor](../benchmarks/harbor.md) for other Harbor tasks.

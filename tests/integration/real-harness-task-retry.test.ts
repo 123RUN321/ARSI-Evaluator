@@ -92,7 +92,7 @@ async function exercise(solver: Solver, fault: Fault) {
       const docker = ["run", "--rm", "--network", "host", "--user", `${process.getuid!()}:${process.getgid!()}`, "-i", "-v", `${session.workdir}:${session.workdir}`, "-w", session.workdir,
         "-v", `${resolve("src/runtimes/dsh/assets/output-hook.mjs")}:/tmp/evaluator-output-hook.mjs:ro`,
         "-v", `${context.paths.agent}:${context.paths.agent}`, "-e", `EVALUATOR_DSH_OUTPUT_DIR=${context.paths.agent}`,
-        "-e", `HOME=${home}`, "-e", `DSH_HOME=${home}`, "-e", "DSH_PERMISSION_MODE=danger-full-access", "-e", "EMBER_EVALUATOR_API_KEY=fixture-key", "-e", "DSH_TELEMETRY_DISABLED=1", "--entrypoint", "node", image!];
+        "-e", `HOME=${home}`, "-e", `DSH_HOME=${home}`, "-e", "DSH_PERMISSION_MODE=danger-full-access", "-e", "ARSI_EVALUATOR_API_KEY=fixture-key", "-e", "DSH_TELEMETRY_DISABLED=1", "--entrypoint", "node", image!];
       const setup = { stdout: "", stderr: "" };
       const config = launch("docker", [...docker, cli, "--profile", "evaluator", "--from-default-profile", "headless", "--dump-config"], session.workdir, env, "", setup);
       // Drain both streams; config creation is a real CLI command, not a fabricated profile.

@@ -7,7 +7,7 @@ import type { DockerCommand } from "./runtime-contract.js";
 import type { ContainerPlatform } from "../../core/contracts/environment.js";
 import type { ImageCleanupRequest, ImageCleanupNode, ImageCleanupItem } from "../../core/contracts/image-cleanup.js";
 import { DockerEnvironmentError } from "./error.js";
-import { dockerImageReference } from "./image-name.js";
+import { DOCKER_IMAGE_NAMESPACE, dockerImageReference } from "./image-name.js";
 import { imageReference } from "./registry-image.js";
 import { acquireRuntimeLock } from "../runtime-installation/lock.js";
 import { applicationCacheRoot } from "../runtime-installation/install.js";
@@ -20,14 +20,14 @@ type Lease = { token: string; pid: number; host: string; runOwner?: string };
 type Inventory = { schemaVersion: 1; daemonId: string; inventoryId: string; entries: Entry[]; leases: Lease[] };
 type Scope = { owner?: Owner; touched: Set<string>; seen: Set<string>; token: string; lease?: Promise<() => Promise<void>> };
 type RetentionOptions = { key?: string; source?: ImageSource; preferred?: string; removeAlias?: boolean; temporary?: boolean; buildInput?: boolean; acquiredInput?: boolean };
-const namespace = "ember-evaluator/";
-const managed = (reference: string) => reference.startsWith(namespace) || /^ember-harbor-verifier:[a-f0-9]{24}$/u.test(reference);
+const namespace = `${DOCKER_IMAGE_NAMESPACE}/`;
+const managed = (reference: string) => reference.startsWith(namespace) || /^arsi-evaluator-harbor-verifier:[a-f0-9]{24}$/u.test(reference);
 const legacyOwned = (reference: string) => managed(reference) && !/:linux-(?:amd64|arm64)-/u.test(reference);
 const digest = /^sha256:[a-f0-9]{64}$/u;
 const absent = (error: unknown) => error instanceof Error && /no such (?:image|object)|not found/iu.test(error.message);
-const staging = (reference: string) => reference.startsWith("ember-evaluator/staging:");
-const legacy = (reference: string) => reference.startsWith("ember-evaluator/shared:") || reference.startsWith("ember-evaluator/pull:") ||
-  /^ember-harbor-verifier:[a-f0-9]{24}$/u.test(reference);
+const staging = (reference: string) => reference.startsWith(`${namespace}staging:`);
+const legacy = (reference: string) => reference.startsWith(`${namespace}shared:`) || reference.startsWith(`${namespace}pull:`) ||
+  /^arsi-evaluator-harbor-verifier:[a-f0-9]{24}$/u.test(reference);
 const replaceable = (entry: Entry) => entry.owned && !entry.buildInput && (legacy(entry.reference) || !managed(entry.reference));
 
 function activeLease(lease: Lease): boolean {
@@ -279,7 +279,7 @@ export class DockerImageInventory {
       const retained = data.entries.filter(entry => entry.id === image.id && entry.retained);
       const candidates = options.removeAlias || options.temporary || digest.test(reference) || options.preferred
         ? [...new Set([...retained.map(entry => entry.reference), ...image.tags])].filter(candidate =>
-          referenceIdentity(candidate) !== sourceName && !candidate.startsWith("ember-evaluator/staging:") &&
+          referenceIdentity(candidate) !== sourceName && !candidate.startsWith("arsi-evaluator/staging:") &&
           !data.entries.some(entry => entry.reference === candidate && entry.id === image.id && entry.buildInput && !entry.retained)) : [];
       let selected: string | undefined;
       for (const candidate of candidates) {
@@ -333,7 +333,7 @@ export class DockerImageInventory {
           break;
         }
       } else if (options.buildInput && (options.temporary || digest.test(reference)) && selected === reference) {
-        selected = `ember-evaluator/staging:${randomUUID()}`;
+        selected = `arsi-evaluator/staging:${randomUUID()}`;
         await this.raw(["image", "tag", image.id, selected], { signal });
       }
       if (await this.platformDigest(selected, platform, signal) !== platformId || (await this.inspect(selected, signal))?.id !== image.id)
@@ -341,7 +341,7 @@ export class DockerImageInventory {
       let entry = data.entries.find(item => item.reference === selected && item.id === image.id);
       if (!entry) {
         entry = { reference: selected, id: image.id, owned: created || legacyOwned(selected), owners: [], dependencies: [] };
-        if (options.buildInput && options.temporary && selected.startsWith("ember-evaluator/staging:")) entry.buildInput = true;
+        if (options.buildInput && options.temporary && selected.startsWith("arsi-evaluator/staging:")) entry.buildInput = true;
         data.entries = data.entries.filter(item => item.reference !== selected);
         data.entries.push(entry);
       }
@@ -394,7 +394,7 @@ export class DockerImageInventory {
   }
 
   async discardStaging(reference: string, signal: AbortSignal): Promise<void> {
-    if (!reference.startsWith("ember-evaluator/staging:")) throw new Error("Expected a staging image reference");
+    if (!reference.startsWith("arsi-evaluator/staging:")) throw new Error("Expected a staging image reference");
     await this.edit(signal, async data => {
       if (await this.inspect(reference, signal)) await this.raw(["image", "rm", "--no-prune", reference], { signal });
       data.entries = data.entries.filter(entry => entry.reference !== reference);

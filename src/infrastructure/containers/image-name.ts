@@ -3,10 +3,12 @@ import type { ContainerPlatform, EnvironmentPreparationContext, EnvironmentSpec 
 
 export type DockerImageScope = EnvironmentPreparationContext & { service?: string };
 
+export const DOCKER_IMAGE_NAMESPACE = "arsi-evaluator";
+
 export function dockerImageReference(platform: ContainerPlatform, purpose: string, scope?: EnvironmentSpec["imageScope"]): string {
   const dataset = scope?.dataset.replace(/^terminal-bench@4\.0(?:\.0)?$/u, "terminalbench4.0") ?? "base";
   const parts = (scope?.taskPath?.split("/") ?? []).map(part => component(part, 32, "task"));
-  const repository = ["ember-evaluator", dataset.toLowerCase().replace(/[^a-z0-9.]+/gu, "-").replace(/[.-]{2,}/gu, "-")
+  const repository = [DOCKER_IMAGE_NAMESPACE, dataset.toLowerCase().replace(/[^a-z0-9.]+/gu, "-").replace(/[.-]{2,}/gu, "-")
     .replace(/^[.-]+|[.-]+$/gu, "").slice(0, 64).replace(/[.-]+$/u, "") || "task"];
   for (const part of parts) {
     if (repository.join("/").length + part.length + 1 > 250) break;
@@ -25,5 +27,5 @@ export function dockerImageName(kind: string, contentKey: string, scope?: Docker
   const prefix = scope ? `${scope.phase}-${service}` : "";
   // Keep the original hash for images that already used an unscoped name.
   const hash = createHash("sha256").update(JSON.stringify([null, scope?.phase, scope?.service, kind, contentKey])).digest("hex").slice(0, 24);
-  return `ember-evaluator/shared:${prefix}${kind}-${hash}`;
+  return `${DOCKER_IMAGE_NAMESPACE}/shared:${prefix}${kind}-${hash}`;
 }

@@ -63,7 +63,7 @@ async function checkEvidence(agent: string): Promise<void> {
 }
 
 test.skipIf(!enabled("local"))("Claude Code uses Bash locally and limits native file tools to the task workspace", async () => {
-  const root = await mkdtemp(join(tmpdir(), "ember-claude-local-"));
+  const root = await mkdtemp(join(tmpdir(), "arsi-evaluator-claude-local-"));
   const steps: Tool[] = [];
   const fixture = await messagesFixture(false, steps);
   const signal = AbortSignal.timeout(900_000);
@@ -118,7 +118,7 @@ test.skipIf(!enabled("local"))("Claude Code uses Bash locally and limits native 
 }, 930_000);
 
 test.skipIf(!enabled("docker"))("Claude Code uses Bash and scores its file through the Docker model gateway", async () => {
-  const root = await mkdtemp(join(tmpdir(), "ember-claude-docker-"));
+  const root = await mkdtemp(join(tmpdir(), "arsi-evaluator-claude-docker-"));
   const fixture = await messagesFixture(true, [{
     name: "Bash",
     input: {

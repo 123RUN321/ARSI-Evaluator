@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { parse } from "yaml";
 
 import { expectNonEmptyString, expectRecord, rejectUnknown } from "../core/validation/input.js";
-import { BUILTIN_RUNTIME_ID, PACKAGE_RUNTIME_ID } from "../core/results/runtime-identity.js";
+import { isEvaluatorRuntimeId } from "../core/results/runtime-identity.js";
 
 export type PluginPatchEntry = {
   id: string;
@@ -39,7 +39,7 @@ function parsePatch(value: unknown): PluginPatchEntry[] {
   }
   const ids = new Set<string>();
   for (const { id } of entries) {
-    if (id === PATCH_METADATA_ID || id === BUILTIN_RUNTIME_ID || id === PACKAGE_RUNTIME_ID) {
+    if (id === PATCH_METADATA_ID || isEvaluatorRuntimeId(id)) {
       throw new TypeError(`plugin patch id ${id} is reserved for evaluator metadata`);
     }
     if (ids.has(id)) throw new TypeError(`duplicate plugin patch id: ${id}`);

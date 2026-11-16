@@ -1,6 +1,6 @@
 """Controlled composition entry for the evaluator deepagents bundle fixture.
 
-Mirrors the real Ember-LangGraph delivery contract with zero third-party
+Mirrors the production DeepAgents bundle format with zero third-party
 dependencies: ``build_agent(extra_middleware=())`` returns a deterministic
 graph that records assembled system prompts through the caller's middleware
 (same ``wrap_model_call`` request shape deepagents uses), performs one write

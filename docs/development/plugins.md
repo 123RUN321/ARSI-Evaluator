@@ -101,12 +101,12 @@ export function apply(ctx) {
 
 执行组件的 `runtime.hardware` 为实验选择的 `npu` 或 `gpu`，bootstrap 和 Ray worker 都传入实际值。历史 SDK 调用方省略该字段时按 NPU 处理。需要加速卡的插件应按该值选择实现，并在分配资源前拒绝不支持的硬件；不需要加速卡的插件无需检测设备。Metrics/Reporter 继续只使用报告上下文，离线报告不探测硬件。
 
-使用 TypeScript 开发时，可从 `ember-evaluator` 包根导入 `HardwareKind`、`Metrics`、`Benchmark`、`Solver`、`PluginFactoryContext` 等公共类型，并实现对应契约。发布产物只加载已编译的 JavaScript；从源码启动的 `pnpm dev` 会按清单回退到对应的 `.ts` 文件。
+使用 TypeScript 开发时，可从 `arsi-evaluator` 包根导入 `HardwareKind`、`Metrics`、`Benchmark`、`Solver`、`PluginFactoryContext` 等公共类型，并实现对应契约。发布产物只加载已编译的 JavaScript；从源码启动的 `pnpm dev` 会按清单回退到对应的 `.ts` 文件。
 
 
 ## 仓库插件构建与扩展
 
-`pnpm build` 扫描 `plugins/*/ember-plugin.json`，依次校验清单、按清单构建，并把声明的文件安装到 `dist/plugins/<id>/`；构建同时生成 `dist/bundled-plugins.patch.yaml` 和索引 `dist/plugins/index.json`。没有清单的目录不编译、不复制，只能在源码中直接 import。
+`pnpm build` 扫描 `plugins/*/arsi-evaluator-plugin.json`，依次校验清单、按清单构建，并把声明的文件安装到 `dist/plugins/<id>/`；构建同时生成 `dist/bundled-plugins.patch.yaml` 和索引 `dist/plugins/index.json`。没有清单的目录不编译、不复制，只能在源码中直接 import。
 
 ```json
 {
@@ -130,7 +130,7 @@ ID 必须与目录名一致。version 默认继承宿主包版本。entry 是 Co
 ```text
 dist/plugins/
 ├── <id>/
-│   ├── ember-plugin.json  # 原样复制，便于运行时追溯来源
+│   ├── arsi-evaluator-plugin.json  # 原样复制，便于运行时追溯来源
 │   ├── cordis.patch.yaml  # 仅在清单声明 patch 时存在
 │   └── index.js
 ```
@@ -141,7 +141,7 @@ dist/plugins/
 
 需要 esbuild 等自定义产物的插件可声明 `build.script`，以插件目录为工作目录执行，由脚本自行产出 `dist`；同时声明 `build.tsconfig` 时先执行 `tsc`，再执行脚本。只通过 `--patch` 加载的插件声明 `patch`，构建时复制 `cordis.patch.yaml` 到安装目录，并把其中 `./dist/` 前缀改写为 `./`。
 
-CLI 模块导出 `registerCli(cli: PluginCliRegistrar)`，公共类型从 `ember-evaluator` 导入：
+CLI 模块导出 `registerCli(cli: PluginCliRegistrar)`，公共类型从 `arsi-evaluator` 导入：
 
 ```ts
 export function registerCli(cli: PluginCliRegistrar): void {
@@ -203,7 +203,7 @@ metrics:                       # 显式列表会替换默认指标，需保留�
 运行时显式指定 patch；省略 `--patch` 时只加载内置组件：
 
 ```bash
-ember-evaluator run experiments/gsm8k.yaml --patch <path>/plugins/cordis.patch.yaml
+arsi-evaluator run experiments/gsm8k.yaml --patch <path>/plugins/cordis.patch.yaml
 ```
 
 `--dry-run` 也接受相同的 `--patch <path>` 参数。patch 路径相对当前工作目录解析；patch 内的本地模块和 npm 依赖相对 patch 文件目录解析。实验配置中的 `cacheDir`、输出目录等仍相对实验 YAML 所在目录解析。

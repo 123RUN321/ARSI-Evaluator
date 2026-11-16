@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { DockerEnvironment, DockerImageArchiveLoader, GitHubLfsSource, PINNED_NODE_IMAGE,
-  checkedPath, runDockerCommand, withDatasetActivity } from "ember-evaluator";
-import type { ActivityListener, DockerCommand, DockerEnvironmentOptions, EnvironmentSpec } from "ember-evaluator";
+  checkedPath, runDockerCommand, withDatasetActivity } from "arsi-evaluator";
+import type { ActivityListener, DockerCommand, DockerEnvironmentOptions, EnvironmentSpec } from "arsi-evaluator";
 import { expectNonEmptyString, expectRecord, parseRepositoryConfig, rejectUnknown } from "./config.js";
 
 const CLAUDE_TAG = "harbor-claude-code-base:2.1.114";

@@ -30,7 +30,7 @@
 运行诊断查看 Docker 代理建议：
 
 ```bash
-ember-evaluator doctor experiment.yaml --network network.yaml
+arsi-evaluator doctor experiment.yaml --network network.yaml
 ```
 
 输出中的 `network.dockerAdvice` 提供建议。按 Docker 的部署方式应用：

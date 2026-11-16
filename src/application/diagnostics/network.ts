@@ -168,7 +168,7 @@ export async function diagnoseNetwork(network: NetworkAccess, signal: AbortSigna
           ? "Docker downloaded image layers" : { status: "not-checked", evidence: "Docker pull succeeded, but layer download could not be distinguished from cache reuse" };
       }
       const target = join(directory, "image"); await mkdir(target);
-      const tag = `ember-network-doctor:${randomUUID()}`;
+      const tag = `arsi-evaluator-network-doctor:${randomUUID()}`;
       const downloaded = method.backend === "skopeo"
         ? await downloadSkopeoImage(source, platform, network, method.skopeoExecutable, target, tag, active)
         : await downloadRegistryImage(source, platform, network.settings.proxy.host, target, tag, active);
@@ -189,7 +189,7 @@ export async function diagnoseNetwork(network: NetworkAccess, signal: AbortSigna
       const settings = dockerBuildNetwork(network);
       const original = "FROM debian:bookworm-slim\n" + (mode === "run" ? "RUN rm -rf /var/lib/apt/lists/* && apt-get update && cd /tmp && apt-get download hello\n" : "");
       await writeFile(join(context, "Dockerfile"), mode === "run" ? settings.recipe(original) : original);
-      const tag = `ember-network-doctor:${randomUUID()}`;
+      const tag = `arsi-evaluator-network-doctor:${randomUUID()}`;
       try {
         const output = await command(["build", "--pull", "--no-cache", "--progress", "plain", "--tag", tag,
           ...(mode === "run" ? settings.buildArgs : []), context], { signal: active, env: settings.environment });

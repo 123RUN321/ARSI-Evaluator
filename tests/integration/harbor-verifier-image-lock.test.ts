@@ -30,7 +30,7 @@ test.each(["verifier", "runtime"])("two %s processes sharing a Docker target bui
     expect((await readFile(join(root, "inspections"), "utf8")).trim().split("\n")).toHaveLength(1);
     await writeFile(join(root, "release"), "release\n");
     const results = await Promise.all(jobs);
-    expect(results[0]?.stdout).toMatch(kind === "verifier" ? /^ember-harbor-verifier:[a-f0-9]{24}$/u : /^ember-evaluator\/shared:solve-runtime-[a-f0-9]{24}$/u);
+    expect(results[0]?.stdout).toMatch(kind === "verifier" ? /^arsi-evaluator-harbor-verifier:[a-f0-9]{24}$/u : /^arsi-evaluator\/shared:solve-runtime-[a-f0-9]{24}$/u);
     expect(results[1]?.stdout).toBe(results[0]?.stdout);
     expect((await readFile(join(root, "builds"), "utf8")).trim().split("\n")).toHaveLength(1);
     expect((await readFile(join(root, "inspections"), "utf8")).trim().split("\n")).toHaveLength(kind === "verifier" ? 2 : 3);

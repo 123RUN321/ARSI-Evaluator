@@ -73,9 +73,9 @@ function fakeLocalSession(options: {
               digest: options.verifyDigest,
               harness: HARNESS,
               home: installHome(),
-              profile: "ember-jw",
+              profile: "arsi-evaluator-jw",
               reused: false,
-              installationId: "ember-jw-01234567",
+              installationId: "arsi-evaluator-jw-01234567",
             })}\n`,
           });
         throw new Error(`unexpected CLI command: ${spec.args.join(" ")}`);

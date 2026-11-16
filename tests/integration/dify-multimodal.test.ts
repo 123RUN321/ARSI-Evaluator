@@ -95,7 +95,7 @@ test("Dify uploads unchanged PDFs, binds document and image IDs in order, and re
     expect(uploads[0]!.body.includes(fixturePDF())).toBe(true);
     expect(uploads[0]!.body.toString()).toContain("Content-Type: application/pdf");
     const workflow = JSON.parse(requests.find(request => request.url.endsWith("run"))!.body.toString());
-    expect(workflow.user).toBe("ember-evaluator");
+    expect(workflow.user).toBe("arsi-evaluator");
     expect(workflow.inputs.files).toEqual([
       { type: "document", transfer_method: "local_file", upload_file_id: "pdf-id" },
       { type: "image", transfer_method: "local_file", upload_file_id: "image-id" },

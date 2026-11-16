@@ -10,7 +10,7 @@ import type { EnvironmentSession } from "../../src/core/contracts/environment.js
 import { runTask } from "../../src/core/execution/run-task.js";
 import { onDemand } from "../../src/core/preparation/task-preparation.js";
 import { DocOpsBenchmark, DocOpsDockerEnvironment } from "../../plugins/docops/index.js";
-import { runDockerCommand } from "ember-evaluator";
+import { runDockerCommand } from "arsi-evaluator";
 import { LocalScheduler } from "../../src/plugins/schedulers/local/scheduler.js";
 import { LocalRunStore } from "../../src/plugins/stores/local.js";
 import { storeRun, trajectoryLines } from "../fixtures/results/store-fixture.js";

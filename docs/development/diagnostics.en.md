@@ -9,7 +9,7 @@
 New plugins should throw explicit error types rather than rely on string diagnostics:
 
 ```typescript
-import { EvaluatorError } from "ember-evaluator";
+import { EvaluatorError } from "arsi-evaluator";
 
 throw new EvaluatorError(
   "VERIFY_RESULT_INVALID",

@@ -26,7 +26,7 @@ function rotateLog(path: string): void {
   } catch { /* No log yet. */ }
 }
 
-/** Records the managed pid so `ember tracer status/stop` can find processes started by a run. */
+/** Records the managed pid so `arsi-evaluator tracer status/stop` can find processes started by a run. */
 function writePidFile(db: string, record: Record<string, unknown>): string {
   const path = join(dirname(db), "tracer.pid");
   mkdirSync(dirname(path), { recursive: true });

@@ -12,8 +12,8 @@ import type {
   RunManifest,
   RunStore,
   TaskReportDocument,
-} from "ember-evaluator";
-import type { JsonValue } from "ember-evaluator";
+} from "arsi-evaluator";
+import type { JsonValue } from "arsi-evaluator";
 import type { TracerClient } from "./client.js";
 import { TrajectoryTailer } from "./tail.js";
 

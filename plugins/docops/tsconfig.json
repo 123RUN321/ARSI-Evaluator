@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "paths": {
-      "ember-evaluator": ["../../src/index.ts"]
+      "arsi-evaluator": ["../../src/index.ts"]
     },
     "noEmit": true,
     "types": ["node"]

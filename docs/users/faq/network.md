@@ -8,9 +8,9 @@ Use the same experiment and network file as evaluation:
 
 ```bash
 # Show effective settings without downloading
-ember-evaluator inspect experiment.yaml --network network.yaml
+arsi-evaluator inspect experiment.yaml --network network.yaml
 # Check tools and connectivity, including temporary downloads
-ember-evaluator doctor experiment.yaml --network network.yaml
+arsi-evaluator doctor experiment.yaml --network network.yaml
 ```
 
 ## Read diagnostic results
@@ -41,7 +41,7 @@ For Docker proxy and daemon connection issues, see [deployment networking](../de
 `doctor` checks a selection of downloads and builds; it does not establish that every task image, dependency, or model call will work. Prepare the selected tasks next:
 
 ```bash
-ember-evaluator warmup experiment.yaml --network network.yaml
+arsi-evaluator warmup experiment.yaml --network network.yaml
 ```
 
 `warmup` prepares images and dependencies without model calls. See [image warmup](../usage.md#warm-images-without-evaluation) for prerequisites and options. For eligible network failures in an existing run, see [network recovery](../network-retry.md).

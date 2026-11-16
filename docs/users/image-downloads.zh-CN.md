@@ -16,8 +16,8 @@
 先按 [Terminal-Bench 入门](quick-start/terminalbench.zh-CN.md)准备 Docker、模型和选题，再在仓库根目录执行：
 
 ```bash
-ember-evaluator warmup playbook/terminalbench/terminalbench-4.0.yaml --network playbook/network/archives.yaml
-ember-evaluator run playbook/terminalbench/terminalbench-4.0.yaml --network playbook/network/archives.yaml
+arsi-evaluator warmup playbook/terminalbench/terminalbench-4.0.yaml --network playbook/network/archives.yaml
+arsi-evaluator run playbook/terminalbench/terminalbench-4.0.yaml --network playbook/network/archives.yaml
 ```
 
 `archives.yaml` 文件内容为：
@@ -80,7 +80,7 @@ docker:
 执行预热，下载所选任务需要的镜像和依赖：
 
 ```bash
-ember-evaluator warmup experiment.yaml --network network-docker.yaml
+arsi-evaluator warmup experiment.yaml --network network-docker.yaml
 ```
 
 本例没有题库专属配置，因此任务镜像和 Node 等共享镜像都通过 `docker pull` 获取。需要使用 DockerProxy 等 Registry 镜像源时，可在同一文件中添加 `docker.mirrors`，配置方法见[修改镜像源](reference/network.zh-CN.md#修改下载地址)。daemon 的代理设置见[部署网络配置](deployment/network.zh-CN.md#docker-构建与-daemon-代理)。
@@ -97,7 +97,7 @@ docker:
 ```
 
 ```bash
-ember-evaluator warmup experiment.yaml --network network-nodejs.yaml
+arsi-evaluator warmup experiment.yaml --network network-nodejs.yaml
 ```
 
 本例通过内置 Node.js 下载器获取任务镜像和共享镜像的 Registry 内容，再导入 Docker；无需安装 skopeo，但仍需要可用的 Docker daemon。下载请求使用 Evaluator 进程的代理，设置方法见[代理配置](reference/network.zh-CN.md#设置代理)。省略 `backend` 时也默认使用 `nodejs`。
@@ -115,7 +115,7 @@ docker:
 ```
 
 ```bash
-ember-evaluator warmup experiment.yaml --network network-skopeo.yaml
+arsi-evaluator warmup experiment.yaml --network network-skopeo.yaml
 ```
 
 `skopeoExecutable` 可以省略，默认从 `PATH` 查找 `skopeo`；也可改为执行节点上的程序绝对路径。skopeo 需要支持 `copy --preserve-digests`，程序不会自动安装它。下载后仍会导入 Docker；Ray 使用该后端时，每个实际执行下载的节点都要预装 skopeo，见[源码启动与部署](deployment/network.zh-CN.md#源码启动与部署)。
@@ -138,7 +138,7 @@ ember-evaluator warmup experiment.yaml --network network-skopeo.yaml
 
 归档地址由 `baseUrl`、任务路径、平台和阶段组成。例如 `terminal-bench/vf2-speedup-networkx` 的解题镜像使用 `<baseUrl>/vf2-speedup-networkx/linux/amd64/solve.tar.gz`，验证镜像改为 `verify.tar.gz`；服务镜像放在 `<阶段>/services/<服务名>.tar.gz`。准备自己的归档时，按[文件布局](../development/image-archives.md#文件布局)组织。
 
-解题基础镜像的本地标签，例如 `ember-evaluator/terminalbench4.0/vf2-speedup-networkx:linux-amd64-base`，对应远端 `vf2-speedup-networkx/linux/amd64/solve.tar.gz`。Evaluator 根据镜像 ID 分配或复用本地引用。Solver 成品在执行节点构建。
+解题基础镜像的本地标签，例如 `arsi-evaluator/terminalbench4.0/vf2-speedup-networkx:linux-amd64-base`，对应远端 `vf2-speedup-networkx/linux/amd64/solve.tar.gz`。Evaluator 根据镜像 ID 分配或复用本地引用。Solver 成品在执行节点构建。
 
 Evaluator 检查归档的平台和镜像 ID，通过临时引用导入 Docker。归档里的发布者标签不会恢复。相同镜像 ID 的归档共用一个本地引用。需要核对归档与原仓库是否一致时，可按下方方法比较镜像 ID。
 

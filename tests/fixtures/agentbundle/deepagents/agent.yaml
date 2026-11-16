@@ -1,6 +1,6 @@
 # Model selection is an execution binding, not bundle content: the values are
 # ${ENV} placeholders resolved by the composition entry (agent.py) at import
-# time, mirroring the real Ember-LangGraph delivery contract.
+# time, mirroring the production DeepAgents bundle format.
 model:
   provider: ${AGENT_MODEL_PROVIDER}
   model: ${AGENT_MODEL_NAME}

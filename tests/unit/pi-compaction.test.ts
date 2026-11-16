@@ -45,7 +45,7 @@ test("an explicit endpoint registers the model with the configured budget", asyn
   const runtime = stubRuntime();
   const model = await modelFor(input({ maxTokens: 384_000 }), runtime as never);
   expect(model).toMatchObject({ contextWindow: 384_000 + COMPACTION_RESERVE_TOKENS, maxTokens: 384_000 });
-  expect(runtime.providers.get("ember-runtime")!.models[0]).toMatchObject({ contextWindow: 384_000 + COMPACTION_RESERVE_TOKENS });
+  expect(runtime.providers.get("arsi-evaluator-runtime")!.models[0]).toMatchObject({ contextWindow: 384_000 + COMPACTION_RESERVE_TOKENS });
 });
 
 test("without model metadata or maxTokens the output limit follows the published 128000 default", async () => {

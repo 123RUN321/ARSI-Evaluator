@@ -1,5 +1,5 @@
 name: "Benchmark Integration"
-description: "Request integration of a new benchmark or dataset into Ember Evaluator"
+description: "Request integration of a new benchmark or dataset into ARSI-Evaluator"
 title: "[Benchmark] "
 labels: ["category:benchmark"]
 body:
@@ -21,7 +21,7 @@ body:
     id: overview
     attributes:
       label: Overview
-      description: "What capability does the benchmark evaluate? Why should Ember support it?"
+      description: "What capability does the benchmark evaluate? Why should ARSI-Evaluator support it?"
     validations:
       required: true
   - type: textarea

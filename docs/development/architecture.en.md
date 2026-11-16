@@ -35,7 +35,7 @@ This table covers repository source dependencies, not Node built-ins or third-pa
 | application | application, config, core, plugins, runtimes, infrastructure |
 | cli | cli, application, core |
 
-`src/index.ts` and `src/cli.ts` are public export/process entries exempt from the directory table. Other internal modules cannot import the package root or self-import `ember-evaluator` to bypass the rules. Config, infrastructure, and runtimes also cannot import `core/execution/`.
+`src/index.ts` and `src/cli.ts` are public export/process entries exempt from the directory table. Other internal modules cannot import the package root or self-import `arsi-evaluator` to bypass the rules. Config, infrastructure, and runtimes also cannot import `core/execution/`.
 
 Run `pnpm check:dependencies`. Rules and the config allowlist live in [check-dependencies.mjs](../../scripts/check-dependencies.mjs); [dependency-baseline.json](../../scripts/dependency-baseline.json) must remain empty. Adding a config file does not automatically permit other layers to import it.
 
@@ -97,7 +97,7 @@ Benchmarks use `agent-harness/`, `inference-engine/`, and `operator/`, each with
 
 A feature can span roles. AgentX input/evidence lives in `plugins/benchmarks/inference-engine/agentx/`, execution calls in `plugins/solvers/agentx-replay.ts`, installation/bridging in `runtimes/agentx/`, and metrics/reporting in their respective roles. `evidence/` parses saved results directly without importing registration entries, installers, or samplers; shared versions come from the I/O-free `runtimes/agentx/versions.ts`.
 
-At build time, [build-plugins.mjs](../../scripts/build-plugins.mjs) scans `plugins/*/ember-plugin.json` at the repository root, installs the build output and patches under `dist/plugins/<id>/`, and writes the default plugin list to `dist/bundled-plugins.patch.yaml`. The registry loads that list at runtime. The host defines CLI commands.
+At build time, [build-plugins.mjs](../../scripts/build-plugins.mjs) scans `plugins/*/arsi-evaluator-plugin.json` at the repository root, installs the build output and patches under `dist/plugins/<id>/`, and writes the default plugin list to `dist/bundled-plugins.patch.yaml`. The registry loads that list at runtime. The host defines CLI commands.
 
 ## Build, Distribution, and Maintenance
 

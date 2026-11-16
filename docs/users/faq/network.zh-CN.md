@@ -8,9 +8,9 @@
 
 ```bash
 # 查看实际生效的配置，不下载
-ember-evaluator inspect experiment.yaml --network network.yaml
+arsi-evaluator inspect experiment.yaml --network network.yaml
 # 检查工具和网络，会发起临时下载
-ember-evaluator doctor experiment.yaml --network network.yaml
+arsi-evaluator doctor experiment.yaml --network network.yaml
 ```
 
 ## 查看诊断结果
@@ -41,7 +41,7 @@ Docker 代理和 daemon 连接问题见[部署网络配置](../deployment/networ
 `doctor` 只检查部分下载和构建操作，不代表所有题目的镜像、依赖或模型调用都可用。进一步准备实际选中的任务：
 
 ```bash
-ember-evaluator warmup experiment.yaml --network network.yaml
+arsi-evaluator warmup experiment.yaml --network network.yaml
 ```
 
 `warmup` 准备镜像和依赖，不调用模型。参数和前置条件见[镜像预热](../usage.zh-CN.md#只预热镜像不开始测评)。已有 run 中符合条件的网络失败任务可按[网络故障补测](../network-retry.zh-CN.md)恢复。

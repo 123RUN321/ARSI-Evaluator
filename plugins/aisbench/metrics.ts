@@ -1,5 +1,5 @@
-import { attemptStatus, fingerprintConfig } from "ember-evaluator";
-import type { AttemptRecord, JsonValue, Metrics, ResultSnapshot } from "ember-evaluator";
+import { attemptStatus, fingerprintConfig } from "arsi-evaluator";
+import type { AttemptRecord, JsonValue, Metrics, ResultSnapshot } from "arsi-evaluator";
 import { normalizedMetrics, parseAisbenchSummary } from "./evidence.js";
 import type { AisbenchSummary } from "./evidence.js";
 import { expectRecord } from "./validation.js";

@@ -13,7 +13,7 @@ import { NetworkRuntime } from "../../src/infrastructure/network/runtime.js";
 test.skipIf(process.env.EVALUATOR_RETAINED_IMAGES_TEST !== "1")("Docker save archives share one retained reference without restoring publisher tags", async () => {
   const root = await mkdtemp(join(tmpdir(), "evaluator-docker-archive-"));
   const name = `evaluator-archive-fixture:${randomUUID()}`;
-  const repository = `ember-evaluator/fixture-${randomUUID()}`;
+  const repository = `arsi-evaluator/fixture-${randomUUID()}`;
   const second = name + "-second";
   const active = AbortSignal.timeout(120_000);
   const raw: typeof runDockerCommand = runDockerCommand;

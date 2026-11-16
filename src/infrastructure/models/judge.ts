@@ -17,9 +17,9 @@ export async function completeJudge(prompt: string, config: ModelConfig, auth: R
   let providerId: string;
   if (config.endpoint !== null) {
     if (config.api === null) throw new TypeError("Judge endpoint requires an API protocol");
-    providerId = "ember-judge";
+    providerId = "arsi-evaluator-judge";
     runtime.registerProvider(providerId, {
-      name: "Ember judge provider",
+      name: "ARSI-Evaluator judge provider",
       baseUrl: config.endpoint,
       api: config.api as Api,
       ...(config.api === "openai-completions" && config.maxTokens === undefined

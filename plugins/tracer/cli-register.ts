@@ -1,4 +1,4 @@
-import type { PluginCliRegistrar } from "ember-evaluator";
+import type { PluginCliRegistrar } from "arsi-evaluator";
 
 export function registerCli(cli: PluginCliRegistrar): void {
   cli.addCommand({

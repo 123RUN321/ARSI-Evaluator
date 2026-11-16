@@ -3,7 +3,7 @@ import { execFile } from "node:child_process";
 import { readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { bootstrap, fingerprintConfig, loadConfig, rebuildReport } from "ember-evaluator";
+import { bootstrap, fingerprintConfig, loadConfig, rebuildReport } from "arsi-evaluator";
 
 const [scenario, directory] = process.argv.slice(2);
 assert(directory, "usage: consumer.mjs <scenario> <directory>");
@@ -15,11 +15,11 @@ process.env.EVALUATOR_NETWORK_CONFIG = networkConfigPath;
 const guard = new URL("./no-external.mjs", import.meta.url).href;
 
 async function hostCli() {
-  let root = dirname(fileURLToPath(import.meta.resolve("ember-evaluator")));
+  let root = dirname(fileURLToPath(import.meta.resolve("arsi-evaluator")));
   while (true) {
     try {
       const metadata = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
-      if (metadata.name === "ember-evaluator") return resolve(root, metadata.bin["ember-evaluator"]);
+      if (metadata.name === "arsi-evaluator") return resolve(root, metadata.bin["arsi-evaluator"]);
     } catch (error) { if (error.code !== "ENOENT") throw error; }
     const parent = dirname(root);
     assert.notEqual(parent, root, "Host package metadata must expose its installed CLI");

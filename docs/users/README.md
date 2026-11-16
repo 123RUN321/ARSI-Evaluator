@@ -17,7 +17,7 @@ Install and complete one scenario before exploring common operations. `benchmark
 | Load-test existing model services over SSH | [Standalone AISBench plugin](../../plugins/aisbench/README.md) |
 | Read downloaded dataset files | [Local datasets](local-datasets.md) |
 | Call evaluations from a Node.js project | [Node.js SDK](sdk.md) |
-| Run evaluations with an agent | [Ember Evaluator skill (中文)](../../skills/ember-evaluator/SKILL.md) |
+| Run evaluations with an agent | [ARSI-Evaluator skill (中文)](../../skills/arsi-evaluator/SKILL.md) |
 
 [Image and PDF evaluation](multimodal.md): input modes, Harness matrix, and runnable examples.
 
@@ -68,9 +68,9 @@ These names are used by `benchmark info`, `init --benchmark`, and YAML. External
 | Operators | `kernel` | [Correctness and NPU performance of existing kernels](benchmarks/kernel-npu.md); local serial execution without model calls |
 
 ```bash
-ember-evaluator benchmark list
-ember-evaluator benchmark info workbuddy
-ember-evaluator init --benchmark workbuddy --output workbuddy.yaml
+arsi-evaluator benchmark list
+arsi-evaluator benchmark info workbuddy
+arsi-evaluator init --benchmark workbuddy --output workbuddy.yaml
 ```
 
 WorkBuddy Web requires a judge; Office model scoring is optional. Store Security data and results on a native Linux filesystem. Do not extract under Windows or WSL `/mnt/c` or `/mnt/d`. See [WorkBuddy](benchmarks/workbuddy.md).

@@ -33,8 +33,8 @@ This is an edit fragment, not a complete file. Update the existing `sources` blo
 Inspect the effective settings, then run your experiment:
 
 ```bash
-ember-evaluator inspect experiment.yaml --network network.yaml
-ember-evaluator run experiment.yaml --network network.yaml
+arsi-evaluator inspect experiment.yaml --network network.yaml
+arsi-evaluator run experiment.yaml --network network.yaml
 ```
 
 ## Change download URLs
@@ -126,7 +126,7 @@ Each command selects one network file in this order:
 | --- | --- |
 | 1 | CLI `--network`, or SDK `networkConfigPath` |
 | 2 | `EVALUATOR_NETWORK_CONFIG` environment variable |
-| 3 | `~/.ember-evaluator/network.yaml` on Linux/macOS, or `%USERPROFILE%\.ember-evaluator\network.yaml` on Windows |
+| 3 | `~/.arsi-evaluator/network.yaml` on Linux/macOS, or `%USERPROFILE%\.arsi-evaluator\network.yaml` on Windows |
 
 Relative paths resolve from the working directory. The selected file is not merged with the user default; omitted fields use built-in defaults. Missing or invalid explicitly selected files fail. A missing default file is created with official sources and direct connections; existing files are never overwritten.
 

@@ -14,13 +14,13 @@ try {
   relay = await startModelRelay({ api, baseUrl, apiKey, token });
   await mkdir(settings, { recursive: true, mode: 0o700 });
   const providerFile = join(home, "provider_config.json");
-  const providerId = "ember-evaluator";
+  const providerId = "arsi-evaluator";
   const apiType = api === "openai-completions" ? "openai-chat-completions" : api;
   await writeFile(providerFile, JSON.stringify({
     schemaVersion: 1,
     config: {
       providerConfigRules: { providerRules: [{
-        providerId, providerName: "Ember Evaluator",
+        providerId, providerName: "ARSI-Evaluator",
         config: {
           group: "standard-personal", access: { type: "api-key", apiKey: token },
           api: { type: apiType, baseUrl: relay.endpoint }, personalModelIds: [model],

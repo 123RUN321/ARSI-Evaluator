@@ -79,9 +79,9 @@ function fakeDockerSession(options: SessionOptions = {}): {
             digest: options.verifyDigest,
             harness: HARNESS,
             home: installHome(),
-            profile: "ember-jw",
+            profile: "arsi-evaluator-jw",
             reused: false,
-            installationId: "ember-jw-01234567",
+            installationId: "arsi-evaluator-jw-01234567",
           })}\n`,
         });
       }

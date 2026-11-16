@@ -17,7 +17,7 @@ export async function createHarnessModel(config: ModelConfig, auth: RuntimeAuth,
     const uniqueMatch = matches.length === 1 ? matches[0] : undefined;
     const registered = provider === null ? uniqueMatch : runtime.getModel(provider, config.name);
     knownContext = registered !== undefined;
-    provider = "ember-runtime";
+    provider = "arsi-evaluator-runtime";
     let definition = registered;
     if (definition === undefined) {
       // Let the Harness construct its own unknown-model definition. No Evaluator

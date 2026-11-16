@@ -340,15 +340,15 @@ export class DockerRuntime {
       return { image: image?.reference ?? tag, digest: existingId, baseDigest };
     }
     signal.throwIfAborted();
-    const context = await mkdtemp(join(tmpdir(), "ember-runtime-"));
+    const context = await mkdtemp(join(tmpdir(), "arsi-evaluator-runtime-"));
     let temporaryBase: string | undefined;
-    const output = preferred && this.inventory ? `ember-evaluator/staging:${randomUUID()}` : tag;
+    const output = preferred && this.inventory ? `arsi-evaluator/staging:${randomUUID()}` : tag;
     try {
       let input = baseImage;
-      if (this.inventory && !baseImage.startsWith("ember-evaluator/") && !/@sha256:[a-f0-9]{64}$/u.test(baseImage)) {
+      if (this.inventory && !baseImage.startsWith("arsi-evaluator/") && !/@sha256:[a-f0-9]{64}$/u.test(baseImage)) {
         const root = (await this.command(["image", "inspect", baseImage, "--format", "{{.Id}}"], { signal })).stdout.trim();
         if (!/^sha256:[a-f0-9]{64}$/u.test(root)) throw new DockerRuntimeError("ENV_IMAGE_REFERENCE_INVALID", `Invalid image identity for ${baseImage}`);
-        temporaryBase = `ember-evaluator/staging:${randomUUID()}`;
+        temporaryBase = `arsi-evaluator/staging:${randomUUID()}`;
         await this.command(["image", "tag", root, temporaryBase], { signal });
         const actual = await this.command(["image", "inspect", "--platform", this.platform, temporaryBase, "--format", "{{.Id}}"], { signal });
         if (actual.stdout.trim() !== baseDigest) throw new DockerRuntimeError("ENV_IMAGE_REFERENCE_INVALID", `Image changed while preparing ${baseImage}`);

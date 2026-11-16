@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFile, readdir, writeFile, cp, mkdir, rm, rename } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { relative as relativePath, dirname, resolve } from "node:path";
+import { relative as relativePath, basename, dirname, resolve } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import { sourceFingerprint } from "./source-fingerprint.mjs";
 
@@ -16,6 +16,11 @@ async function normalizeRuntimeText(directory) {
     if (entry.isDirectory()) await normalizeRuntimeText(path);
     else if (entry.isFile() && (entry.name === "Dockerfile" || /\.(?:m?js|json|py|txt|ya?ml)$/u.test(entry.name))) await normalizeRuntimeFile(path);
   }
+}
+
+function isRuntimeAsset(source) {
+  const name = basename(source);
+  return name !== "__pycache__" && !/\.py[co]$/u.test(name);
 }
 
 // Local development uses pnpm, while container installation still uses npm ci.
@@ -90,7 +95,7 @@ for (const name of ["worker.py", "workbuddy.py", "Dockerfile", "build-runtime.py
 }
 try {
   await mkdir(new URL("../dist/infrastructure/ray/python/", import.meta.url), { recursive: true });
-  await cp(python, new URL("../dist/infrastructure/ray/python/", import.meta.url), { recursive: true, filter: source => !source.includes("__pycache__") });
+  await cp(python, new URL("../dist/infrastructure/ray/python/", import.meta.url), { recursive: true, filter: isRuntimeAsset });
 } catch (error) { if (error.code !== "ENOENT") throw error; }
 // Normalize copied text assets before hashing so Windows and Linux builds
 // reproduce the fixed hashes embedded in the AgentBundle CLI provenance.
@@ -123,7 +128,7 @@ await writeFile(new URL("source-provenance.json", distribution),
 for (const directory of ["dsh", "deepagents", "dify", "jiuwenswarm", "hermes", "agentx", "codex", "claudecode", "zcode", "trae", "codebuddy", "shared"]) {
   const target = new URL(`../dist/runtimes/${directory}/assets/`, import.meta.url);
   await mkdir(target, { recursive: true });
-  await cp(new URL(`../src/runtimes/${directory}/assets/`, import.meta.url), target, { recursive: true });
+  await cp(new URL(`../src/runtimes/${directory}/assets/`, import.meta.url), target, { recursive: true, filter: isRuntimeAsset });
   await normalizeRuntimeText(target);
 }
 const agentBundleAssets = new URL("../dist/runtimes/agentbundle/assets/", import.meta.url);

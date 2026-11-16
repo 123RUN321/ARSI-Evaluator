@@ -48,7 +48,7 @@ test("report rebuilds stored results without model authentication and preserves 
 test("offline built-in reports ignore unavailable unrelated inserted modules", async () => {
   const manifest: RunManifest = { ...mixedSnapshot.run,
     pluginRuntime: { configDirectory: import.meta.dirname, entries: [{ id: "unrelated-solver", name: "./does-not-exist.mjs" }] },
-    pluginVersions: { "unrelated-solver": "saved-version", "ember-evaluator:builtin-runtime": `sha256:${"a".repeat(64)}` } };
+    pluginVersions: { "unrelated-solver": "saved-version", "arsi-evaluator:builtin-runtime": `sha256:${"a".repeat(64)}` } };
   const runDir = await savedRun({}, manifest); const { io, stderr } = output();
   expect(await runCli(["report", runDir], io)).toBe(0); expect(stderr.join("\n")).not.toContain("ERROR");
 });

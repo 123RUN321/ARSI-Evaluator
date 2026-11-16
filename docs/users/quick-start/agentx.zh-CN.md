@@ -22,7 +22,7 @@ bash scripts/toolbox/run.sh
 pnpm install --frozen-lockfile
 pnpm build
 pnpm add --global .
-ember-evaluator --help
+arsi-evaluator --help
 ```
 
 工具箱共享 Evaluator 仓库，Node/pnpm、Python 和编译器由管理镜像提供。AgentBundle 随项目依赖自动安装到容器的专用依赖卷中。AgentX 首次执行时自动创建独立缓存 venv 并安装 Harness，后续各并发档复用；无需手动创建 venv、任务容器或 SSH Worker。裸机无需安装这些容器内依赖。
@@ -115,9 +115,9 @@ local 回放直接在 Evaluator 所在环境执行，不创建 AgentX 任务镜�
 ## 3. 检查和运行
 
 ```bash
-ember-evaluator doctor "$EVALUATOR_CONFIG"
-ember-evaluator run "$EVALUATOR_CONFIG" --dry-run
-ember-evaluator run "$EVALUATOR_CONFIG"
+arsi-evaluator doctor "$EVALUATOR_CONFIG"
+arsi-evaluator run "$EVALUATOR_CONFIG" --dry-run
+arsi-evaluator run "$EVALUATOR_CONFIG"
 ```
 
 按顺序执行，上一条失败时先处理错误。`doctor` 执行网络下载探针，不推理、不采样；`--dry-run` 按需读取或下载来源并列出测量点，不安装 Harness 或启动采样；`run` 自动准备 venv 和数据、启动已配置的采样、预热、测量并生成报告。首次安装和完整语料重建可能耗时较长。普通前台 CLI 运行期间保持终端连接；需要后台任务时使用调用方现有的任务管理方式。
@@ -129,8 +129,8 @@ ember-evaluator run "$EVALUATOR_CONFIG"
 在所选 YAML 的 `output.directory` 下打开 `<RUN_ID>/report.md` 目录页。例如 local NPU 示例输出到 `results/agentx-npu-local`，在线 API 示例输出到 `results/agentx-model-api`。三档详细结果分别是 `points/c1/report.md`、`points/c4/report.md`、`points/c8/report.md`，每档有自己的 `metrics.json`。确认 Harness 有效性、请求错误和已启用来源的采集完整性；`completed` 本身不代表正式可比。
 
 ```bash
-ember-evaluator run "$EVALUATOR_CONFIG" --resume
-ember-evaluator report /path/to/results/RUN_ID
+arsi-evaluator run "$EVALUATOR_CONFIG" --resume
+arsi-evaluator report /path/to/results/RUN_ID
 ```
 
 续跑跳过已完成点，未完成点整档重跑。离线报告不需要模型服务、硬件采样或模型 key。更多场景和指标口径见[AgentX 完整指南](../benchmarks/agentx.zh-CN.md)。

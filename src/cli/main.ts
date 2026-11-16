@@ -177,7 +177,7 @@ async function runCliCommand(
   } catch (error) {
     if (error instanceof CommandUsageError) { failure(error); io.error(error.helpText); return 2; }
     failure(error);
-    io.error("Use ember-evaluator <command> --help for usage and parameter details.");
+    io.error("Use arsi-evaluator <command> --help for usage and parameter details.");
     return 2;
   }
   const networkOptions = command.networkConfigPath === undefined ? {} : { networkConfigPath: command.networkConfigPath };
@@ -205,7 +205,7 @@ async function runCliCommand(
       phase = "arguments";
       detail = `Parsing ${label} arguments`;
       failure(result.error);
-      io.error(`Use ember-evaluator ${label} <command> --help for usage and parameter details.`);
+      io.error(`Use arsi-evaluator ${label} <command> --help for usage and parameter details.`);
       return 2;
     }
     report(`running the ${label} plugin`, result.error);

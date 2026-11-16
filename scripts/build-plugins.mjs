@@ -5,7 +5,7 @@ import { join, relative, resolve, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { parse, stringify } from "yaml";
 
-// Repository plugins declare themselves in plugins/<name>/ember-plugin.json. The installed
+// Repository plugins declare themselves in plugins/<name>/arsi-evaluator-plugin.json. The installed
 // modules are collected in one patch for the packaged runtime and indexed for discovery.
 const FLAG_PATTERN = /^--([a-z][a-z0-9-]*)(?: +(?:<([a-z][a-z0-9-]*)>|\[([a-z][a-z0-9-]*)\]))?$/u;
 
@@ -58,7 +58,7 @@ export async function buildPlugins(root = fileURLToPath(new URL("..", import.met
       .sort();
     const manifests = [];
     for (const name of names) {
-      const file = join(pluginsDir, name, "ember-plugin.json");
+      const file = join(pluginsDir, name, "arsi-evaluator-plugin.json");
       if (!existsSync(file)) continue;
       const fail = message => { throw new Error(`${relativePath(root, file)}: ${message}`); };
       let manifest;
@@ -147,7 +147,7 @@ export async function buildPlugins(root = fileURLToPath(new URL("..", import.met
     } else if (manifest.entry !== undefined) {
       operations = [{ insert: [{ id: name, name: moduleName(manifest.entry) }] }];
     }
-    await cp(file, join(target, "ember-plugin.json"));
+    await cp(file, join(target, "arsi-evaluator-plugin.json"));
     if (!Array.isArray(operations) || operations.some(operation => !Array.isArray(operation?.insert))) {
       fail("plugin patch must contain a list of insert operations");
     }

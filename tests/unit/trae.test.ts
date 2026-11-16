@@ -123,6 +123,6 @@ test.each([
   await expect(solver.solve({ id: "task", prompt: "Find the answer" }, session, await attempt()))
     .resolves.toMatchObject({ finalText: "answer" });
   const command = start.mock.calls[0]?.[0];
-  expect(command?.args).toContain(`model_providers.ember.wire_api="${wireApi}"`);
-  expect(command?.args).toContain('model_providers.ember.base_url="http://127.0.0.1:4321/v1"');
+  expect(command?.args).toContain(`model_providers.arsi-evaluator.wire_api="${wireApi}"`);
+  expect(command?.args).toContain('model_providers.arsi-evaluator.base_url="http://127.0.0.1:4321/v1"');
 });

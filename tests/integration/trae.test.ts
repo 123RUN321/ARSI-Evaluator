@@ -71,10 +71,10 @@ for (const environment of ["local", "docker"] as const) {
 
 async function smoke(environment: "local" | "docker"): Promise<void> {
   const docker = environment === "docker";
-  const root = await mkdtemp(join(tmpdir(), "ember-trae-test-"));
+  const root = await mkdtemp(join(tmpdir(), "arsi-evaluator-trae-test-"));
   // Vitest's mock home is in the temporary directory, where workspace-write permits writes.
   const { homedir } = await vi.importActual<typeof import("node:os")>("node:os");
-  const outside = docker ? undefined : await mkdtemp(join(homedir(), ".ember-trae-sandbox-test-"));
+  const outside = docker ? undefined : await mkdtemp(join(homedir(), ".arsi-evaluator-trae-sandbox-test-"));
   const outsideFile = outside === undefined ? undefined : join(outside, "outside.txt");
   const fixture = await responsesFixture(docker, outsideFile);
   try {

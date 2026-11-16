@@ -9,7 +9,7 @@
 推荐新插件抛出明确类型，避免依赖字符串诊断：
 
 ```typescript
-import { EvaluatorError } from "ember-evaluator";
+import { EvaluatorError } from "arsi-evaluator";
 
 throw new EvaluatorError(
   "VERIFY_RESULT_INVALID",

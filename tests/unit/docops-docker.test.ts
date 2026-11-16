@@ -5,14 +5,14 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, expect, test } from "vitest";
 
-import { gitBlobHash } from "ember-evaluator";
+import { gitBlobHash } from "arsi-evaluator";
 import type { EnvironmentSpec } from "../../src/core/contracts/environment.js";
 import {
   DocOpsImageProvider,
   parseDocOpsDockerConfig,
   type DocOpsImageTransport,
 } from "../../plugins/docops/index.js";
-import type { DockerCommand } from "ember-evaluator";
+import type { DockerCommand } from "arsi-evaluator";
 
 const commit = "1234567890abcdef1234567890abcdef12345678";
 const roots: string[] = [];

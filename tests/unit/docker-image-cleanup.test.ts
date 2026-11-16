@@ -8,7 +8,7 @@ import { fingerprintImageConfig } from "../../src/core/policies/image-config.js"
 import { parseImageCleanupRequest, parseImageCleanupSummary } from "../../src/infrastructure/ray/image-cleanup.js";
 
 const id = `sha256:${"a".repeat(64)}`, otherId = `sha256:${"b".repeat(64)}`;
-const source = "official/task:v1", base = "ember-evaluator/task:solve-base-a", agent = "ember-evaluator/task:solve-agent-a";
+const source = "official/task:v1", base = "arsi-evaluator/task:solve-base-a", agent = "arsi-evaluator/task:solve-agent-a";
 const signal = () => AbortSignal.timeout(10_000);
 const owner = (configFingerprint = "a".repeat(64)) => ({ configFingerprint, taskId: "task", phase: "solve" });
 let directory: string;
@@ -61,8 +61,8 @@ const selected = (execute = true, configFingerprint = owner().configFingerprint)
 
 test("legacy cache hits rename in place, preserving both owners and a conflicting user tag", async () => {
   const fake = docker();
-  const old = "ember-evaluator/shared:solve-runtime-fixture";
-  const preferred = "ember-evaluator/base:linux-amd64-solver-simpleagent";
+  const old = "arsi-evaluator/shared:solve-runtime-fixture";
+  const preferred = "arsi-evaluator/base:linux-amd64-solver-simpleagent";
   fake.images.set(old, id);
   fake.images.set(preferred, otherId);
   const platform = "linux/amd64";
@@ -130,7 +130,7 @@ test("a shared image survives until its last selected configuration is removed",
 
 test("a missing alias held by another configuration cannot block cleanup of a live tag", async () => {
   const fake = docker();
-  const current = "ember-evaluator/base:linux-amd64-base";
+  const current = "arsi-evaluator/base:linux-amd64-base";
   const other = owner("b".repeat(64));
   await acquire(fake, false, other);
   await fake.inventory.use(owner(), signal(), () =>
@@ -154,7 +154,7 @@ test("a missing alias held by another configuration cannot block cleanup of a li
 
 test("210 tasks sharing one image add one owner per configuration", async () => {
   const fake = docker();
-  const shared = "ember-evaluator/shared:solve-runtime-a";
+  const shared = "arsi-evaluator/shared:solve-runtime-a";
   fake.images.set(shared, id);
   for (let index = 0; index < 210; index++) {
     await fake.inventory.use({ ...owner(), taskId: `test:${index}` }, signal(), () => fake.inventory.associatePrepared(shared, signal()));
@@ -218,7 +218,7 @@ test("a digest with a foreign tag is retained rather than removing that user's t
   expect(fake.images.has("user/keep:latest")).toBe(true);
 });
 
-test("--all admits historical evaluator names but preserves unrecorded foreign images", async () => {
+test("--all admits unrecorded evaluator images but preserves unrecorded foreign images", async () => {
   const fake = docker(); fake.images.set(base, id); fake.images.set(source, id);
   const result = await fake.inventory.cleanup({ all: true, execute: true }, signal());
   expect(result.items).toEqual([expect.objectContaining({ reference: base, status: "deleted" })]);
@@ -236,7 +236,7 @@ test("first previews on a shared cache agree on inventory identity without recor
 });
 test("all-image preview uses one Docker inventory query instead of inspecting hundreds of aliases", async () => {
   const fake = docker();
-  for (let index = 0; index < 200; index++) fake.images.set(`ember-evaluator/task-${index}:runtime`, id);
+  for (let index = 0; index < 200; index++) fake.images.set(`arsi-evaluator/task-${index}:runtime`, id);
   const result = await fake.inventory.cleanup({ all: true, execute: false }, signal());
   expect(result.items).toHaveLength(200);
   expect(result.items.every(item => item.status === "candidate")).toBe(true);

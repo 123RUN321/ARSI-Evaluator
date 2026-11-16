@@ -8,6 +8,7 @@ import type { ContainerPlatform } from "../../core/contracts/environment.js";
 import { downloadRegistryImage, mirrorImageReference } from "./registry-image.js";
 import { EvaluatorError } from "../../core/errors/evaluator-error.js";
 import { DockerBuildCache } from "./build-cache.js";
+import { DOCKER_IMAGE_NAMESPACE } from "./image-name.js";
 import { dockerActivity } from "./progress.js";
 import { applicationCacheRoot } from "../runtime-installation/install.js";
 import { acquireRuntimeLock } from "../runtime-installation/lock.js";
@@ -96,7 +97,7 @@ export function createDockerImagePuller(command: DockerCommand, options: {
   const downloads = new DockerBuildCache<Awaited<ReturnType<DockerImagePull>>>(false);
   return (reference, platform, signal, context) => downloads.get(JSON.stringify([reference, platform, context]), signal, async active => {
     const key = createHash("sha256").update(JSON.stringify([reference, platform])).digest("hex");
-    const tag = `ember-evaluator/pull:${key}`;
+    const tag = `${DOCKER_IMAGE_NAMESPACE}/pull:${key}`;
     const cache = join(process.env.EVALUATOR_CACHE_DIR ?? applicationCacheRoot(), "docker-pulls");
     await mkdir(cache, { recursive: true, mode: 0o700 });
     const path = join(cache, `${key}.json`);

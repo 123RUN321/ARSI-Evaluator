@@ -16,15 +16,15 @@ The first launch builds the image, then opens a container terminal. After exitin
 
 ## Install Evaluator in the Container
 
-From the repository root inside the container, follow the [installation guide](../installation.md#install-from-source) and confirm that `ember-evaluator --help` prints usage. The container already has pnpm configured.
+From the repository root inside the container, follow the [installation guide](../installation.md#install-from-source) and confirm that `arsi-evaluator --help` prints usage. The container already has pnpm configured.
 
 ## Run Experiments Inside the Container
 
 Follow the [quick start](../quick-start.md) to set model variables and prepare a configuration, then run:
 
 ```bash
-ember-evaluator doctor /path/to/config.yaml
-ember-evaluator run /path/to/config.yaml
+arsi-evaluator doctor /path/to/config.yaml
+arsi-evaluator run /path/to/config.yaml
 ```
 
 See [Playbook](../../../playbook/README.md) for examples. Set model variables again when reentering the container. For Ray, see [Ray configuration](../config.md#ray-and-execution-nodes).
@@ -32,7 +32,7 @@ See [Playbook](../../../playbook/README.md) for examples. Set model variables ag
 To open another terminal in the running container, run on the host:
 
 ```bash
-docker exec -it ember-evaluator-toolbox bash
+docker exec -it arsi-evaluator-toolbox bash
 ```
 
 ## Environment Boundaries
@@ -53,7 +53,7 @@ The management container configures the Docker wrapper automatically. For a cust
 environment:
   name: docker
   config:
-    dockerExecutable: /path/to/ember-evaluator/scripts/toolbox/docker-host.sh
+    dockerExecutable: /path/to/arsi-evaluator/scripts/toolbox/docker-host.sh
 ```
 
 The script supports local Linux Docker only. See [Docker troubleshooting](../faq/docker.md) for download and network issues.

@@ -47,12 +47,12 @@ test("run retains model and credential overrides", () => {
 test.each([["config"], ["config", "resolve", "experiment.yaml"], ["kernel"], ["unknown"]])("removed or unknown command %j prints root help", async (...args) => {
   const out: string[] = [], errors: string[] = [];
   expect(await runCli(args, { out: text => out.push(text), error: text => errors.push(text) })).toBe(2);
-  expect([...out, ...errors].join("\n")).toContain("Usage: ember-evaluator");
+  expect([...out, ...errors].join("\n")).toContain("Usage: arsi-evaluator");
 });
 test.each(["benchmark", "cleanup"])("%s without a subcommand prints its help", async name => {
   const out: string[] = [], errors: string[] = [];
   expect(await runCli([name], { out: text => out.push(text), error: text => errors.push(text) })).toBe(2);
-  expect([...out, ...errors].join("\n")).toContain("Usage: ember-evaluator " + name);
+  expect([...out, ...errors].join("\n")).toContain("Usage: arsi-evaluator " + name);
 });
 test("root help includes benchmark and omits removed commands", () => {
   const result = parseArgs(["--help"]);

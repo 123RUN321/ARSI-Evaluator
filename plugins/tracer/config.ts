@@ -44,7 +44,7 @@ function optionalString(value: unknown, path: string): string | undefined {
 }
 
 /** Options saved with a run must never contain a literal credential. */
-export function parseTracerOptions(value: unknown): Record<string, import("ember-evaluator").JsonValue> {
+export function parseTracerOptions(value: unknown): Record<string, import("arsi-evaluator").JsonValue> {
   const record = expectRecord(value ?? {}, "tracer options");
   const allowed = ["url", "collector", "db", "spool", "tokenEnv", "autostart", "timeoutMs"];
   for (const key of Object.keys(record)) if (!allowed.includes(key)) throw new TypeError(`Unknown tracer option ${key}; use tokenEnv for credentials`);
@@ -55,7 +55,7 @@ export function parseTracerOptions(value: unknown): Record<string, import("ember
   }
   const { tokenEnv, ...options } = record;
   parseTracerConfig(options);
-  return { ...options, ...(tokenEnv === undefined ? {} : { tokenEnv }) } as Record<string, import("ember-evaluator").JsonValue>;
+  return { ...options, ...(tokenEnv === undefined ? {} : { tokenEnv }) } as Record<string, import("arsi-evaluator").JsonValue>;
 }
 
 export function parseTracerConfig(value: unknown): TracerConfig {

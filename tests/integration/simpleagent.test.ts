@@ -175,7 +175,7 @@ afterEach(() => { vi.unstubAllEnvs(); });
 
 describe("simpleagent runner", () => {
   test.skipIf(process.platform === "win32")("honors the explicit Bash path before starting a model session", async () => {
-    vi.stubEnv("EMBER_BASH_PATH", join(root, "missing-shell"));
+    vi.stubEnv("ARSI_EVALUATOR_BASH_PATH", join(root, "missing-shell"));
     try {
       await expect(run(projectRunnerInput({
         key: { runId: "run", taskId: "shell", attemptId: "attempt" },
@@ -184,7 +184,7 @@ describe("simpleagent runner", () => {
         auth: { value: "fixture", reference: null },
         workdir: root,
         outputDir: join(root, "invalid-shell"),
-      }))).rejects.toThrow(/EMBER_BASH_PATH/u);
+      }))).rejects.toThrow(/ARSI_EVALUATOR_BASH_PATH/u);
     } finally {
       vi.unstubAllEnvs();
     }
@@ -264,7 +264,7 @@ describe("simpleagent runner", () => {
     if (process.platform === "win32") {
       const systemRoot = process.env.SystemRoot ?? "C:\\Windows";
       vi.stubEnv("PATH", [dirname(process.execPath), join(systemRoot, "System32", "WindowsPowerShell", "v1.0")].join(";"));
-      vi.stubEnv("EMBER_BASH_PATH", join(root, "no-git-bash"));
+      vi.stubEnv("ARSI_EVALUATOR_BASH_PATH", join(root, "no-git-bash"));
     }
     const workspaceRoot = join(root, "workspaces");
     await mkdir(workspaceRoot, { recursive: true });
@@ -314,7 +314,7 @@ describe("simpleagent runner", () => {
         expect(nativeSession.endsWith("\n")).toBe(true);
         expect(nativeSession).not.toContain(item.key);
         expect(await readFile(join(item.session.workdir, "marker.txt"), "utf8")).toBe(item.name);
-        expect(await stat(join(item.session.workdir, ".ember-runtime")).then(() => true, () => false)).toBe(false);
+        expect(await stat(join(item.session.workdir, ".arsi-evaluator-runtime")).then(() => true, () => false)).toBe(false);
         expect(trajectoryText).not.toContain(item.key);
         expect(trajectoryText).not.toContain("ISOLATION_BREACH");
       }
@@ -633,7 +633,7 @@ describe("simpleagent bundle", () => {
     // Standalone Node distributions may use npm installed in a different PATH directory.
     const npmDirectory = resolve(dirname(await packageManagerCli("npm")), "../../..");
     vi.stubEnv("PATH", [dirname(process.execPath), npmDirectory, join(systemRoot, "System32", "WindowsPowerShell", "v1.0")].join(";"));
-    vi.stubEnv("EMBER_BASH_PATH", join(root, "no-git-bash"));
+    vi.stubEnv("ARSI_EVALUATOR_BASH_PATH", join(root, "no-git-bash"));
   }
 
   test("declares bundle assets, pip installation and import probes", async () => {

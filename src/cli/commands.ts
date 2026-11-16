@@ -36,14 +36,14 @@ export class CommandUsageError extends TypeError {
 
 export function parseCommand(argv: string[], extensions: CliExtensions = { commands: [], options: [] }): Command {
   const plugins = extensions.commands;
-  const pluginExamples = plugins.map(command => `  ember-evaluator ${command.name} <command> ...`).join("\n");
+  const pluginExamples = plugins.map(command => `  arsi-evaluator ${command.name} <command> ...`).join("\n");
   const activations = new Map<string, PluginActivation>();
   let result: Command | undefined;
   let help = "";
-  const program = new Commander("ember-evaluator")
+  const program = new Commander("arsi-evaluator")
     .description("Run benchmark experiments, inspect configuration, and rebuild saved reports.")
     .exitOverride().configureOutput({ writeOut: text => { help += text; }, writeErr: text => { help += text; } });
-  program.addHelpText("after", `\nExamples:\n  ember-evaluator run experiment.yaml\n  ember-evaluator run --help\n  ember-evaluator report <run-dir>\n${pluginExamples ? pluginExamples + "\n" : ""}\nUse <command> --help for parameter details.`);
+  program.addHelpText("after", `\nExamples:\n  arsi-evaluator run experiment.yaml\n  arsi-evaluator run --help\n  arsi-evaluator report <run-dir>\n${pluginExamples ? pluginExamples + "\n" : ""}\nUse <command> --help for parameter details.`);
   const patch = (cmd: Commander) => cmd.option("--patch <path>", "Load an explicit plugin patch; path is relative to the current directory");
   const network = (cmd: Commander) => cmd.option("--network <yaml>", "Use this network YAML for source endpoints, proxies, and download settings");
   const networkOptions = (opts: Options) => opts.network === undefined ? {} : { networkConfigPath: resolve(opts.network) };
@@ -71,7 +71,7 @@ export function parseCommand(argv: string[], extensions: CliExtensions = { comma
     }
     if (name === "run") cmd.option("--dry-run", "Resolve the dataset and list selected task IDs without solving tasks")
       .addOption(new Option("--resume [run-id]", "Resume a saved run; omit the ID to select automatically").conflicts("dryRun"));
-    cmd.addHelpText("after", `\nExample:\n  ember-evaluator ${name} experiment.yaml`);
+    cmd.addHelpText("after", `\nExample:\n  arsi-evaluator ${name} experiment.yaml`);
     cmd.action((file: string, opts: Options) => {
       result = { kind: name === "run" && opts.dryRun ? "dry-run" : name, file, ...common(opts),
         ...(opts.taskIdsFile === undefined ? {} : { taskIdsFile: opts.taskIdsFile }),

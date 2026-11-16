@@ -5,7 +5,7 @@ import { isAbsolute, join } from "node:path";
 
 const MAX_STRING_BYTES = 8 * 1024;
 const MAX_EVENT_BYTES = 32 * 1024;
-const handlerKey = Symbol.for("ember.evaluator.dsh.tool-output.v1");
+const handlerKey = Symbol.for("arsi-evaluator.dsh.tool-output.v1");
 
 function redact(text, secret) {
   if (!secret) return text;
@@ -76,7 +76,7 @@ export function serializeToolResult(event, outputDir, secret = "") {
 
 const outputDir = process.env.EVALUATOR_DSH_OUTPUT_DIR;
 if (outputDir !== undefined) {
-  const secret = process.env.EMBER_EVALUATOR_API_KEY ?? "";
+  const secret = process.env.ARSI_EVALUATOR_API_KEY ?? "";
   // PATH shims require NODE_OPTIONS to preload in their child Node process.
   // Remove only our option before DSH launches tools; retain other Node options.
   const option = `--import=${import.meta.url}`;

@@ -14,7 +14,7 @@ importers:
       '@types/node':
         specifier: 24.13.5
         version: 24.13.5
-      ember-evaluator:
+      arsi-evaluator:
         specifier: link:../..
         version: link:../..
       esbuild:

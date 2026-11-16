@@ -23,7 +23,7 @@ export KERNEL_EVAL_PYTHON=/absolute/path/to/venv/bin/python
 export KERNEL_MANIFEST=/absolute/path/to/cases/tasks.json
 export KERNEL_EVAL_PLACEHOLDER=unused-local-evaluation
 cp playbook/kernel/existing.yaml experiment.yaml
-ember-evaluator run experiment.yaml
+arsi-evaluator run experiment.yaml
 ```
 
 示例 YAML 中的 service 是框架必填字段占位，地址不可用。现有配置加载器要求 `api_key` 引用非空环境变量，因此设置 `KERNEL_EVAL_PLACEHOLDER` 为上述普通文本即可，不要填写真实模型密钥。模型用量为零；离线 `report` 不需要该变量。
@@ -33,7 +33,7 @@ ember-evaluator run experiment.yaml
 所有操作均通过同一个实验 YAML 运行：
 
 ```bash
-ember-evaluator run experiment.yaml
+arsi-evaluator run experiment.yaml
 ```
 
 使用 `benchmark.config.operation` 选择执行内容：
@@ -258,15 +258,15 @@ profiling.artifacts                        # 相对 verifier/ 的原始证据路
 
 ```bash
 # 使用 run 输出的结果目录；无需模型凭证或重新执行算子。
-ember-evaluator report /absolute/path/to/results/run-id
+arsi-evaluator report /absolute/path/to/results/run-id
 # 沿用同一配置续跑；仍须设置配置引用的环境变量。
-ember-evaluator run experiment.yaml --resume
+arsi-evaluator run experiment.yaml --resume
 ```
 
 `--dry-run` 通过只表示配置和任务来源可解析，不检查 NPU 是否可用。实际 `run` 缺少 torch、torch_npu 或 NPU 时会返回非零退出码，并留下无效评测记录；不能据此判断候选算子的正确性。
 
 ## 与 RSI 框架对接
 
-RSI 的 `application.kernel` 封存候选源码，`proposer.operator` 生成改动，`evaluator.operatorbench` 通过完整 `Evaluator.run()` SDK 调用 kernel Benchmark 与 kernel-replay Solver。RSI 安装固定提交的 `ember-evaluator`，通过实验配置选择相同的 Benchmark 操作。Measurement 证据链接原生结果与 verifier 产物；证据可用性及校准用于标记可信度，与候选生成区分。
+RSI 的 `application.kernel` 封存候选源码，`proposer.operator` 生成改动，`evaluator.operatorbench` 通过完整 `Evaluator.run()` SDK 调用 kernel Benchmark 与 kernel-replay Solver。RSI 安装固定提交的 `arsi-evaluator`，通过实验配置选择相同的 Benchmark 操作。Measurement 证据链接原生结果与 verifier 产物；证据可用性及校准用于标记可信度，与候选生成区分。
 
 SDK 拥有运行资产、依赖和 prepare/build 生命周期。契约与计时验证通过公共导出消费。独立安装包测试只能证明打包和软件链路，真实精度与性能仍须在 NPU 验证。

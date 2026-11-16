@@ -76,7 +76,7 @@ export async function loadAttachments(input: PublicTask, session: EnvironmentSes
         }
         for (const page of attachment.pages) {
           const name = `${attachment.sha256}-${attachment.rendererVersion}-${attachment.dpi}-${page}`;
-          const prefix = join(tmpdir(), "ember-evaluator-pdf-pages-v1", name);
+          const prefix = join(tmpdir(), "arsi-evaluator-pdf-pages-v1", name);
           const target = `${prefix}.png`;
           const release = await acquireRuntimeLock(`${prefix}.lock`, context.signal);
           try {

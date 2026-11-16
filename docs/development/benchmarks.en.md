@@ -178,22 +178,22 @@ These validate discovery/config/execution during development. Real dataset image
 Follow [installation](../users/installation.md), build, set MODEL_NAME/MODEL_ENDPOINT/MODEL_API_KEY, then run from root in WSL/Bash:
 
 ```bash
-ember-evaluator benchmark list --patch tests/fixtures/benchmark-examples/patch.yaml
-ember-evaluator benchmark info example-definition --patch tests/fixtures/benchmark-examples/patch.yaml
-ember-evaluator doctor tests/fixtures/benchmark-examples/definition.yaml --patch tests/fixtures/benchmark-examples/patch.yaml
-ember-evaluator run tests/fixtures/benchmark-examples/definition.yaml --patch tests/fixtures/benchmark-examples/patch.yaml
+arsi-evaluator benchmark list --patch tests/fixtures/benchmark-examples/patch.yaml
+arsi-evaluator benchmark info example-definition --patch tests/fixtures/benchmark-examples/patch.yaml
+arsi-evaluator doctor tests/fixtures/benchmark-examples/definition.yaml --patch tests/fixtures/benchmark-examples/patch.yaml
+arsi-evaluator run tests/fixtures/benchmark-examples/definition.yaml --patch tests/fixtures/benchmark-examples/patch.yaml
 ```
 
-Replace `definition.yaml` with `protocol.yaml` or harbor.yaml. Harbor needs Docker/pinned Node; models need tools/file writes. `doctor` runs download/build probes without calling models; execution may download runtimes. Results live under .scratch/benchmark-examples/. Pass output to ember-evaluator report `<run-dir>` for offline rebuild without authentication. Saved report-plugin provenance loads Metrics/Reporter; no repeated patch argument is needed.
+Replace `definition.yaml` with `protocol.yaml` or harbor.yaml. Harbor needs Docker/pinned Node; models need tools/file writes. `doctor` runs download/build probes without calling models; execution may download runtimes. Results live under .scratch/benchmark-examples/. Pass output to arsi-evaluator report `<run-dir>` for offline rebuild without authentication. Saved report-plugin provenance loads Metrics/Reporter; no repeated patch argument is needed.
 
 For init-generated configurations, copy example data beside output so profile-relative paths remain valid:
 
 ```bash
 mkdir -p .scratch/benchmark-init
 cp tests/fixtures/benchmark-examples/questions.json .scratch/benchmark-init/
-ember-evaluator init --benchmark example-protocol --output .scratch/benchmark-init/experiment.yaml --patch tests/fixtures/benchmark-examples/patch.yaml
-ember-evaluator doctor .scratch/benchmark-init/experiment.yaml --patch tests/fixtures/benchmark-examples/patch.yaml
-ember-evaluator run .scratch/benchmark-init/experiment.yaml --patch tests/fixtures/benchmark-examples/patch.yaml
+arsi-evaluator init --benchmark example-protocol --output .scratch/benchmark-init/experiment.yaml --patch tests/fixtures/benchmark-examples/patch.yaml
+arsi-evaluator doctor .scratch/benchmark-init/experiment.yaml --patch tests/fixtures/benchmark-examples/patch.yaml
+arsi-evaluator run .scratch/benchmark-init/experiment.yaml --patch tests/fixtures/benchmark-examples/patch.yaml
 ```
 
 `init` never overwrites. Harbor copies `harbor/` beside config. Change `benchmark.config.path` for records or source for Harbor. Paths are always YAML-relative, not patch-relative.

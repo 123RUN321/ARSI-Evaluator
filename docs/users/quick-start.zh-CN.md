@@ -8,14 +8,14 @@
 
 先完成[安装指南](installation.zh-CN.md#直接安装)。下面的 local 示例不需要 Docker 或 Ray，Agent 会在本机执行工具。
 
-后文使用安装时注册的 `ember-evaluator` 命令；请在同一工作目录依次执行，便于使用生成的配置和结果路径。
+后文使用安装时注册的 `arsi-evaluator` 命令；请在同一工作目录依次执行，便于使用生成的配置和结果路径。
 
 ## 2. 选择题库并生成配置
 
 ```bash
-ember-evaluator benchmark list
-ember-evaluator benchmark info gsm8k
-ember-evaluator init --benchmark gsm8k --output first-run.yaml
+arsi-evaluator benchmark list
+arsi-evaluator benchmark info gsm8k
+arsi-evaluator init --benchmark gsm8k --output first-run.yaml
 ```
 
 `list` 列出可用名称，`info` 显示默认组合，`init` 生成配置文件。文件已存在时 `init` 会报错，不会覆盖它。
@@ -74,8 +74,8 @@ $env:MODEL_API_KEY = [System.Net.NetworkCredential]::new("", $modelKey).Password
 ## 4. 先检查，再运行
 
 ```bash
-ember-evaluator doctor first-run.yaml
-ember-evaluator run first-run.yaml
+arsi-evaluator doctor first-run.yaml
+arsi-evaluator run first-run.yaml
 ```
 
 `doctor` 会检查配置、认证引用、工具和网络，执行临时下载及 Docker 构建探针，不发送模型请求、不执行题目。`not-checked` 表示没有检查，不表示检查通过；模型与数据源权限需要实际运行确认。
@@ -95,7 +95,7 @@ results/first-run/<RUN_ID>
 以后需要重新生成报告时：
 
 ```bash
-ember-evaluator report results/first-run/<RUN_ID>
+arsi-evaluator report results/first-run/<RUN_ID>
 ```
 
 把 `<RUN_ID>` 换成实际目录名。离线报告不需要模型 key，不会再次发题；保持结果目录完整，不要只复制一个 `result.json`。
@@ -107,7 +107,7 @@ ember-evaluator report results/first-run/<RUN_ID>
 保持实验配置不变，使用同一份 YAML：
 
 ```bash
-ember-evaluator run first-run.yaml --resume
+arsi-evaluator run first-run.yaml --resume
 ```
 
 也可用 `--resume <RUN_ID>` 明确指定。续跑跳过已有有效结果，未完成或无效任务会新建 attempt，不是从对话的某一轮继续。Evaluator 代码允许更新并重新构建后续跑；改了模型、题目、并发等配置后应开始新 run。配置、来源、外部插件和 Solver 身份检查仍然有效，详见[续跑说明](usage.zh-CN.md#续跑与重建报告)。

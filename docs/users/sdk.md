@@ -11,7 +11,7 @@
 Follow [source installation](installation.md#install-from-source) to install and build Evaluator. pnpm downloads and builds the AgentBundle SDK automatically. Use ESM and pnpm in the application, then run these commands from its directory. Here, `pnpm` reads the application’s own `packageManager` configuration rather than Evaluator’s:
 
 ```bash
-pnpm add 'ember-evaluator@link:../ember-evaluator'
+pnpm add 'arsi-evaluator@link:../arsi-evaluator'
 ```
 
 Adjust the path for your layout. `link:` does not compile source automatically; rebuild after updating Evaluator. Keep the Evaluator directory and its installed dependencies accessible.
@@ -23,7 +23,7 @@ pnpm pack --pack-destination .scratch/packages
 ```
 
 ```bash
-pnpm add '/path/to/ember-evaluator-0.1.0.tgz'
+pnpm add '/path/to/arsi-evaluator-0.1.0.tgz'
 ```
 
 Evaluator uses `private: true` in its package manifest. The commands above install the SDK from a local link or tarball.
@@ -33,7 +33,7 @@ Evaluator uses `private: true` in its package manifest. The commands above insta
 Set `"type": "module"` in the application's `package.json`. For example, create `evaluate.mjs`:
 
 ```js
-import { Evaluator, EvaluatorRunError } from "ember-evaluator";
+import { Evaluator, EvaluatorRunError } from "arsi-evaluator";
 
 const evaluator = new Evaluator();
 const controller = new AbortController();
@@ -68,7 +68,7 @@ Set the YAML model variables in the current terminal as shown in [quick start](q
 | Option | Meaning |
 | --- | --- |
 | `configPath` | Experiment YAML; relative to the working directory at call time |
-| `networkConfigPath` | Network YAML, relative to the working directory; defaults to `EVALUATOR_NETWORK_CONFIG`, then `~/.ember-evaluator/network.yaml` |
+| `networkConfigPath` | Network YAML, relative to the working directory; defaults to `EVALUATOR_NETWORK_CONFIG`, then `~/.arsi-evaluator/network.yaml` |
 | `patchPath` | Adds plugins alongside bundled defaults. The path is relative to the current directory |
 | `overrides` | CLI-equivalent `model` `overrides`: `model`, `endpoint`, `apiKey`, `apiKeyEnv` |
 | `env` | YAML variable expansion and model authentication; defaults to `process.env`; an explicit object replaces it without merging |
@@ -92,7 +92,7 @@ const result = await evaluator.run({
 
 The network YAML can reference `proxy: { https: "${DOWNLOAD_PROXY}" }`. When `networkConfigPath` is omitted, Evaluator checks `EVALUATOR_NETWORK_CONFIG` before using the default file in the user directory. An empty file uses built-in values, with supported environment overrides still applied. See [network configuration fields](reference/network.md).
 
-Set local data paths in the experiment YAML: `benchmark.config.localPath` for record datasets, or `benchmark.config.source: { kind: local, path: ./dataset }` for Harbor tasks. Paths are relative to the experiment YAML for both SDK and CLI. See [local datasets](local-datasets.md). The SDK does not expose `doctor()` or `inspect()`; use `ember-evaluator doctor experiment.yaml` for diagnosis.
+Set local data paths in the experiment YAML: `benchmark.config.localPath` for record datasets, or `benchmark.config.source: { kind: local, path: ./dataset }` for Harbor tasks. Paths are relative to the experiment YAML for both SDK and CLI. See [local datasets](local-datasets.md). The SDK does not expose `doctor()` or `inspect()`; use `arsi-evaluator doctor experiment.yaml` for diagnosis.
 
 ## Cancellation, Resume, and Reports
 

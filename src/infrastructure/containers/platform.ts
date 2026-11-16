@@ -84,10 +84,10 @@ export class PlatformCapabilityDetector {
       // Pull failures retain their registry/network classification; they do not
       // prove that emulation is unavailable.
       const image = await prepareProbeImage(active);
-      const name = `ember-platform-probe-${randomUUID()}`;
+      const name = `arsi-evaluator-platform-probe-${randomUUID()}`;
       const probeSignal = AbortSignal.any([active, AbortSignal.timeout(30_000)]);
       try {
-        await this.command(["create", "--pull", "never", "--name", name, "--label", "ember.role=platform-probe",
+        await this.command(["create", "--pull", "never", "--name", name, "--label", "arsi-evaluator.role=platform-probe",
           "--network", "none", "--read-only", "--cpus", "1", "--memory", "256m", "--platform", resolution.platform,
           "--entrypoint", "/usr/local/bin/node", image, "-e",
           "process.stdout.write(process.platform + '/' + process.arch)"], { signal: probeSignal });

@@ -30,7 +30,7 @@ PDF 需要指定 `mode`：
 3. 把附件放入 `input.attachments`，把答案和隐藏测试留在 `verification` 或独立验证环境。禁止根据私有答案提示挑选“相关图片”。
 4. 多步骤任务分别在每个 `step.task.input` 声明附件。核心会在启动环境前校验路径、类型、来源摘要，在调用 Solver 前检查输入能力。
 
-第三方插件从 `ember-evaluator` 包根导入 `TaskAttachment`、`InputModality` 和 `parseTaskAttachments`。不依赖 `src/runtimes` 内部文件。
+第三方插件从 `arsi-evaluator` 包根导入 `TaskAttachment`、`InputModality` 和 `parseTaskAttachments`。不依赖 `src/runtimes` 内部文件。
 
 ## Solver：声明并实际发送能力
 
@@ -72,7 +72,7 @@ export EVALUATOR_DEEPAGENTS_TEST_PYTHON=/path/to/venv/bin/python
 # 此 venv 安装 deepagents==0.7.15 与 langchain-openai。
 export EVALUATOR_DSH_TEST_RUNTIME=/path/to/dsh-runtime
 # 此目录含 package.json 以及同版本 dsh、dsh-sdk-client 的 node_modules。
-export EMBER_EVALUATOR_API_KEY=fixture
+export ARSI_EVALUATOR_API_KEY=fixture
 pnpm exec vitest run tests/integration/multimodal-runners.test.ts
 
 # 安装固定提交 9b3706f 的 JiuwenSwarm 及其依赖后运行真实 Harness 请求回归。

@@ -35,7 +35,7 @@ config 负责配置文件读取和解析，不加载插件模块。[plugin-patch
 | application | application、config、core、plugins、runtimes、infrastructure |
 | cli | cli、application、core |
 
-`src/index.ts` 和 `src/cli.ts` 是公开导出和进程入口，不受上表的目录限制。其他内部模块不得引用包根或用 `ember-evaluator` 自引用绕过规则。config、infrastructure、runtimes 还禁止引用 `core/execution/`。
+`src/index.ts` 和 `src/cli.ts` 是公开导出和进程入口，不受上表的目录限制。其他内部模块不得引用包根或用 `arsi-evaluator` 自引用绕过规则。config、infrastructure、runtimes 还禁止引用 `core/execution/`。
 
 运行 `pnpm check:dependencies` 检查这些限制。规则和 config 允许清单维护在 [check-dependencies.mjs](../../scripts/check-dependencies.mjs)，[dependency-baseline.json](../../scripts/dependency-baseline.json) 必须保持为空。新增 config 文件不会自动获得其他层的引用权限。
 
@@ -97,7 +97,7 @@ Benchmark 分为 `agent-harness/`、`inference-engine/`、`operator/`，各自�
 
 同一功能可以跨角色目录。例如 AgentX 的输入和证据在 `plugins/benchmarks/inference-engine/agentx/`，负载调用在 `plugins/solvers/agentx-replay.ts`，安装和桥接在 `runtimes/agentx/`，指标与报告分别在 metrics 和 reporters。`evidence/` 直接解析保存的结果，不通过注册入口加载安装器或采样进程；共享版本信息来自无 I/O 的 `runtimes/agentx/versions.ts`。
 
-构建时，[build-plugins.mjs](../../scripts/build-plugins.mjs) 扫描仓库根目录下的 `plugins/*/ember-plugin.json`，把构建产物和 patch 写到 `dist/plugins/<id>/`，并生成默认插件列表 `dist/bundled-plugins.patch.yaml`。运行时由注册表加载这份列表。CLI 命令由宿主定义。
+构建时，[build-plugins.mjs](../../scripts/build-plugins.mjs) 扫描仓库根目录下的 `plugins/*/arsi-evaluator-plugin.json`，把构建产物和 patch 写到 `dist/plugins/<id>/`，并生成默认插件列表 `dist/bundled-plugins.patch.yaml`。运行时由注册表加载这份列表。CLI 命令由宿主定义。
 
 ## 构建、发布与维护
 

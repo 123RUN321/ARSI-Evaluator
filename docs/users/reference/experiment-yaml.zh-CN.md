@@ -57,7 +57,7 @@
 | `benchmark.verifier.config` | 对象 | 可选，取合并后的设置或空对象 | 所选 Verifier 的专属参数。 |
 | `benchmark.verifier.service` | 非空字符串 | 可选，取 Profile 或保持未设置 | 需要模型的 Verifier 可绑定服务。显式设为 `$default` 时按 Solver 的默认服务规则查找。 |
 
-用 `ember-evaluator benchmark list` 查看可用 Benchmark，用 `ember-evaluator benchmark info <name>` 查看指定 Benchmark 的版本、场景和解析后的设置。
+用 `arsi-evaluator benchmark list` 查看可用 Benchmark，用 `arsi-evaluator benchmark info <name>` 查看指定 Benchmark 的版本、场景和解析后的设置。
 
 ## Environment、Scheduler、Store、Reporter 与 Metrics
 
@@ -138,8 +138,8 @@
 在仓库根目录运行下面的命令。执行 `inspect` 前先设置生成的 YAML 引用的模型环境变量。该命令会展示应用框架和 Profile 默认值后的配置，并校验所选组件的参数。插件在运行时补齐的默认值可查对应插件说明。
 
 ```bash
-ember-evaluator init --benchmark gsm8k --output experiment.yaml
-ember-evaluator inspect experiment.yaml
+arsi-evaluator init --benchmark gsm8k --output experiment.yaml
+arsi-evaluator inspect experiment.yaml
 ```
 
 [模型配置与两题快速入门](../quick-start.zh-CN.md) · [可运行的 Playbook](../../../playbook/README.md) · [CLI 命令参考](cli.zh-CN.md)

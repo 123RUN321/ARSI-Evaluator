@@ -1,5 +1,5 @@
 {
-  "name": "ember-evaluator-codebuddy-runtime",
+  "name": "arsi-evaluator-codebuddy-runtime",
   "version": "1.0.0",
   "private": true,
   "dependencies": {

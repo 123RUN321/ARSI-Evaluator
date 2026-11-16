@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
-import { classifyError, EvaluatorError, fingerprintConfig } from "ember-evaluator";
-import type { AttemptRecord, JsonValue, MetricResults, ResultSnapshot } from "ember-evaluator";
+import { classifyError, EvaluatorError, fingerprintConfig } from "arsi-evaluator";
+import type { AttemptRecord, JsonValue, MetricResults, ResultSnapshot } from "arsi-evaluator";
 import { AisbenchPerformanceMetrics } from "../../metrics.js";
 import { AisbenchMarkdownReporter } from "../../reporter.js";
 import { aisbenchRecord, aisbenchSnapshot, aisbenchSummary } from "../fixtures/results.js";

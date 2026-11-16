@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { fingerprintConfig } from "ember-evaluator";
+import { fingerprintConfig } from "arsi-evaluator";
 
 // This tiny file source belongs to the example; real adapters may fetch/cache elsewhere.
 export function questionSource(path) {

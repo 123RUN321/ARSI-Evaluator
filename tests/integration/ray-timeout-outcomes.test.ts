@@ -18,7 +18,7 @@ vi.mock("../../src/infrastructure/ray/client.js", () => ({ RayClient: class {
   start = async () => {};
   submit = bridge.submit; cleanupAttempt = bridge.cleanupAttempt; cancel = bridge.cancel; close = bridge.close;
 } }));
-vi.mock("../../src/infrastructure/provenance/package.js", () => ({ PACKAGE_RUNTIME_ID: "ember-evaluator:package", loadPackageDigest: async () => `sha256:${"a".repeat(64)}` }));
+vi.mock("../../src/infrastructure/provenance/package.js", () => ({ PACKAGE_RUNTIME_ID: "arsi-evaluator:package", loadPackageDigest: async () => `sha256:${"a".repeat(64)}` }));
 vi.mock("../../src/infrastructure/transfer/https.js", () => ({ startTransferReceiver: async () => ({ url: "https://collector.invalid", close: async () => {} }) }));
 
 const cleanups: (() => Promise<void>)[] = [];
@@ -30,7 +30,7 @@ async function fixture(taskIds = ["a"], concurrency?: number) {
   cleanups.push(async () => { await store.close(); await rm(root, { recursive: true, force: true }); });
   const certFile = join(root, "certificate.pem");
   await writeFile(certFile, "fixture");
-  const run = { ...storeRun, taskIds, pluginVersions: { "ember-evaluator:package": `sha256:${"a".repeat(64)}` } };
+  const run = { ...storeRun, taskIds, pluginVersions: { "arsi-evaluator:package": `sha256:${"a".repeat(64)}` } };
   const safeConfig = {
     benchmark: { name: "fixture", config: {} }, environment: { name: "docker", config: { platform: "auto" } },
     solver: { name: "fixture", config: {}, service: "default" },

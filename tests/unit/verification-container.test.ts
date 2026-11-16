@@ -1,5 +1,7 @@
 import type { SpawnOptions } from "node:child_process";
 import { afterEach, expect, test, vi } from "vitest";
+import { recoverDockerAttempts } from "../../src/infrastructure/containers/recovery.js";
+import type { DockerCommand } from "../../src/infrastructure/containers/runtime-contract.js";
 import { humanevalDefinition } from "../../src/plugins/benchmarks/agent-harness/definitions/humaneval.js";
 import { createVerifierContainer, materializeVerifierImage } from "../../src/plugins/verifiers/shared/container.js";
 
@@ -36,6 +38,22 @@ test("missing verifier images are pulled during materialization and resolved to 
   expect(state.calls.map(args => args[0])).toEqual(["image", "version", "pull", "image"]);
 });
 
+test("Docker recovery looks up and verifies the ARSI-Evaluator attempt labels", async () => {
+  const id = "a".repeat(12);
+  const labels = { "arsi-evaluator.run": "run", "arsi-evaluator.task": "task", "arsi-evaluator.attempt": "attempt", "arsi-evaluator.phase": "verify" };
+  const docker = vi.fn<DockerCommand>()
+    .mockResolvedValueOnce({ stdout: id, stderr: "" })
+    .mockResolvedValueOnce({ stdout: JSON.stringify([{ Config: { Labels: labels } }]), stderr: "" })
+    .mockResolvedValueOnce({ stdout: "", stderr: "" });
+  await recoverDockerAttempts(docker, [key], signal());
+  expect(docker.mock.calls.map(([args]) => args)).toEqual([
+    ["ps", "--all", "--quiet", "--filter", "label=arsi-evaluator.run=run",
+      "--filter", "label=arsi-evaluator.task=task", "--filter", "label=arsi-evaluator.attempt=attempt"],
+    ["inspect", id],
+    ["rm", "--force", id],
+  ]);
+});
+
 test.each([0, 1])("HumanEval requires completed tests in a prepared, labelled offline container (exit %s)", async code => {
   state.exitCode = code;
   state.script = `let input=''; process.stdin.on('data', chunk => input+=chunk); process.stdin.on('end', () => {
@@ -50,7 +68,7 @@ test.each([0, 1])("HumanEval requires completed tests in a prepared, labelled of
   const handle = await runtime.prepare(task, receipt, { key, paths, signal: signal() });
   const creation = state.calls.find(args => args[0] === "create")!;
   expect(creation).toEqual(expect.arrayContaining(["--pull", "never", "--network", "none", "--read-only", "--pids-limit", "64", state.image,
-    "ember.run=run", "ember.task=task", "ember.attempt=attempt", "ember.phase=verify"]));
+    "arsi-evaluator.run=run", "arsi-evaluator.task=task", "arsi-evaluator.attempt=attempt", "arsi-evaluator.phase=verify"]));
   expect(state.calls.some(args => args[0] === "start")).toBe(false);
   try { expect(await handle.verify(solved, null, signal())).toMatchObject({ score: code === 0 ? 1 : 0, passed: code === 0, details: { timedOut: false } }); }
   finally { await handle.dispose(signal()); }

@@ -1,5 +1,5 @@
 name: "Bug Report"
-description: "Report a reproducible defect or a regression in Ember Evaluator"
+description: "Report a reproducible defect or a regression in ARSI-Evaluator"
 title: "[Bug] "
 labels: ["category:bug"]
 body:
@@ -11,7 +11,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: Ember Evaluator Version / Commit
+      label: ARSI-Evaluator Version / Commit
       description: "Release version or commit SHA."
       placeholder: "e.g. master @ <commit-sha>"
     validations:
@@ -34,7 +34,7 @@ body:
       description: "Include the command or minimal YAML configuration, if possible."
       placeholder: |
         1. Configure ...
-        2. Run `ember-evaluator ...`
+        2. Run `arsi-evaluator ...`
         3. Observe ...
     validations:
       required: true

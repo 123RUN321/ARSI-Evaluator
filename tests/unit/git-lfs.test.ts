@@ -4,7 +4,7 @@ import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promis
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, expect, test, vi } from "vitest";
-import { DatasetCache, GitLfsCache, parseGitLfsPointer } from "ember-evaluator";
+import { DatasetCache, GitLfsCache, parseGitLfsPointer } from "arsi-evaluator";
 
 const roots: string[] = [];
 afterEach(async () => {

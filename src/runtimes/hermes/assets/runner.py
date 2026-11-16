@@ -57,7 +57,7 @@ def install_output_capture() -> None:
         target = Path(path).expanduser()
         data = json.loads(target.read_text(encoding="utf-8"))
         captured = dict(result["evaluator_output"])
-        secret = os.environ.get("EMBER_EVALUATOR_API_KEY", "")
+        secret = os.environ.get("ARSI_EVALUATOR_API_KEY", "")
         if secret:
             for sensitive in {secret, quote(secret, safe="~()*!.'-_")}:
                 captured["finalText"] = captured["finalText"].replace(sensitive, "[redacted]")

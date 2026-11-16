@@ -1,6 +1,6 @@
 import { expect, test, vi } from "vitest";
-import { DockerImageArchiveLoader } from "ember-evaluator";
-import type { DockerCommand } from "ember-evaluator";
+import { DockerImageArchiveLoader } from "arsi-evaluator";
+import type { DockerCommand } from "arsi-evaluator";
 
 function fixture() {
   const images = new Set<string>();

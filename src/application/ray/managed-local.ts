@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 const script = fileURLToPath(new URL("../../../scripts/ray-smoke/ensure.mjs", import.meta.url));
 const builtInPlaybook = fileURLToPath(new URL("../../../playbook/", import.meta.url));
 const builtInBundles = fileURLToPath(new URL("../../../tests/fixtures/agentbundle/", import.meta.url));
-const emberPiBundle = fileURLToPath(
+const arsiPiBundle = fileURLToPath(
   new URL("../../../../pi/bundles/pi", import.meta.url),
 );
 
@@ -19,7 +19,7 @@ export function resolveManagedLocalBundlePath(configDirectory: string, configure
   const builtin = location === "" || (!isAbsolute(location) && location !== ".." && !location.startsWith(`..${sep}`));
   return builtin
     ? basename(configuredPath) === "pi"
-      ? emberPiBundle
+      ? arsiPiBundle
       : join(builtInBundles, basename(configuredPath))
     : resolve(configDirectory, configuredPath);
 }

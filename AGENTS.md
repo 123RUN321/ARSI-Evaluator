@@ -109,7 +109,7 @@ pnpm test --run
 
 ### 插件开发规范
 
-- 支持八类组件：`benchmark`、`verifier`、`environment`、`solver`、`metrics`、`reporter`、`store`、`scheduler`。实现对应的 `src/core/contracts/` 契约；第三方插件从包根 `ember-evaluator` 导入公共类型，不依赖未导出的内部路径。
+- 支持八类组件：`benchmark`、`verifier`、`environment`、`solver`、`metrics`、`reporter`、`store`、`scheduler`。实现对应的 `src/core/contracts/` 契约；第三方插件从包根 `arsi-evaluator` 导入公共类型，不依赖未导出的内部路径。
 - Cordis 插件声明 `inject = ["evaluator"]`，在 `apply(ctx)` 中通过 `ctx.evaluator.register(role, name, validate, factory)` 注册组件。同一 role 下名称唯一；一个模块可以注册多个组件。
 - 插件默认配置通过 `ctx.evaluator.registerProfile()` 注册声明式 Profile，类型从包根导入。Profile 属于配置元数据，不增加执行组件类别；继承、版本和场景由解析层展开，避免在 Loader 或 Engine 中新增按 Benchmark 名称分支的默认值。内置 Harbor Profile YAML 随构建发布并纳入摘要，外部 Profile 随显式 patch 插件发布。
 - 配置校验与实例创建分开。`validate` 校验类型、范围和未知字段，并给出明确错误；校验阶段不启动进程、访问模型或分配运行资源。模块导入和注册阶段也不启动评测工作。

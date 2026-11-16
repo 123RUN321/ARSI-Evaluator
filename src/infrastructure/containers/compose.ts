@@ -10,6 +10,7 @@ import { EVALUATOR_NODE_EXECUTABLE, PROCESS_HELPER } from "./runtime-contract.js
 import { buildFileManifest } from "../../core/artifacts/artifacts.js";
 import { startLocalProcess, runtimeProcessEnvironment } from "../process/local.js";
 import { ComposeEntrypoint } from "./compose-entrypoint.js";
+import { dockerAttemptLabels } from "./attempt-labels.js";
 
 export function composeEnvironment(value: JsonValue | undefined): Record<string, string> {
   if (value === undefined) return {};
@@ -73,7 +74,7 @@ export class DockerComposeProject {
   constructor(private readonly command: DockerCommand, private readonly executable: string,
     private readonly spec: EnvironmentSpec, private readonly paths: AttemptPaths,
     key: AttemptKey, private readonly phase: "solve" | "verify") {
-    this.name = "ember-" + createHash("sha256").update(JSON.stringify({ key, phase })).digest("hex").slice(0, 24);
+    this.name = "arsi-evaluator-" + createHash("sha256").update(JSON.stringify({ key, phase })).digest("hex").slice(0, 24);
     this.file = join(paths.root, `compose-${phase}.json`);
     this.emptyEnv = join(paths.root, `compose-${phase}.env`);
     this.entrypoint = new ComposeEntrypoint(paths.root, phase);
@@ -155,7 +156,7 @@ export class DockerComposeProject {
     for (const [source, service] of Object.entries(spec.services ?? {})) {
       const id = this.containers.get(service);
       if (!id || service === "main") throw new Error(`Unknown artifact service: ${service}`);
-      const stage = await mkdtemp(join(tmpdir(), "ember-service-artifact-"));
+      const stage = await mkdtemp(join(tmpdir(), "arsi-evaluator-service-artifact-"));
       const payload = join(stage, "payload");
       try {
         await this.command(["cp", `${id}:${source}`, payload], { signal });
@@ -184,8 +185,7 @@ export class DockerComposeProject {
 
 export async function recoverComposeNetworks(command: DockerCommand, keys: AttemptKey[], signal: AbortSignal): Promise<void> {
   for (const key of keys) {
-    const expected = Object.fromEntries(Object.entries({ "ember.run": key.runId, "ember.task": key.taskId, "ember.attempt": key.attemptId })
-      .map(([name, value]) => [name, value.replace(/[\u0000-\u001f\u007f]/gu, "_")]));
+    const expected = dockerAttemptLabels(key);
     const output = await command(["network", "ls", "--quiet", ...Object.entries(expected).flatMap(([name, value]) => ["--filter", `label=${name}=${value}`])], { signal });
     for (const id of output.stdout.trim().split(/\s+/u).filter(Boolean)) {
       if (!/^[a-f0-9]{12,64}$/u.test(id)) throw new Error("Invalid task network identity");

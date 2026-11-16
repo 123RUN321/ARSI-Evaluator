@@ -12,7 +12,7 @@
 
 ```text
 work/
-├── Ember-Evaluator/       # 已构建，包含 dist/index.d.ts 和 dist/cli.js
+├── ARSI-Evaluator/       # 已构建，包含 dist/index.d.ts 和 dist/cli.js
 └── evaluator-metrics/          # 独立插件项目；以下命令均在此目录执行
     ├── package.json
     ├── tsconfig.json
@@ -41,7 +41,7 @@ work/
   "files": ["dist"],
   "scripts": { "build": "tsc -p tsconfig.json" },
   "devDependencies": {
-    "ember-evaluator": "link:../Ember-Evaluator",
+    "arsi-evaluator": "link:../ARSI-Evaluator",
     "@deepseek-ai/cordis": "4.0.2",
     "@types/node": "24.13.5",
     "typescript": "7.0.2"
@@ -81,7 +81,7 @@ work/
 
 ```ts
 import type { Context } from "@deepseek-ai/cordis";
-import type { PluginConfigValidator, PluginFactory, PluginRole } from "ember-evaluator";
+import type { PluginConfigValidator, PluginFactory, PluginRole } from "arsi-evaluator";
 
 export type EvaluatorPluginContext = Context & {
   evaluator: {
@@ -98,7 +98,7 @@ export type EvaluatorPluginContext = Context & {
 新建 `src/index.ts`，注册一个统计有效评分任务数的指标。
 
 ```ts
-import type { Metrics } from "ember-evaluator";
+import type { Metrics } from "arsi-evaluator";
 import type { EvaluatorPluginContext } from "./context.js";
 
 export const inject = ["evaluator"];
@@ -138,11 +138,11 @@ pnpm build
 
 首次安装后提交插件自己的 `pnpm-lock.yaml`，后续安装使用 `pnpm install --frozen-lockfile`。修改 TypeScript 后重新构建；Evaluator 拒绝直接加载 `.ts` 入口。Evaluator 根目录的构建不会自动编译这个独立项目。
 
-其他组件也使用相同的 `register(role, name, validate, factory)`。从包根导入公共类型，不导入 `ember-evaluator/src/...`。`validate` 只校验配置，资源在工厂或运行阶段创建；工厂使用 `runtime.resolvePath()` 解析实验相对路径。持有长连接、临时目录等资源时，在插件作用域注册 `ctx.effect(() => () => resource.close())`；attempt 资源按对应 session 契约释放。详见[组件接口与生命周期](plugins.md)。
+其他组件也使用相同的 `register(role, name, validate, factory)`。从包根导入公共类型，不导入 `arsi-evaluator/src/...`。`validate` 只校验配置，资源在工厂或运行阶段创建；工厂使用 `runtime.resolvePath()` 解析实验相对路径。持有长连接、临时目录等资源时，在插件作用域注册 `ctx.effect(() => () => resource.close())`；attempt 资源按对应 session 契约释放。详见[组件接口与生命周期](plugins.md)。
 
 ### 独立项目中的 Solver
 
-沿用第 1 步的项目结构。把[固定回复 Solver 的实现](add-solver.md#最小示例)保存为独立项目中的 `src/fixed-answer.ts`，将 `Solver` 类型的导入改为 `import type { Solver } from "ember-evaluator"`。将 `src/index.ts` 写成以下入口，并在独立项目中运行 `pnpm build`。
+沿用第 1 步的项目结构。把[固定回复 Solver 的实现](add-solver.md#最小示例)保存为独立项目中的 `src/fixed-answer.ts`，将 `Solver` 类型的导入改为 `import type { Solver } from "arsi-evaluator"`。将 `src/index.ts` 写成以下入口，并在独立项目中运行 `pnpm build`。
 
 ```ts
 import type { EvaluatorPluginContext } from "./context.js";
@@ -158,8 +158,8 @@ export function apply(ctx: EvaluatorPluginContext): void {
 按第 3 步创建文件方式的 patch，`name` 指向 `./dist/index.js`，`id` 可用 `custom-solver`。将 Solver 示例里的 `experiment.yaml` 和 `gpqa.csv` 保存到独立项目，把 YAML 中的 `benchmark.solver.name` 改为 `external-fixed-answer`，并设置示例中的 `EXAMPLE_SOLVER_KEY`。在独立项目目录执行以下命令。
 
 ```bash
-ember-evaluator inspect experiment.yaml --patch cordis.patch.yaml
-ember-evaluator run experiment.yaml --patch cordis.patch.yaml
+arsi-evaluator inspect experiment.yaml --patch cordis.patch.yaml
+arsi-evaluator run experiment.yaml --patch cordis.patch.yaml
 ```
 
 `inspect` 应显示选中了 `external-fixed-answer`。检查评分和产物时，沿用[固定回复示例](add-solver.md#最小示例)的验收步骤。
@@ -238,12 +238,12 @@ Solver 的模型服务通过 `benchmark.solver.service` 选择；需要模型的
 
 ## 5. 验证加载并运行
 
-先按[安装指南](../users/installation.zh-CN.md#安装全局命令)注册 `ember-evaluator`，再在插件项目目录执行：
+先按[安装指南](../users/installation.zh-CN.md#安装全局命令)注册 `arsi-evaluator`，再在插件项目目录执行：
 
 ```bash
-ember-evaluator inspect experiment.yaml --patch cordis.patch.yaml
-ember-evaluator run experiment.yaml --patch cordis.patch.yaml --dry-run
-ember-evaluator run experiment.yaml --patch cordis.patch.yaml
+arsi-evaluator inspect experiment.yaml --patch cordis.patch.yaml
+arsi-evaluator run experiment.yaml --patch cordis.patch.yaml --dry-run
+arsi-evaluator run experiment.yaml --patch cordis.patch.yaml
 ```
 
 - `inspect` 校验实验配置、组件注册名和插件参数，输出展开后的实验配置和脱敏后的网络配置。
@@ -255,8 +255,8 @@ ember-evaluator run experiment.yaml --patch cordis.patch.yaml
 续跑仍显式传入相同 patch：
 
 ```bash
-ember-evaluator run experiment.yaml --patch cordis.patch.yaml --resume <run-id>
-ember-evaluator report results/<run-id>
+arsi-evaluator run experiment.yaml --patch cordis.patch.yaml --resume <run-id>
+arsi-evaluator report results/<run-id>
 ```
 
 `report` 不接受 `--patch`，它按已保存的提供者信息加载原来的 Metrics/Reporter 插件，不重新求解。保留原插件安装及可解析路径；移动结果目录不会自动复制插件，也不会自动改写保存的插件路径。
@@ -268,7 +268,7 @@ ember-evaluator report results/<run-id>
 SDK 使用同一套 YAML 和 patch，通过 `patchPath` 显式加载：
 
 ```ts
-import { Evaluator } from "ember-evaluator";
+import { Evaluator } from "arsi-evaluator";
 
 const result = await new Evaluator().run({
   configPath: "./experiment.yaml",

@@ -9,7 +9,7 @@ for (const name of ["HTTP_PROXY", "http_proxy", "HTTPS_PROXY", "https_proxy", "A
   "NPM_CONFIG_REGISTRY", "npm_config_registry", "EVALUATOR_NODE_MIRROR", "EVALUATOR_GITHUB_MIRROR", "EVALUATOR_DEBIAN_MIRROR",
   "EVALUATOR_DOCKER_BUILD_NETWORK", "EVALUATOR_NETWORK_CONFIG"]) delete process.env[name];
 
-// Configuration tests must never read or overwrite the developer's ~/.ember-evaluator.
+// Configuration tests must never read or overwrite the developer's ~/.arsi-evaluator.
 const testHome = mkdtempSync(join(tmpdir(), "evaluator-test-home-"));
 vi.mock("node:os", async importOriginal => {
   const original = await importOriginal<typeof import("node:os")>();

@@ -20,7 +20,7 @@
 | 通过 SSH 压测已有模型服务 | [AISBench 独立插件](../../plugins/aisbench/README.md) |
 | 从本地目录或文件读取题库 | [本地数据集](local-datasets.zh-CN.md) |
 | 从 Node.js 业务项目调用评测 | [Node.js SDK](sdk.zh-CN.md) |
-| 使用 Agent 执行评测 | [Ember Evaluator skill](../../skills/ember-evaluator/SKILL.md) |
+| 使用 Agent 执行评测 | [ARSI-Evaluator skill](../../skills/arsi-evaluator/SKILL.md) |
 
 ## 通用操作
 
@@ -69,9 +69,9 @@
 | 算子 | `kernel` | [已有 kernel 的正确性与 NPU 性能评测](benchmarks/kernel-npu.zh-CN.md)；本地串行，不调用模型 |
 
 ```bash
-ember-evaluator benchmark list
-ember-evaluator benchmark info workbuddy
-ember-evaluator init --benchmark workbuddy --output workbuddy.yaml
+arsi-evaluator benchmark list
+arsi-evaluator benchmark info workbuddy
+arsi-evaluator init --benchmark workbuddy --output workbuddy.yaml
 ```
 
 WorkBuddy Web 需要裁判模型，Office 的模型评分可选。Security 数据和结果应放在 Linux 原生文件系统，不在 Windows 或 WSL 的 `/mnt/c`、`/mnt/d` 解压。具体限制见 [WorkBuddy 指南](benchmarks/workbuddy.zh-CN.md)。

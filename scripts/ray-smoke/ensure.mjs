@@ -16,7 +16,7 @@ const composeFiles = [
 ];
 const composeArgs = composeFiles.flatMap(file => ["-f", file]);
 const imageName = "evaluator-ray-smoke:local";
-const fingerprintLabel = "org.ember.evaluator.source-fingerprint";
+const fingerprintLabel = "org.arsi.evaluator.source-fingerprint";
 const appServices = ["head", "worker-a", "worker-b", "gateway", "coordinator"];
 const dependencyServices = ["docker-a", "docker-b"];
 const requiredServices = [...appServices, ...dependencyServices];
@@ -120,7 +120,7 @@ async function serviceStates(env) {
     if (!requiredServices.includes(name)) continue;
     states[name] = {
       id: container.Id,
-      networkDigest: container.Config?.Labels?.["org.ember.evaluator.network"] ?? null,
+      networkDigest: container.Config?.Labels?.["org.arsi.evaluator.network"] ?? null,
       imageId: container.Image,
       running: container.State?.Running === true,
       health: container.State?.Health?.Status ?? null,

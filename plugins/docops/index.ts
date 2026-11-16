@@ -1,4 +1,4 @@
-import { bindSolverService } from "ember-evaluator";
+import { bindSolverService } from "arsi-evaluator";
 import type { Context } from "@deepseek-ai/cordis";
 import { DocOpsBenchmark, parseDocOpsConfig } from "./benchmark.js";
 import { DocOpsDockerEnvironment, parseDocOpsDockerConfig } from "./docker-environment.js";

@@ -28,7 +28,7 @@ const fs = require("node:fs");
 const args = process.argv.slice(1);
 const log = process.env.EVALUATOR_TEST_BUILD_LOG;
 const digest = "sha256:" + "a".repeat(64);
-const isPin = ref => ref.startsWith("ember-evaluator/") && !ref.startsWith("ember-evaluator/shared:");
+const isPin = ref => ref.startsWith("arsi-evaluator/") && !ref.startsWith("arsi-evaluator/shared:");
 const pinFile = ref => log + ".pin-" + require("node:crypto").createHash("sha256").update(ref).digest("hex");
 if (process.env.EVALUATOR_TEST_COMMAND_LOG) fs.appendFileSync(process.env.EVALUATOR_TEST_COMMAND_LOG, JSON.stringify(args) + "\n");
 if (args[0] === process.env.EVALUATOR_TEST_FAILED_OPERATION) {
@@ -37,7 +37,7 @@ if (args[0] === process.env.EVALUATOR_TEST_FAILED_OPERATION) {
 if (args[0] === "load") {
   const bytes = fs.readFileSync(args.at(-1));
   const text = bytes.toString("utf8");
-  const tag = text.match(/ember-evaluator\/staging:[a-f0-9-]{36}/u)[0];
+  const tag = text.match(/arsi-evaluator\/staging:[a-f0-9-]{36}/u)[0];
   fs.writeFileSync(pinFile(tag), process.env.EVALUATOR_TEST_ARCHIVE_ID);
 }
 else if (args[0] === "version") console.log(args.at(-1).includes("APIVersion") ? "1.52 1.52" : process.env.EVALUATOR_TEST_DAEMON_PLATFORM || "linux/amd64");
@@ -179,13 +179,13 @@ test("materialization reuses a source reference and shares the solve result acro
   const b = await environment.materialize(main, signal, undefined, undefined, { ...context, taskId: "terminal-bench/other" });
   const verify = await environment.materialize(main, signal, undefined, undefined, { ...context, phase: "verify" });
   expect(a.prepared).toMatchObject({ baseImage: { pinnedReference: "fixture/base" },
-    runtime: { image: "ember-evaluator/base:linux-amd64-solver-runtime" } });
+    runtime: { image: "arsi-evaluator/base:linux-amd64-solver-runtime" } });
   expect(verify.prepared).toMatchObject({ baseImage: { pinnedReference: "fixture/base" },
-    runtime: { image: "ember-evaluator/base:linux-amd64-solver-runtime" } });
+    runtime: { image: "arsi-evaluator/base:linux-amd64-solver-runtime" } });
   expect(a.prepared).toEqual(b.prepared);
   const calls: string[][] = (await readFile(log + ".commands", "utf8")).trim().split("\n").map(line => JSON.parse(line));
   const tags = calls.filter(args => args[0] === "image" && args[1] === "tag").map(args => args[3]);
-  expect(tags.filter(tag => !tag?.startsWith("ember-evaluator/staging:"))).toEqual(["ember-evaluator/base:linux-amd64-solver-runtime"]);
+  expect(tags.filter(tag => !tag?.startsWith("arsi-evaluator/staging:"))).toEqual(["arsi-evaluator/base:linux-amd64-solver-runtime"]);
   expect(new Set(tags).size).toBe(tags.length);
   expect(calls.some(args => args[1] === "inspect" && args.includes("fixture/redis"))).toBe(true);
 });
@@ -666,7 +666,7 @@ test("archive selection uses the requested platform and bypasses an existing pin
       AbortSignal.timeout(15000), undefined, undefined, { taskId: "terminal-bench/task-a", phase: "solve" });
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(String(fetch.mock.calls[0]![0])).toBe("https://modelscope.cn/datasets/team/images/resolve/master/terminalbench4.0/task-a/linux/arm64/solve.tar.gz");
-    expect(prepared.prepared).toMatchObject({ baseImage: { pinnedReference: "ember-evaluator/base:linux-arm64-base" } });
+    expect(prepared.prepared).toMatchObject({ baseImage: { pinnedReference: "arsi-evaluator/base:linux-arm64-base" } });
     const calls: string[][] = (await readFile(log + ".commands", "utf8")).trim().split("\n").map(line => JSON.parse(line));
     expect(calls.some(args => args.includes(sourceImage))).toBe(false);
     expect(calls.filter(args => args[0] === "load")).toHaveLength(1);

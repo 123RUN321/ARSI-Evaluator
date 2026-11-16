@@ -16,15 +16,15 @@ bash scripts/toolbox/run.sh
 
 ## 在管理容器安装 Evaluator
 
-在容器内的仓库根目录按[安装指南](../installation.zh-CN.md#直接安装)安装，确认 `ember-evaluator --help` 正常输出。容器已配置好 pnpm。
+在容器内的仓库根目录按[安装指南](../installation.zh-CN.md#直接安装)安装，确认 `arsi-evaluator --help` 正常输出。容器已配置好 pnpm。
 
 ## 在容器中运行实验
 
 按[快速上手](../quick-start.zh-CN.md)设置模型变量并准备配置，然后运行：
 
 ```bash
-ember-evaluator doctor /path/to/config.yaml
-ember-evaluator run /path/to/config.yaml
+arsi-evaluator doctor /path/to/config.yaml
+arsi-evaluator run /path/to/config.yaml
 ```
 
 示例配置见 [Playbook](../../../playbook/README.md)。重新进入容器后需要重新设置模型变量；使用 Ray 时，参阅 [Ray 配置](../config.zh-CN.md#ray-与执行节点)。
@@ -32,7 +32,7 @@ ember-evaluator run /path/to/config.yaml
 需要另开终端进入正在运行的容器时，在宿主机执行：
 
 ```bash
-docker exec -it ember-evaluator-toolbox bash
+docker exec -it arsi-evaluator-toolbox bash
 ```
 
 ## 环境边界
@@ -53,7 +53,7 @@ docker exec -it ember-evaluator-toolbox bash
 environment:
   name: docker
   config:
-    dockerExecutable: /path/to/ember-evaluator/scripts/toolbox/docker-host.sh
+    dockerExecutable: /path/to/arsi-evaluator/scripts/toolbox/docker-host.sh
 ```
 
 该脚本仅适用于本机 Linux Docker。下载和网络问题见 [Docker 排障](../faq/docker.zh-CN.md)。

@@ -15,7 +15,7 @@ import { canonicalJson } from "../../core/results/run-manifest.js";
 import { AgentBundleError, cliJson, cliOutput, parseInstalledBundle, parseVerifiedBundle, type VerifiedBundle } from "../agentbundle/cli.js";
 import { DSH_VERSION } from "./runtime.js";
 
-import { DSH_AUTH_ENV, type DshPermissionMode, dshModelPatch, dshPermissionPatch, dshSdkPatch } from "./model.js";
+import { DSH_AUTH_ENV, DSH_ENDPOINT_PROVIDER, type DshPermissionMode, dshModelPatch, dshPermissionPatch, dshSdkPatch } from "./model.js";
 import { consumeDsh } from "./protocol.js";
 
 import { acquireRuntimeLock } from "../../infrastructure/runtime-installation/lock.js";
@@ -213,7 +213,7 @@ export async function prepareDsh(
             input: Buffer.from(JSON.stringify({ dsh, home, profile, key: context.key, patches: [...overlays, sdkOverlay],
               moduleBase: local && preparation.localDsh ? preparation.localDsh.entry : path(runtime.root, "package.json"),
               workdir: session.workdir, outputDir: session.agentOutputDir, prompt: input.prompt, media,
-              provider: preparation.model.endpoint === null ? preparation.model.provider : "ember-evaluator", model: preparation.model.name })), }, signal);
+              provider: preparation.model.endpoint === null ? preparation.model.provider : DSH_ENDPOINT_PROVIDER, model: preparation.model.name })), }, signal);
         }
         return start(
           {

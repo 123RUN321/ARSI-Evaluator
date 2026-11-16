@@ -51,7 +51,7 @@ test.each(["length", "empty", "network", "no-reason", "auth", "cancelled", "cont
     const report = join(value.paths.agent, "usage.json");
     const { stdout } = await exec(python, [resolve("tests/fixtures/hermes-output-capture.py"),
       resolve("src/runtimes/hermes/assets/runner.py"), report, scenario],
-    { signal: value.signal, env: { ...process.env, EMBER_EVALUATOR_API_KEY: "secret" } });
+    { signal: value.signal, env: { ...process.env, ARSI_EVALUATOR_API_KEY: "secret" } });
     const warnings: unknown[] = [];
     const consuming = consumeHermes(handle("native diagnostic text", 2), { ...value, warning: warning => warnings.push(warning) }, "secret", report);
     if (scenario === "length" || scenario === "empty") {

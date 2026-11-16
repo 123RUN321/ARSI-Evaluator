@@ -20,22 +20,22 @@ When a task image lacks system CA certificates, Evaluator writes the pinned Node
 
 Evaluator reuses references by actual image ID on the same Docker daemon. Newly prepared images retain at most one Evaluator-managed tag per ID, and can reuse existing source references. Each attempt starts a separate container from its final image ID.
 
-Evaluator generates references in the form `ember-evaluator/<repository-path>:<platform>-<purpose>`. In `ember-evaluator/terminalbench4.0/coq-block-bound:linux-amd64-solver-codex`, each part has a specific meaning.
+Evaluator generates references in the form `arsi-evaluator/<repository-path>:<platform>-<purpose>`. In `arsi-evaluator/terminalbench4.0/coq-block-bound:linux-amd64-solver-codex`, each part has a specific meaning.
 
-- `ember-evaluator` is the Evaluator image namespace.
+- `arsi-evaluator` is the Evaluator image namespace.
 - `terminalbench4.0/coq-block-bound` identifies the benchmark version and task path. Harbor uses this structure for task-provided images. A shared benchmark image uses just the benchmark name, such as `officeqa-pro-v2`. The default solve environment uses `base`.
 - `linux-amd64` represents the Docker platform `linux/amd64`. ARM64 uses `linux-arm64`.
 - `solver-codex` identifies the image used to launch Codex. The `base` purpose marks a base image, `verify` marks a separate verifier image, and `solve-service-redis` marks a Redis sidecar for the solve phase. Verification sidecars use `verify-service-<service>`.
 
 | Retained image | Example reference |
 | --- | --- |
-| Default solve base | `ember-evaluator/base:linux-amd64-base` |
-| Harbor task base | `ember-evaluator/terminalbench4.0/coq-block-bound:linux-amd64-base` |
-| Solver image | `ember-evaluator/terminalbench4.0/coq-block-bound:linux-amd64-solver-codex` |
-| Shared OfficeQA Pro V2 corpus | `ember-evaluator/officeqa-pro-v2:linux-amd64-base` |
-| Separate verification image | `ember-evaluator/officeqa-pro-v2:linux-amd64-verify` |
-| Sidecar | `ember-evaluator/terminalbench4.0/example:linux-amd64-solve-service-redis` |
-| Separately acquired shared Node image | `ember-evaluator/node:linux-amd64-base` |
+| Default solve base | `arsi-evaluator/base:linux-amd64-base` |
+| Harbor task base | `arsi-evaluator/terminalbench4.0/coq-block-bound:linux-amd64-base` |
+| Solver image | `arsi-evaluator/terminalbench4.0/coq-block-bound:linux-amd64-solver-codex` |
+| Shared OfficeQA Pro V2 corpus | `arsi-evaluator/officeqa-pro-v2:linux-amd64-base` |
+| Separate verification image | `arsi-evaluator/officeqa-pro-v2:linux-amd64-verify` |
+| Sidecar | `arsi-evaluator/terminalbench4.0/example:linux-amd64-solve-service-redis` |
+| Separately acquired shared Node image | `arsi-evaluator/node:linux-amd64-base` |
 
 When a tag already points to a different image, the next image gets a suffix such as `-2` or `-3`. The suffix distinguishes images that would otherwise have the same tag. Tasks and roles that resolve to the same image ID share its registered reference. For example, a verifier image shared by two tasks may appear under just one task path.
 
@@ -46,17 +46,25 @@ One multi-stage build adds the Solver installation and runtime helpers to the fi
 List images by benchmark.
 
 ```bash
-docker image ls --filter 'reference=ember-evaluator/terminalbench4.0/*:*'
-docker image ls --filter 'reference=ember-evaluator/officeqa-pro-v2:*'
+docker image ls --filter 'reference=arsi-evaluator/terminalbench4.0/*:*'
+docker image ls --filter 'reference=arsi-evaluator/officeqa-pro-v2:*'
 ```
 
 Different images can share layers. Use `docker system df` for disk usage.
 
-Alongside Docker images, Evaluator stores local records needed for reuse under `EVALUATOR_CACHE_DIR/docker-images/`, or the application cache directory when unset. Toolbox typically uses `/toolbox-home/.cache/ember-evaluator/docker-images/`. Copying images without these records may still require downloading again.
+Alongside Docker images, Evaluator stores local records needed for reuse under `EVALUATOR_CACHE_DIR/docker-images/`, or the application cache directory when unset. Toolbox typically uses `/toolbox-home/.cache/arsi-evaluator/docker-images/`. Copying images without these records may still require downloading again.
 
 Preparation fails if local image tags were replaced or the platform does not match. Check Docker context, target platform, and cache directory first. To clean up and prepare again, follow [delete evaluation images](../usage.md#delete-evaluation-images), then run `warmup`.
 
 When preparation hits an older tag, Evaluator replaces it with a readable tag once containers and other preparations release the image. Cache lookups still use build inputs and image IDs. Use `cleanup images --all` to preview cleanup of older tags.
+
+## Find containers for a run
+
+Use the run ID from `manifest.json` to list the containers created for that run. The other attempt labels are `arsi-evaluator.task`, `arsi-evaluator.attempt`, and `arsi-evaluator.phase`. The phase value is `solve` or `verify`.
+
+```bash
+docker ps -a --filter 'label=arsi-evaluator.run=<RUN_ID>'
+```
 
 ## Will Restarting Redownload or Rebuild Every Image?
 
@@ -85,13 +93,13 @@ Docker may still reuse build layers; its cache determines which steps rerun.
 **Image reuse and task resume are separate.** Ordinary `run` creates a new evaluation, reuses images, and creates fresh containers/workspaces without skipping previous completed tasks:
 
 ```bash
-ember-evaluator run playbook/terminalbench/terminalbench-4.0.yaml
+arsi-evaluator run playbook/terminalbench/terminalbench-4.0.yaml
 ```
 
 To continue the previous evaluation, use identical configuration with `--resume`:
 
 ```bash
-ember-evaluator run playbook/terminalbench/terminalbench-4.0.yaml --resume
+arsi-evaluator run playbook/terminalbench/terminalbench-4.0.yaml --resume
 ```
 
 Resume still checks/prepares environments, skips valid results, and reruns unfinished/invalid tasks. Evaluator code may be updated and rebuilt; configuration, sources, external plugins, candidate bundles, and harness versions must still match. See [resume](../usage.md#resume-and-rebuild-reports). New runs without resume also reuse images.
@@ -149,7 +157,7 @@ Build public baseline caches separately and map exact images with imageOverrides
 ```bash
 bash scripts/prewarm-go-image.sh \
   'public-task-image-reference' \
-  'ember-evaluator-prewarm:task-name' \
+  'arsi-evaluator-prewarm:task-name' \
   'full-base_commit_hash-from-task.toml'
 ```
 
@@ -161,7 +169,7 @@ environment:
   config:
     platform: linux/amd64
     imageOverrides:
-      "public-task-image-reference": "ember-evaluator-prewarm:task-name"
+      "public-task-image-reference": "arsi-evaluator-prewarm:task-name"
     containerEnv:
       GOGC: "off"
       GOMAXPROCS: "2"

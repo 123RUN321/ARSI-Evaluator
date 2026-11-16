@@ -30,7 +30,7 @@ Network YAML `docker.mirrors` does not change the daemon's `registry-mirrors`. S
 Run diagnosis for Docker proxy advice:
 
 ```bash
-ember-evaluator doctor experiment.yaml --network network.yaml
+arsi-evaluator doctor experiment.yaml --network network.yaml
 ```
 
 Apply the suggestions in `network.dockerAdvice` according to your Docker deployment:

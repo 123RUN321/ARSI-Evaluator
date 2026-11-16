@@ -1,5 +1,5 @@
 {
-  "name": "@ember-evaluator/dsh-workbuddy-sec-guidance",
+  "name": "@arsi-evaluator/dsh-workbuddy-sec-guidance",
   "version": "0.1.0",
   "type": "module",
   "main": "./index.js",

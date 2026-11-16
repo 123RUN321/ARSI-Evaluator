@@ -371,11 +371,11 @@ Paths use the YAML directory. For Ray, replace local sources and check node imag
 After installation/build, run from the repository root with actual paths:
 
 ```bash
-ember-evaluator inspect experiment.yaml
-ember-evaluator doctor experiment.yaml
-ember-evaluator run experiment.yaml --dry-run
-ember-evaluator run experiment.yaml
-ember-evaluator report <run-dir>
+arsi-evaluator inspect experiment.yaml
+arsi-evaluator doctor experiment.yaml
+arsi-evaluator run experiment.yaml --dry-run
+arsi-evaluator run experiment.yaml
+arsi-evaluator report <run-dir>
 ```
 
 Use identical --patch for checks/execution. Offline reports use saved provenance without patches. `doctor` runs download/build probes without calling models; dry-run is not runtime acceptance.

@@ -5,7 +5,7 @@
 `--network` 指定一份网络 YAML，设置代理、下载源和镜像来源。实验 YAML 负责选择 Benchmark、模型、题目和执行环境：
 
 ```bash
-ember-evaluator run experiment.yaml --network network.yaml
+arsi-evaluator run experiment.yaml --network network.yaml
 ```
 
 两份文件的路径都以当前工作目录为基准。命令需先按[安装指南](installation.zh-CN.md#安装全局命令)注册。
@@ -27,9 +27,9 @@ ember-evaluator run experiment.yaml --network network.yaml
 
 ```bash
 # 查看实际配置，不下载
-ember-evaluator inspect experiment.yaml --network playbook/network/archives.yaml
+arsi-evaluator inspect experiment.yaml --network playbook/network/archives.yaml
 # 开始评测
-ember-evaluator run experiment.yaml --network playbook/network/archives.yaml
+arsi-evaluator run experiment.yaml --network playbook/network/archives.yaml
 ```
 
 `--network` 只选择本次命令使用的文件，后续命令需要再次传入。省略参数时使用环境变量或用户目录中的默认文件，见[设置默认网络文件](reference/network.zh-CN.md#设置默认网络文件)。

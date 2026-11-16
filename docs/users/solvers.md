@@ -265,7 +265,7 @@ output:
 
 ## AgentBundle
 
-Follow [source installation](installation.md#install-from-source) to prepare Evaluator. pnpm installs the AgentBundle SDK automatically, without a sibling source repository. `AGENT_BUNDLE_PATH` below points to a prepared **agent bundle directory**, supplied separately rather than the SDK installation path. See the [AgentBundle project](https://github.com/evolving-foundry/agentbundle) for concepts, CLI usage and examples, and its [bundle authoring guide](https://github.com/evolving-foundry/agentbundle/blob/master/docs/bundle-formats.md) for harness-specific layouts, manifests and validation.
+Follow [source installation](installation.md#install-from-source) to prepare Evaluator. pnpm installs the AgentBundle SDK automatically, without a sibling source repository. `AGENT_BUNDLE_PATH` below points to a prepared **agent bundle directory**, supplied separately rather than the SDK installation path. See the [AgentBundle project](https://github.com/ARSI-LAB/agentbundle) for concepts, CLI usage and examples, and its [bundle authoring guide](https://github.com/ARSI-LAB/agentbundle/blob/master/docs/bundle-formats.md) for harness-specific layouts, manifests and validation.
 
 ```yaml
 services:

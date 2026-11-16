@@ -22,7 +22,7 @@ With toolbox, run commands inside it. PNPM_HOME/global PATH/directories are auto
 pnpm install --frozen-lockfile
 pnpm build
 pnpm add --global .
-ember-evaluator --help
+arsi-evaluator --help
 ```
 
 Toolbox shares the Evaluator repository and supplies Node/pnpm/Python/compilers. AgentBundle installs automatically with project dependencies in the dedicated dependency volume. First AgentX run creates a cached venv and installs the harness, reused across concurrency points. No manual venv/task container/SSH worker is needed. Host installation of these container dependencies is unnecessary.
@@ -115,9 +115,9 @@ Toolbox sampling requires host Python 3.9+/driver npu-smi; direct-host replay ne
 ## 3. Check and Run
 
 ```bash
-ember-evaluator doctor "$EVALUATOR_CONFIG"
-ember-evaluator run "$EVALUATOR_CONFIG" --dry-run
-ember-evaluator run "$EVALUATOR_CONFIG"
+arsi-evaluator doctor "$EVALUATOR_CONFIG"
+arsi-evaluator run "$EVALUATOR_CONFIG" --dry-run
+arsi-evaluator run "$EVALUATOR_CONFIG"
 ```
 
 Run in order and fix failures before proceeding. `doctor` performs network download probes without inference or device sampling. dry-run resolves/downloads sources and lists points without harness installation/sampling. `run` prepares venv/data, configured samplers, warmup, measurements, and reports. Initial installs/full corpus rebuilds may take time. Keep foreground terminals connected; use your existing job manager for background execution.
@@ -129,8 +129,8 @@ Run in order and fix failures before proceeding. `doctor` performs network downl
 Open `<RUN_ID>/report.md` under selected output.directory. Local NPU defaults to `results/agentx-npu-local`; online API to results/agentx-model-api. Details are `points/c1/report.md`, `points/c4/report.md`, `points/c8/report.md`, each with metrics.json. Check harness validity, request errors, and enabled-source completeness; `completed` alone does not establish comparability.
 
 ```bash
-ember-evaluator run "$EVALUATOR_CONFIG" --resume
-ember-evaluator report /path/to/results/RUN_ID
+arsi-evaluator run "$EVALUATOR_CONFIG" --resume
+arsi-evaluator report /path/to/results/RUN_ID
 ```
 
 Resume skips completed points and reruns unfinished points in full. Offline reports need no model service, sampling, or keys. See [AgentX](../benchmarks/agentx.md) for scenarios/definitions.

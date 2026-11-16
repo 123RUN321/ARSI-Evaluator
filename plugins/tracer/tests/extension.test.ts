@@ -2,7 +2,7 @@ import { createServer } from "node:http";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { afterEach, expect, test } from "vitest";
-import type { RunStore } from "ember-evaluator";
+import type { RunStore } from "arsi-evaluator";
 import { mixedSnapshot } from "../../../tests/fixtures/results/mixed-run/fixture.js";
 import { parseCommand } from "../../../src/cli/commands.js";
 import { readPluginCatalog } from "../../../src/application/plugins/catalog.js";

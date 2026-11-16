@@ -214,7 +214,7 @@ export class DockerSession implements EnvironmentSession {
     ) as { Running?: boolean; Paused?: boolean };
     if (state.Paused)
       throw new DockerEnvironmentError("ENV_CAPABILITY_UNSUPPORTED", `cannot download from paused container ${this.id}`);
-    const staging = await mkdtemp(join(tmpdir(), "ember-docker-download-"));
+    const staging = await mkdtemp(join(tmpdir(), "arsi-evaluator-docker-download-"));
     const payload = join(staging, "payload");
     const token = randomUUID();
     let snapshotAttempted = false;

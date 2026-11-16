@@ -49,8 +49,8 @@ test.skipIf(process.env.EVALUATOR_RETAINED_IMAGES_TEST !== "1")(
       const added = (await imageRefs()).filter(line => !baseline.has(line));
       expect(added).toHaveLength(newImages);
       expect(new Set(added.map(line => line.split(" ")[0])).size).toBe(newImages);
-      expect(added.every(line => !line.includes("ember-evaluator/staging") && !line.includes("solver-install"))).toBe(true);
-      expect(added.every(line => !line.includes("ember-evaluator/shared"))).toBe(true);
+      expect(added.every(line => !line.includes("arsi-evaluator/staging") && !line.includes("solver-install"))).toBe(true);
+      expect(added.every(line => !line.includes("arsi-evaluator/shared"))).toBe(true);
       return new Set(await imageRefs());
     };
     const paths = async (attemptId: string, taskId: string) => {

@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { parseTaskAttachments } from "ember-evaluator";
+import { parseTaskAttachments } from "arsi-evaluator";
 
 export const inject = ["evaluator"];
 export function apply(ctx) {

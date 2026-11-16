@@ -11,7 +11,7 @@ importers:
       '@iarna/toml':
         specifier: 2.2.5
         version: 2.2.5
-      ember-evaluator:
+      arsi-evaluator:
         specifier: link:../..
         version: link:../..
     devDependencies:

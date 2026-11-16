@@ -70,7 +70,7 @@ export function readPluginCatalog(root = fileURLToPath(new URL("../../../", impo
     const version: unknown = record(JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"))).version;
     entries = existsSync(directory) ? readdirSync(directory, { withFileTypes: true }).filter(entry => entry.isDirectory()).sort((a, b) => a.name.localeCompare(b.name)).flatMap(entry => {
       const base = resolve(directory, entry.name);
-      const file = resolve(base, "ember-plugin.json");
+      const file = resolve(base, "arsi-evaluator-plugin.json");
       if (!existsSync(file)) return [];
       const manifest = record(JSON.parse(readFileSync(file, "utf8")));
       if (manifest.id !== entry.name) throw new TypeError(`Plugin id must match directory ${entry.name}`);

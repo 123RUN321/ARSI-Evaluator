@@ -10,7 +10,7 @@ import { DockerImageInventory } from "../../src/infrastructure/containers/image-
 const digest = `sha256:${"d".repeat(64)}`;
 const id = `sha256:${"a".repeat(64)}`;
 const reference = `registry.example.test/bench:task-v1@${digest}`;
-const imported = "ember-evaluator/pull:fixture";
+const imported = "arsi-evaluator/pull:fixture";
 const external = "user/keep:latest";
 let directory: string;
 beforeEach(async () => { directory = await mkdtemp(join(tmpdir(), "evaluator-base-image-test-")); });

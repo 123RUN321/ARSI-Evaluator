@@ -41,7 +41,7 @@ export class DockerTaskArchive {
       const operationId = randomUUID();
       const report: typeof activity = activity ? event => activity({ ...event, operationId }) : undefined;
       report?.({ message: `Downloading task image archive (${context.phase}, ${platform})`, status: "started" });
-      const tag = `ember-evaluator/staging:${operationId}`;
+      const tag = `arsi-evaluator/staging:${operationId}`;
       const directory = await mkdtemp(join(cache, "import-"));
       try {
         let imported: Awaited<ReturnType<typeof prepareTaskArchiveImport>> | undefined;

@@ -110,7 +110,7 @@ for (const kind of ["local", "docker"] as const) {
   const selected = docker ? cases.filter(item => item.name !== "zcode" || item.api === "anthropic-messages") : cases;
   test.skipIf(enabled !== "all" && enabled !== kind).each(selected)(
     `$name forwards image and PDF input to $api in ${kind}`, async ({ name, Solver, api, nativePdf }) => {
-      const root = await mkdtemp(join(tmpdir(), "ember-cli-attachments-"));
+      const root = await mkdtemp(join(tmpdir(), "arsi-evaluator-cli-attachments-"));
       const mock = await modelFixture(api, docker);
       const networkPath = process.env.EVALUATOR_CLI_ATTACHMENTS_NETWORK;
       const network = new NetworkRuntime(networkPath === undefined ? undefined : await loadNetworkConfig(networkPath));
