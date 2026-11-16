@@ -29,6 +29,7 @@
 | YAML、Profile、默认值与环境变量 | [配置指南](config.zh-CN.md) |
 | 模型、Judge、SimpleAgent、AgentBundle 与 Dify | [Solver 与模型服务](solvers.zh-CN.md) |
 | 抽题、续跑、报告、轨迹与 DSH 完整工具输出 | [日常操作](usage.zh-CN.md) |
+| 在浏览器查看 Attempt 轨迹、性能指标和反馈 | [Tracer](tracer.zh-CN.md) |
 | 任务并发、环境准备、流水线与超时 | [并发指南](concurrency.zh-CN.md) |
 | 在原 run 中恢复网络失败任务 | [网络故障补测](network-retry.zh-CN.md) |
 

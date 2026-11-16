@@ -27,43 +27,50 @@
 
 ## ℹ️ 简介
 
-Ember Evaluator 用 YAML 选择任务和组件，用 `--patch` 加载自定义插件。评测支持自定义网络配置、网络故障自动重试、中断续跑和按题定位错误。
+**Ember Evaluator** 是一个插件化的统一评测框架，支持 **Agent Harness 能力评测、推理引擎性能评测和算子性能评测**，并可扩展至更多评测场景。
 
-支持多种评测场景，包括 Agent Harness 的终端、编程和办公任务评测，推理引擎性能测试，以及算子正确性和性能测试。
+框架通过 YAML 配置和可组合的评测组件组织评测流程，支持本地、容器及分布式执行，提供结果记录、故障诊断与断点续跑等能力。
 
-![Ember Evaluator 手绘流程图，展示 Agent Harness 能力、推理服务性能和算子性能三类评测，以及八个基础组件、Cordis 插件和可选的 Tracer 分支](imgs/01-flowchart-evaluation-architecture.png)
+![Ember Evaluator 评测架构与执行流程](imgs/01-flowchart-evaluation-architecture.png)
 
-[源码架构与执行流程](docs/development/architecture.md)
+*Ember Evaluator 整体架构概览，详细设计参见 [源码架构与执行流程](docs/development/architecture.md)。*
 
 ## ⚙️ 功能介绍
 
-- **多种评测任务**。用 Terminal-Bench、SWE-bench Verified、WorkBuddy 或自有 Harbor 任务，让 Agent 执行终端、代码和办公任务。OfficeQA Pro V2 支持解析后的 JSON 和原始 PDF。 [支持的 Benchmark](docs/users/README.zh-CN.md#现在能测哪些-benchmark) · [OfficeQA Pro V2](docs/users/benchmarks/officeqa-pro-v2.zh-CN.md)
-- **本机、容器与分布式执行**。在本机或 Docker 中执行，按需配置并发。使用 Ray 时，每个节点只预热分给自己的题目。 [执行方式](docs/users/usage.zh-CN.md#本地docker-与-ray) · [并发与预热](docs/users/concurrency.zh-CN.md)
-- **证据保存与任务续跑**。按题记录失败阶段、错误码、执行轨迹和验证日志。用 `--resume` 继续原评测，用 `retry` 补测符合条件的网络失败题。 [续跑](docs/users/usage.zh-CN.md#续跑与重建报告) · [错误定位](docs/users/reference/errors.zh-CN.md) · [网络补测](docs/users/network-retry.zh-CN.md)
-- **模型服务性能测量**。AgentX 回放请求轨迹，测吞吐、首 token 延迟和请求耗时，可采集 vLLM 与 Ascend NPU 指标。 [AgentX 指南](docs/users/benchmarks/agentx.zh-CN.md)
-- **多种 Agent 与模型服务**。可用内置 SimpleAgent，或通过 AgentBundle 接入 DSH、Dify、Pi、DeepAgents、Hermes 和 JiuwenSwarm。 [Solver 与模型服务](docs/users/solvers.zh-CN.md)
-- **指标与离线报告**。从已保存结果统计得分、正确率、耗时和 token 用量，生成 Markdown 报告。 [结果阅读](docs/users/usage.zh-CN.md#如何读结果) · [评分口径](docs/users/reference/scoring.zh-CN.md)
-- **网络配置**。用 `--network` 为实验选择适合运行环境的配置。 [网络配置](docs/users/network.zh-CN.md)
-- **插件扩展**。用 `--patch` 加载自定义 Benchmark、Solver 或 Verifier 等组件。 [插件开发](docs/development/README.md#第一次新增组件)
-- **Node.js SDK**。用 `Evaluator.run()` 发起评测，支持进度、取消、续跑和 Ray Jobs。 [SDK 指南](docs/users/sdk.zh-CN.md)
+- **多场景评测**：支持 Agent Harness、推理引擎和算子评测，兼容多种 Benchmark 与自定义任务。 [Benchmark 列表](docs/users/README.zh-CN.md#现在能测哪些-benchmark)
+- **多种 Agent 接入**：支持内置 SimpleAgent，并可通过 AgentBundle 接入 DSH、Dify、Pi、DeepAgents 等 Agent Harness。 [Agent 接入](docs/users/solvers.zh-CN.md)
+- **灵活的执行方式**：支持本地、Docker 和 Ray 分布式执行，提供并发控制、环境预热及网络配置。 [执行模式](docs/users/usage.zh-CN.md#本地docker-与-ray)
+- **可靠的评测流程**：支持执行证据留存、故障诊断、中断续跑及网络失败补测。 [续跑与恢复](docs/users/usage.zh-CN.md#续跑与重建报告) · [网络补测](docs/users/network-retry.zh-CN.md)
+- **指标与轨迹分析**：支持评测指标统计、离线报告生成，以及通过 Tracer 查看执行轨迹与反馈。 [结果与报告](docs/users/usage.zh-CN.md#如何读结果)
+- **插件与 SDK 扩展**：支持自定义评测组件，并提供 Node.js SDK 集成评测能力。 [插件开发](docs/development/README.md#第一次新增组件) · [SDK 集成](docs/users/sdk.zh-CN.md)
+
+## 🧪 支持的 Benchmark
+
+Ember Evaluator 覆盖以下三类评测场景，完整支持列表及运行条件参见 [Benchmark 列表](docs/users/README.zh-CN.md#现在能测哪些-benchmark)。
+
+| 评测方向 | 代表性 Benchmark | 评测内容 |
+| --- | --- | --- |
+| 模型与 Agent 能力评测 | GSM8K、MMLU、SWE-bench、Terminal-Bench、WorkBuddy、OfficeQA 等 | 覆盖问答、编程、终端、办公及网页等任务，支持自定义 Harbor 任务。 |
+| 推理引擎性能评测 | AgentX、AISBench | 支持 Agent 请求轨迹回放与模型服务压测，测量吞吐量、延迟及 Prefix Cache 等性能指标。 [AgentX 指南](docs/users/benchmarks/agentx.zh-CN.md) · [AISBench 指南](plugins/aisbench/README.md) |
+| 算子性能评测 | kernel | 验证算子正确性，测量执行耗时与加速比。 [算子评测指南](docs/users/benchmarks/kernel-npu.zh-CN.md) |
 
 ## 📦 安装部署
 
-### Agent Instruction
+### 通过编程 Agent 安装
 
-将以下指令交给编程 Agent。
+将以下指令交给编程 Agent，自动完成 CLI 和 Skill 的安装与验证。
 
 ```text
-请从 https://github.com/evolving-foundry/ember-evaluator 安装 Ember Evaluator CLI 和配套的 ember-evaluator skill。
-按照 README 的 Manual Installation 步骤安装 CLI，并在目标项目中为当前 Agent 安装 skill。
-运行 ember-evaluator --help，并确认当前 Agent 能发现和读取该 skill。验证安装后结束任务。
+请从 https://github.com/evolving-foundry/ember-evaluator 安装 Ember Evaluator CLI 和配套的 ember-evaluator Skill。
+参考 README 中的手动安装步骤完成 CLI 安装，并在当前项目中为自己安装 Skill。
+执行 ember-evaluator --help 验证 CLI，并确认 Skill 可以正常发现和读取。验证完成后结束任务。
 ```
 
-### Manual Installation
+### 手动安装
 
 #### 1. 安装 CLI
 
-准备 Node.js 24.x（至少 24.22.1）、pnpm 11 或 12 和 Git。缺少 pnpm 时，先执行 `npm install --global pnpm`。
+需要 Node.js 24.x（至少 24.22.1）、pnpm 11 或 12 和 Git。未安装 pnpm 时，可执行 `npm install -g pnpm`。
 
 ```bash
 git clone https://github.com/evolving-foundry/ember-evaluator.git
@@ -74,25 +81,21 @@ pnpm add -g .
 ember-evaluator --help
 ```
 
-看到帮助信息即安装成功。 [安装指南](docs/users/installation.zh-CN.md) · [Linux 管理容器](docs/users/deployment/container-toolbox.zh-CN.md)
+成功显示帮助信息即完成安装。
 
-想直接以 TypeScript 源码运行 CLI，可使用 `pnpm dev`。全新源码树无需先手动构建：第一次执行需要加载插件注册表的命令时，会先一次性打包 Agent 运行时（`tsc` 加 `package-runtime`）再启动。
+#### 2. 安装 Agent Skill（可选）
 
-```bash
-pnpm dev run --tracer http://127.0.0.1:8787 playbook/gsm8k/gsm8k-quick-start.yaml
-```
-
-#### 2. 安装 skill
-
-在要使用 skill 的项目目录执行，并选择对应的编程 Agent。
+在目标项目目录执行以下命令，为编程 Agent 安装配套的 Skill：
 
 ```bash
 npx skills add evolving-foundry/ember-evaluator --skill ember-evaluator
 ```
 
+如需了解其他安装方式或排查安装问题，请参阅[安装指南](docs/users/installation.zh-CN.md)。
+
 ## 🚀 快速入门
 
-在仓库根目录用 Bash 运行两道 GSM8K 题。示例使用本机的 SimpleAgent，将以下模型设置换成支持 OpenAI Chat Completions 和工具调用的服务。
+在仓库根目录使用 Bash，通过内置 SimpleAgent 运行两道 GSM8K 题。首先配置支持 OpenAI Chat Completions 和工具调用的模型服务。
 
 ```bash
 export MODEL_NAME="your-model-id"
@@ -103,19 +106,13 @@ ember-evaluator inspect playbook/gsm8k/gsm8k-quick-start.yaml
 ember-evaluator run playbook/gsm8k/gsm8k-quick-start.yaml
 ```
 
-`inspect` 检查配置，`run` 开始评测。结束后打开终端所示结果目录里的 `report.md`。 [完整步骤和 PowerShell 用法](docs/users/quick-start.zh-CN.md)
+`inspect` 用于检查实验配置，`run` 执行评测。完成后可在结果目录中的 `report.md` 查看评测报告。完整操作步骤及命令行示例参见[快速上手指南](docs/users/quick-start.zh-CN.md)。
 
-| 评测目标 | Benchmark / 场景 | 执行环境 | 额外条件 | 快速入门 |
-| --- | --- | --- | --- | --- |
-| 跑通模型与报告链路 | GSM8K，两道题 | local | 支持工具调用的模型 API | [两题快速上手](docs/users/quick-start.zh-CN.md) |
-| 评测终端操作能力 | Terminal-Bench 4.0 | Docker | amd64 镜像；ARM64 需 QEMU/binfmt | [Terminal-Bench 4.0 入门](docs/users/quick-start/terminalbench.zh-CN.md) |
-| 模型服务标准性能测评 | AgentX standard | local，可选管理容器 | Python 3.11–3.13、venv、tokenizer、长上下文流式模型服务；管理镜像已提供 Python | [AgentX 性能入门](docs/users/quick-start/agentx.zh-CN.md) |
+其他评测场景可参考 [Terminal-Bench 4.0 入门](docs/users/quick-start/terminalbench.zh-CN.md)和 [AgentX 性能入门](docs/users/quick-start/agentx.zh-CN.md)。更多实验配置见 [Playbook 示例](playbook/README.md)。
 
-更多配置见 [Playbook](playbook/README.md)。
+## 🔥 评测前预热（可选）
 
-## 🔥 评测前预热镜像
-
-用同一份 YAML 检查环境、预热镜像，再开始评测。先处理 `doctor` 报出的失败项。
+对于需要准备 Docker 镜像的评测，可提前检查环境并预热镜像及运行时依赖，减少正式评测时的准备开销。
 
 ```bash
 ember-evaluator doctor playbook/terminalbench/terminalbench-4.0.yaml
@@ -123,75 +120,23 @@ ember-evaluator warmup playbook/terminalbench/terminalbench-4.0.yaml
 ember-evaluator run playbook/terminalbench/terminalbench-4.0.yaml
 ```
 
-`warmup` 提前准备解题、验证和侧车镜像，以及 Solver 运行依赖。模型调用和评分留到 `run`，预热阶段可省略模型 API key。
+`doctor` 检查运行环境，`warmup` 提前准备镜像和依赖，`run` 正式执行评测。预热不会调用模型或执行评分，正式运行可复用已准备的镜像。具体用法参见[预热说明](docs/users/usage.zh-CN.md#只预热镜像不开始测评)。
 
-本机 Docker、Ray Client 和 Ray Jobs 均可预热。Ray 在实际执行节点准备镜像。保持实验配置和执行环境一致，正式运行可复用缓存。 [预热指南](docs/users/usage.zh-CN.md#只预热镜像不开始测评)
+项目在 ModelScope 上同步维护了[评测镜像仓库](https://www.modelscope.cn/datasets/evolving-foundry/ember-evaluator)，用于存储已发布的 Benchmark 评测镜像，方便下载与复用。可通过 `--network` 配置镜像来源，具体参见[镜像下载指南](docs/users/image-downloads.zh-CN.md#从-modelscope-下载任务镜像)。
 
-### 📥 从 ModelScope 下载评测镜像
+## 🛰️ Tracer：轨迹与反馈分析
 
-`warmup` 和 `run` 可按题目、平台和阶段下载 ModelScope 归档并加载到 Docker，也支持 Hugging Face 归档。 [官方 ModelScope 镜像仓库](https://www.modelscope.cn/datasets/evolving-foundry/ember-evaluator)
-
-以下命令用 `--network` 指定镜像来源。
-
-```bash
-ember-evaluator warmup playbook/terminalbench/terminalbench-4.0.yaml --network playbook/network/archives.yaml
-ember-evaluator run playbook/terminalbench/terminalbench-4.0.yaml --network playbook/network/archives.yaml
-```
-
-示例默认选全部题目，归档下载范围以已发布的题目和平台为准。 [Terminal-Bench 入门](docs/users/quick-start/terminalbench.zh-CN.md) · [镜像来源配置](docs/users/network.zh-CN.md#1-先选一份网络配置)
-
-## 🛰️ Tracer：轨迹展示、优化反馈与运维
-
-仓库内置的 `tracer` 插件会把每次 attempt 实时推送到本地 Collector：一个轻量 HTTP 服务，用于展示 Agent 轨迹与性能指标，产出确定性反馈（可选 LLM 归因），并导出文件供下游 RSI 使用。配置的 Store 始终是权威数据源，推送失败只产生告警，不会中断评测。
-
-按需为单次运行开启，插件会自动拉起 Collector：
+Tracer 支持查看 Agent 执行轨迹、性能指标和优化反馈，展示模型调用、工具事件及其耗时，并提供规则诊断与可选的 LLM 分析。运行评测时添加 `--tracer` 即可启用。
 
 ```bash
 ember-evaluator run playbook/gsm8k/gsm8k-quick-start.yaml --tracer
 ```
 
-插件随主运行时一起发布：`pnpm build` 会把 `plugins/tracer` 编译到 `dist/plugins/tracer`，无需单独安装，也不需要额外的解释器。Collector 以 Node 子进程运行，内置 `node:sqlite`。
+Tracer 会按需启动本地 Collector。在运行 Collector 的机器上，通过浏览器访问 `http://127.0.0.1:8787`，即可查看轨迹与反馈。
 
-用四个子命令管理 Collector：
+![Tracer 轨迹瀑布图，展示模型调用和工具事件的耗时](imgs/tracer-trajectory.png)
 
-| 命令 | 作用 |
-| --- | --- |
-| `ember-evaluator tracer serve [--url <url>] [--db <path>] [--spool <path>] [--port <n>] [--timeout <ms>]` | 启动 Collector，或复用已健康的实例；在数据库同级写入 `tracer.pid` |
-| `ember-evaluator tracer status [--url <url>] [--db <path>] [--port <n>]` | 输出 JSON 状态；不健康时以非零码退出 |
-| `ember-evaluator tracer logs [--log <path>] [--lines <n>] [--follow]` | 输出 `collector.log` 末尾内容，可跟随新增日志 |
-| `ember-evaluator tracer stop [--url <url>] [--db <path>] [--port <n>]` | 按 `tracer.pid` 停止进程（先 SIGTERM，5 秒后升级为 SIGKILL） |
-
-`--url`、`--db`、`--spool` 对所有子命令通用；`--port` 除 `logs` 外均可用。
-
-默认值为 `http://127.0.0.1:8787`、`.cache/tracer/trace.db`、`.cache/tracer/spool`、`.cache/tracer/collector.log`，可用 `TRACER_URL`、`TRACER_DB`、`TRACER_SPOOL`、`TRACER_LOG`、`TRACER_COLLECTOR`、`TRACER_TOKEN` 覆盖。想保留旧数据时，把 `TRACER_DB` 指向原来的 `plugins/tracer/trace.db` 即可。Collector 以子进程启动，环境变量在启动那一刻继承，改动后先 `ember-evaluator tracer stop` 再 `ember-evaluator tracer serve`。
-
-LLM 分析是可选能力；未配置 provider 时 Collector 只走确定性规则，反馈页的 LLM 区块会标记为未配置。要启用，准备一个 OpenAI 兼容的 `/chat/completions` 服务：
-
-```bash
-export TRACER_LLM_BASE_URL="https://your-model-service.example/v1"
-export TRACER_LLM_MODEL="your-model-id"
-export TRACER_LLM_API_KEY="your-api-key"
-ember-evaluator tracer serve
-```
-
-`TRACER_LLM_BASE_URL`、`TRACER_LLM_MODEL`、`TRACER_LLM_API_KEY` 会分别回退到 `MODEL_ENDPOINT`、`MODEL_NAME`、`MODEL_API_KEY`。`TRACER_LLM_TIMEOUT` 默认 120 秒，`TRACER_LLM_MAX_TOKENS` 默认 8000（推理模型需要更大预算）。这些变量在 Collector 启动时读取，所以要在 `ember-evaluator tracer serve` 之前设置，或者改完后重启 Collector。
-
-## 📖 使用指南
-
-- **配置实验** · [YAML 和 Profile](docs/users/config.zh-CN.md) · [Solver 和模型服务](docs/users/solvers.zh-CN.md)
-- **运行不同任务** · [Benchmark 指南](docs/users/benchmarks/README.zh-CN.md) · [可运行配置](playbook/README.md)
-- **管理评测过程** · [选题、续跑与报告](docs/users/usage.zh-CN.md) · [并发](docs/users/concurrency.zh-CN.md) · [镜像清理](docs/users/usage.zh-CN.md#删除评测镜像)
-- **测量服务性能** · [AgentX 并发扫描和轨迹回放](docs/users/benchmarks/agentx.zh-CN.md)
-- **扩展项目** · [新增 Solver](docs/development/add-solver.md) · [新增内置基础插件](docs/development/add-built-in-plugin.md) · [新增外部插件](docs/development/add-external-plugin.md) · [Benchmark 开发](docs/development/benchmarks.md) · [数据集验收](docs/development/benchmark-evaluation-requirements.md)
-- **排查问题** · [FAQ](docs/users/faq/README.zh-CN.md) · [错误码](docs/users/reference/errors.zh-CN.md) · [网络补测](docs/users/network-retry.zh-CN.md)
-
-## 🧪 支持的 Benchmark
-
-| 类别 | 支持的 Benchmark | 评测内容与使用说明 |
-| --- | --- | --- |
-| 模型 + Agent Harness 能力测评 | GSM8K、MATH-500、MGSM、MMLU、MMLU-Pro、GPQA、DROP、TriviaQA、SimpleQA、HealthBench、HumanEval、DeepSWE、SWE-bench Verified、Terminal-Bench、WorkBuddy、OfficeQA Pro V2，以及自有 Harbor 任务包 | 按各题库规则评测问答、代码、终端、办公、网页和安全任务。 [题库与运行条件](docs/users/README.zh-CN.md#现在能测哪些-benchmark) |
-| 推理引擎性能测评（AgentX） | AgentX（`agentx`） | 回放 Agent 请求轨迹，测吞吐、首 token 延迟、token 间隔和请求耗时。 [AgentX 指南](docs/users/benchmarks/agentx.zh-CN.md) |
-| 算子性能测评（kernel） | kernel（`kernel`） | 在本机 Ascend NPU 上串行验证候选算子，比较耗时与加速比，可采集硬件指标。 [算子指南](docs/users/benchmarks/kernel-npu.zh-CN.md) · [配置示例](playbook/kernel/existing.yaml) |
+*Tracer 轨迹分析界面，详细配置及问题排查参见 [Tracer 使用指南](docs/users/tracer.zh-CN.md)。*
 
 ## 📊 评测结果
 
@@ -206,14 +151,20 @@ ember-evaluator tracer serve
 | SWE-bench Verified | SimpleAgent | `tbd` |
 | OfficeQA Pro V2 | SimpleAgent | 56.67% (51 / 90) |
 
-## 🙏 致谢
+## 📖 使用指南
 
-感谢 Cordis 的维护者和贡献者。Ember Evaluator 使用 Cordis 注册插件并管理组件生命周期。[Cordis 项目](https://github.com/cordiverse/cordis)
-
-感谢 Harbor 的维护者和贡献者。Ember Evaluator 支持 Harbor 任务包，并遵循 Harbor 协议执行和验证任务。[Harbor 项目](https://github.com/harbor-framework/harbor)
+- **配置实验**：[配置指南](docs/users/config.zh-CN.md) · [Solver 与模型服务](docs/users/solvers.zh-CN.md)
+- **选择评测场景**：[Benchmark 指南](docs/users/benchmarks/README.zh-CN.md) · [AgentX 性能评测](docs/users/benchmarks/agentx.zh-CN.md) · [Playbook 示例](playbook/README.md)
+- **运行与管理评测**：[日常操作](docs/users/usage.zh-CN.md) · [并发与环境准备](docs/users/concurrency.zh-CN.md) · [镜像清理](docs/users/usage.zh-CN.md#删除评测镜像)
+- **插件扩展与集成**：[插件开发与加载](docs/development/plugins.md) · [SDK 集成](docs/users/sdk.zh-CN.md)
+- **故障排查与恢复**：[常见问题](docs/users/faq/README.zh-CN.md) · [错误码参考](docs/users/reference/errors.zh-CN.md) · [网络故障补测](docs/users/network-retry.zh-CN.md)
 
 ## 🔗 相关项目
 
-- [Ember RSI](https://github.com/evolving-foundry/ember-rsi)：通过可衡量的实验开展迭代优化的工具。
-- [AgentBundle](https://github.com/evolving-foundry/agentbundle)：跨运行时验证、安装和管理 Agent Bundle 的统一 CLI 与 SDK。
+- [Ember RSI](https://github.com/ARSI-LAB/ARSI)：面向 Agent 和 AI 基础设施的插件化递归自我改进（RSI）框架。以 Ember Evaluator 的评测结果为反馈，持续生成和优化候选方案，实现迭代式自我改进。
+- [AgentBundle](https://github.com/ARSI-LAB/agentbundle)：统一打包和管理不同 Agent Harness 的配置、技能与插件，方便在 Ember Evaluator 中接入和评测不同 Agent。
+
+## 🙏 致谢
+
+感谢 [Cordis](https://github.com/cordiverse/cordis) 和 [Harbor](https://github.com/harbor-framework/harbor) 的维护者与贡献者。Ember Evaluator 使用 Cordis 管理插件及其生命周期，并支持遵循 Harbor 协议执行和验证评测任务。
 
