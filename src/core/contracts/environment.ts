@@ -54,6 +54,8 @@ export type ContainerService = {
 };
 
 export type EnvironmentSpec = {
+  /** Logical repository for a task-provided Docker image. */
+  imageScope?: { dataset: string; taskPath?: string };
   executionUsers?: { solve?: string; verify?: string };
   services?: Record<string, ContainerService>;
   healthcheck?: { command: string; intervalSeconds: number; timeoutSeconds: number; retries: number; startPeriodSeconds: number; startIntervalSeconds: number };
@@ -135,7 +137,10 @@ export type CommandSpec = {
   env: Record<string, string>;
   /** Inherit the environment process/container defaults; true when omitted for compatibility. */
   inheritEnv?: boolean;
-  /** Pending output retained before consumption; null preserves complete protocol output. Defaults to a bounded diagnostic tail. */
+  /** Pending output retained before consumption. A number keeps a diagnostic tail and null preserves all bytes.
+   * Docker defaults to complete pipes. Consume stdout and stderr concurrently with done.
+   * Local processes default to a bounded diagnostic tail.
+   */
   outputBufferBytes?: number | null;
   input: Uint8Array | null;
 };
