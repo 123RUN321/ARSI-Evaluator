@@ -51,19 +51,23 @@ export function identifyNetworkFailure(values: readonly unknown[], context: {
     ...details.map(value => own(value, "networkEvidence")).filter(value => typeof value === "string")].join("\n");
   const truncation = stage === "model-api" ? evidence.match(/Response payload is not completed|Not enough data to satisfy (?:transfer|content) length header|incomplete chunked read|peer closed connection without sending complete message|UND_ERR_RES_CONTENT_LENGTH_MISMATCH|(?:model )?stream ended (?:without (?:a )?finish_reason|before (?:the )?(?:completion|terminal|end) event)/iu)?.[0] : undefined;
   if (truncation) return { networkStage: "model-api", networkReason: "response-truncated", networkEvidence: truncation };
+  const dockerDns = stage === "docker-pull" ? evidence.match(/\bno such host\b/iu)?.[0] : undefined;
+  const dockerConnection = stage === "docker-pull" ? evidence.match(/\b(?:connection refused|network is unreachable|no route to host)\b/iu)?.[0] : undefined;
+  const dockerRateLimit = stage === "docker-pull" ? evidence.match(/\btoomanyrequests\b/iu)?.[0] : undefined;
   let reason: string | undefined;
-  if (/\b(?:EAI_AGAIN|ENOTFOUND|NameResolutionError)\b|Could not resolve|Temporary failure in name resolution/iu.test(evidence)) reason = "dns";
+  if (dockerDns || /\b(?:EAI_AGAIN|ENOTFOUND|NameResolutionError)\b|Could not resolve|Temporary failure in name resolution/iu.test(evidence)) reason = "dns";
   else if (/\b(?:ECONNRESET|EPIPE|UND_ERR_SOCKET|UND_ERR_RES_CONTENT_LENGTH_MISMATCH|ServerDisconnectedError|TransferEncodingError)\b|connection reset|socket hang up|Response payload is not completed|unexpected EOF|APIConnectionError/iu.test(evidence)) reason = "connection-interrupted";
-  else if (/\b(?:ECONNREFUSED|ENETUNREACH|EHOSTUNREACH)\b|Failed to establish a new connection|Failed to connect to .* port/iu.test(evidence)) reason = "connection-failed";
+  else if (dockerConnection || /\b(?:ECONNREFUSED|ENETUNREACH|EHOSTUNREACH)\b|Failed to establish a new connection|Failed to connect to .* port/iu.test(evidence)) reason = "connection-failed";
   else if (/\b(?:ETIMEDOUT|ESOCKETTIMEDOUT|UND_ERR_CONNECT_TIMEOUT|UND_ERR_HEADERS_TIMEOUT|UND_ERR_BODY_TIMEOUT|ReadTimeout|ConnectTimeout|APITimeoutError|APIConnectionTimeoutError)\b|Read timed out|TLS handshake timeout|dial tcp.*i\/o timeout|curl: \(28\)|(?:pi-ai stream|dataset stream) idle timeout|Client\.Timeout exceeded|(?:Get|Head) "https?:[^\n]+context deadline exceeded|lookup [^\n]+i\/o timeout|Connection timed out \[IP:/iu.test(evidence)) reason = "transport-timeout";
   else if ([408, 500, 502, 503, 504].includes(status)) reason = "http-transient";
-  else if (status === 429 || (stage === "model-api" && /\bRateLimitError\b/iu.test(evidence))) reason = "rate-limit";
+  else if (status === 429 || dockerRateLimit || (stage === "model-api" && /\bRateLimitError\b/iu.test(evidence))) reason = "rate-limit";
   if (!reason) return null;
   const retryAfter = [...values, ...details].map(value => own(value, "retryAfterMs")).find((value): value is number =>
     typeof value === "number" && Number.isSafeInteger(value) && value >= 0 && value <= 86_400_000);
   // Store the recognized signal, not arbitrary command output or credential-bearing URLs.
-  const marker = reason === "http-transient" || reason === "rate-limit" ? (Number.isInteger(status) ? `HTTP ${status}` : "RateLimitError")
+  const marker = reason === "http-transient" || reason === "rate-limit" ? (Number.isInteger(status) ? `HTTP ${status}` : dockerRateLimit ?? "RateLimitError")
     : evidence.match(/\b(?:EAI_AGAIN|ENOTFOUND|NameResolutionError|ECONNRESET|EPIPE|UND_ERR_SOCKET|UND_ERR_RES_CONTENT_LENGTH_MISMATCH|ServerDisconnectedError|TransferEncodingError|ECONNREFUSED|ENETUNREACH|EHOSTUNREACH|APIConnectionError|ETIMEDOUT|ESOCKETTIMEDOUT|UND_ERR_\w+|ReadTimeout|ConnectTimeout|APITimeoutError|APIConnectionTimeoutError)\b/iu)?.[0]
+      ?? dockerDns ?? dockerConnection
       ?? diagnostic.split("\n").find(line => /Could not resolve|Temporary failure|connection reset|socket hang up|Read timed out|TLS handshake timeout|dial tcp|curl: \(28\)|(?:pi-ai stream|dataset stream) idle timeout|Client\.Timeout exceeded|context deadline exceeded|i\/o timeout|Connection timed out|unexpected EOF|Failed to connect|Failed to establish/iu.test(line))?.slice(0, 512);
   if (!marker) return null;
   return { networkStage: stage as NetworkStage, networkReason: reason, networkEvidence: marker,

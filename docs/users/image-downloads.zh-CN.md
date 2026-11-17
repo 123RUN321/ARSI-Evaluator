@@ -11,7 +11,7 @@
 
 ## 从 ModelScope 下载任务镜像
 
-使用 ModelScope 时，在同一份网络文件中保留 `docker.pull` 默认配置，再添加 `docker.benchmarks.terminalbench`，将 Terminal-Bench 的任务镜像改为归档下载；共享镜像继续使用 `docker.pull` 指定的方式。
+在同一份网络配置中保留 `docker.pull`，再添加 `docker.benchmarks.terminalbench`。Evaluator 会从 ModelScope 下载并加载 Terminal-Bench 的任务镜像。Node 等共享镜像继续使用 `docker.pull` 指定的方式。
 
 先按 [Terminal-Bench 入门](quick-start/terminalbench.zh-CN.md)准备 Docker、模型和选题，再在仓库根目录执行：
 
@@ -28,7 +28,7 @@ docker:
   # 未单独配置获取方式的题库任务镜像也使用此设置。
   pull:
     method: docker
-  # Terminal-Bench 任务镜像：从 ModelScope 下载归档并加载到 Docker。
+  # 从 ModelScope 下载 Terminal-Bench 任务镜像并加载到 Docker。
   benchmarks:
     terminalbench:
       method: archive
@@ -37,14 +37,14 @@ docker:
       baseUrl: https://modelscope.cn/datasets/evolving-foundry/ember-evaluator/resolve/master/terminalbench4.0
 ```
 
-`terminalbench` 对应实验中的 `benchmark.name`，`baseUrl` 指向该版本镜像归档的下载目录。程序根据所选任务和平台下载解题、验证及服务镜像，再自动加载到 Docker，无需手动下载或执行 `docker load`。只有远端已发布的任务和平台可用；文件缺失会报错，不会自动改从原 Registry 拉取。
+`terminalbench` 对应实验中的 `benchmark.name`，`baseUrl` 指向 ModelScope 上该版本的任务镜像下载目录。Evaluator 按所选任务和平台下载解题、验证及服务镜像，并自动加载到 Docker。ModelScope 缺少所需镜像文件时，按[任务镜像下载与回退](#任务镜像下载与回退)处理。
 
 本例以 `docker.pull.method: docker` 为默认配置，再单独指定 Terminal-Bench 的任务镜像来源：
 
 | 镜像类别 | 使用的配置 | 获取方式 |
 | --- | --- | --- |
 | Node 等共享镜像 | `docker.pull` | 执行 `docker pull` |
-| Terminal-Bench 的解题、验证和服务镜像 | `docker.benchmarks.terminalbench` | 从 ModelScope 下载归档，再执行 `docker load` |
+| Terminal-Bench 的解题、验证和服务镜像 | `docker.benchmarks.terminalbench` | 从 ModelScope 下载任务镜像并自动加载到 Docker |
 | 未单独配置的其他题库任务镜像 | `docker.pull` | 执行 `docker pull` |
 
 也可以将 `docker.pull` 改为 `method: registry-client`，并选择 `backend: nodejs` 或 `skopeo`：共享镜像及未单独配置的题库任务镜像改用对应后端，Terminal-Bench 的任务镜像仍从 ModelScope 下载。
@@ -63,7 +63,7 @@ docker:
 | `method: registry-client`，`backend: nodejs` | Evaluator 下载镜像内容，再导入 Docker | [Node.js 下载后端](#nodejs-下载后端) |
 | `method: registry-client`，`backend: skopeo` | 调用预装 skopeo；可设置 `skopeoExecutable`，不会自动安装或切换后端 | [skopeo 下载后端](#skopeo-下载后端) |
 
-需要额外指定任务镜像来源时，再添加 `docker.benchmarks.<实验选择的 benchmark 标识>`。其中的 `method: archive` 优先于该题库的默认获取方式；完整示例见上方的 [ModelScope 配置](#从-modelscope-下载任务镜像)。它可以与表中的任意一种默认配置组合，同一个任务镜像只使用选中的一种方式。
+要为某个题库从 ModelScope 下载任务镜像，在 `docker.benchmarks.<题库名>` 下设置 `method: archive` 和 `provider: modelscope`。这可以与表中的任意一种 `docker.pull` 设置组合。下载失败时，见[任务镜像下载与回退](#任务镜像下载与回退)。
 
 以下三个示例分别展示默认配置，均未添加题库专属设置，各自使用独立的网络文件。将 `experiment.yaml` 换成自己的 Docker 实验配置；准备 Docker、模型和选题的方法见 [Terminal-Bench 入门](quick-start/terminalbench.zh-CN.md)。
 
@@ -128,23 +128,25 @@ arsi-evaluator warmup experiment.yaml --network network-skopeo.yaml
 
 下载私有仓库镜像前，先在实际执行下载的机器上使用 `docker login` 登录。`registry-client` 使用当前执行用户的 Docker 登录信息；Ray 下载发生在执行节点上，需要在对应节点配置登录信息。
 
-使用 `registry-client` 时，同一镜像和平台的本机缓存仍可用，就会直接复用，无需重新下载。使用 `method: docker` 时，Docker 自己管理镜像层缓存。
+使用 `registry-client` 时，按实际下载的 Registry 引用和平台复用本机镜像缓存。使用 `method: docker` 时，Docker 自己管理镜像层缓存。
 
-下载或导入 Docker 失败时，程序会报错，不会自动切换镜像源或获取方式。
+镜像站遇到连接故障、限流或临时服务错误时，先重试镜像站。重试耗尽后，同一个后端使用原始镜像引用再尝试。鉴权、摘要校验、平台或 Docker 导入失败会直接报告错误。Docker 原生拉取仍受 daemon 自身的镜像配置控制。
 
-### 归档路径与缓存
+### 任务镜像下载与回退
 
-`method: archive` 的具体配置见开头的 [ModelScope 示例](#从-modelscope-下载任务镜像)。使用 Hugging Face 时，改为 `provider: huggingface` 并填写对应下载根地址，示例见[归档网络配置](../development/image-archives.md#网络配置)。
+从 ModelScope 下载任务镜像的配置见[上方示例](#从-modelscope-下载任务镜像)。如果镜像文件发布在 Hugging Face，设置 `provider: huggingface`，并填写对应的 `baseUrl`。 [Hugging Face 配置示例](../development/image-archives.md#网络配置)
 
-归档地址由 `baseUrl`、任务路径、平台和阶段组成。例如 `terminal-bench/vf2-speedup-networkx` 的解题镜像使用 `<baseUrl>/vf2-speedup-networkx/linux/amd64/solve.tar.gz`，验证镜像改为 `verify.tar.gz`；服务镜像放在 `<阶段>/services/<服务名>.tar.gz`。准备自己的归档时，按[文件布局](../development/image-archives.md#文件布局)组织。
+镜像文件的下载地址由 `baseUrl`、任务路径、平台和阶段组成。以 `terminal-bench/vf2-speedup-networkx` 为例，解题镜像位于 `<baseUrl>/vf2-speedup-networkx/linux/amd64/solve.tar.gz`，验证镜像使用 `verify.tar.gz`，服务镜像位于 `<阶段>/services/<服务名>.tar.gz`。 [发布镜像文件的目录结构](../development/image-archives.md#文件布局)
 
 解题基础镜像的本地标签，例如 `arsi-evaluator/terminalbench4.0/vf2-speedup-networkx:linux-amd64-base`，对应远端 `vf2-speedup-networkx/linux/amd64/solve.tar.gz`。Evaluator 根据镜像 ID 分配或复用本地引用。Solver 成品在执行节点构建。
 
-Evaluator 检查归档的平台和镜像 ID，通过临时引用导入 Docker。归档里的发布者标签不会恢复。相同镜像 ID 的归档共用一个本地引用。需要核对归档与原仓库是否一致时，可按下方方法比较镜像 ID。
+从 ModelScope 或 Hugging Face 下载任务镜像时，如果远端返回 `404`，或临时网络故障重试耗尽，Evaluator 会按 `docker.pull` 从任务声明的镜像仓库获取对应镜像，保留目标平台和固定摘要。比如 Terminal-Bench 4.0 的某道题在 ModelScope 缺少解题镜像时，Evaluator 会直接使用该题声明的 Docker Hub 引用。这次回退跳过 `docker.mirrors`，并与 ModelScope 或 Hugging Face 下载结果分别缓存。任务缺少对应的镜像引用，或发生认证、镜像文件校验、`docker load` 失败时，Evaluator 会报告错误。
 
-用 `environment.platform` 选择归档平台，`auto` 使用执行节点的原生平台。同一下载地址优先复用已有镜像，清理镜像后可以用本机缓存的归档重新导入。不同下载地址各自记录下载结果。发布更新时请换用新的版本地址。
+Evaluator 检查下载文件的镜像平台和镜像 ID，再通过临时引用导入 Docker。相同镜像 ID 共用一个本地引用，发布者使用的标签不会恢复。可按下方步骤比较下载的镜像与原仓库镜像的 ID。
 
-官方维护的 ModelScope 仓库为 [evolving-foundry/ember-evaluator](https://www.modelscope.cn/datasets/evolving-foundry/ember-evaluator)，存放部分 Benchmark 的官方任务镜像归档。可用镜像以仓库目录为准；上传自己的镜像见[单个和批量上传指引](../development/image-archives.md#上传到-modelscope)。
+用 `environment.platform` 选择要下载的镜像平台，`auto` 使用执行节点的原生平台。同一下载地址优先复用已有镜像，清理镜像后可以用本机缓存的镜像文件重新导入。不同下载地址各自记录下载结果。发布更新时请换用新的版本地址。
+
+Evaluator 的 ModelScope 仓库提供部分题库的官方任务镜像，具体可用镜像见仓库文件列表。 [ModelScope 仓库](https://www.modelscope.cn/datasets/evolving-foundry/ember-evaluator) · [单个和批量上传指引](../development/image-archives.md#上传到-modelscope)
 
 ### 核验 ModelScope 镜像
 
@@ -157,15 +159,15 @@ Evaluator 检查归档的平台和镜像 ID，通过临时引用导入 Docker。
 docker pull --platform linux/amd64 '官方镜像:标签'
 docker image inspect --platform linux/amd64 --format '{{.Id}}' '官方镜像:标签'
 
-# 2. 加载 ModelScope 下载的归档
+# 2. 加载从 ModelScope 下载的任务镜像
 docker load --input solve.tar.gz
 
 # 3. 使用上一步 Loaded image 输出的引用，查看 ID，与第 1 步比较
 docker image inspect --platform linux/amd64 --format '{{.Id}}' '导入后的镜像引用'
 ```
 
-先记下官方 ID，再加载归档，避免同名标签被覆盖。若 ID 不同，检查是否使用了相同版本和平台，或误打包了 Runtime/Agent 镜像；官方 tag 更新也会导致 ID 不同。
+先记下官方镜像 ID，再加载从 ModelScope 下载的镜像文件，避免同名标签被覆盖。若 ID 不同，检查版本、平台和镜像类型。官方标签更新也会导致 ID 不同。
 
-## 归档下载认证
+## 任务镜像下载认证
 
 ModelScope 使用执行节点的 `MODELSCOPE_API_TOKEN`，Hugging Face 使用 `HF_TOKEN`；公开文件不需要 Token。认证信息通过环境变量提供，不写进网络文件。

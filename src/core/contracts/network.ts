@@ -16,8 +16,9 @@ export type NetworkSettings = {
   proxy: Record<NetworkLocation, NetworkProxy>;
   sources: {
     huggingface: string;
-    python: { index: string; extraIndexes: string[]; interpreter: string | null };
-    npm: { registry: string };
+    huggingfacePublicMirror?: true;
+    python: { index: string; indexPublicMirror?: true; extraIndexes: string[]; interpreter: string | null };
+    npm: { registry: string; registryPublicMirror?: true };
     node: { dist: string };
     github: { api: string; raw: string; repository: string };
     apt: AptSources;

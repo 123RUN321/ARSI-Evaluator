@@ -8,6 +8,8 @@ import { createServer } from "node:net";
 import { getGlobalDispatcher } from "undici";
 import { extract } from "tar";
 import { downloadRegistryImage } from "../../src/infrastructure/containers/registry-image.js";
+import { createDockerImagePuller } from "../../src/infrastructure/containers/image-pull.js";
+import type { DockerCommand } from "../../src/infrastructure/containers/runtime-contract.js";
 import { dockerRegistryCredential } from "../../src/infrastructure/containers/registry-auth.js";
 import { registryProxyFixture } from "../fixtures/registry-proxy.js";
 
@@ -70,6 +72,29 @@ test("retries one layer without downloading completed manifests or config again"
   expect(f.requests.filter(request => request.path.includes("/manifests/"))).toHaveLength(2);
   expect(f.requests.filter(request => request.path.endsWith(f.configDigest))).toHaveLength(1);
 }, 10000);
+
+test("uses the original registry after mirror retries and keeps a separate import cache", async () => {
+  const f = await fixture();
+  vi.stubEnv("EVALUATOR_CACHE_DIR", f.root);
+  f.controls.transientPath = `/v2/example/image/manifests/${f.indexDigest}`;
+  f.controls.transientFailures = 3;
+  const network = new NetworkRuntime(networkDocument({ proxy: { http: f.proxy },
+    docker: { pull: { method: "registry-client" }, mirrors: { "127.0.0.1:9": "http://localhost:9" } } }, {}));
+  cleanup.push(() => network.dispose());
+  const command = vi.fn<DockerCommand>().mockImplementation(async args => ({
+    stdout: args[0] === "load" ? "" : JSON.stringify([f.configDigest, "linux", "amd64"]), stderr: "",
+  }));
+  const pull = createDockerImagePuller(command, { network });
+  const first = await pull(f.reference, "linux/amd64", AbortSignal.timeout(10_000));
+  expect(first.verifiedDigest).toBe(f.indexDigest);
+  expect(f.requests.filter(request => request.path === f.controls.transientPath).map(request => request.host))
+    .toEqual(["localhost:9", "localhost:9", "localhost:9", "127.0.0.1:9"]);
+  const second = await pull(f.reference, "linux/amd64", AbortSignal.timeout(5000));
+  expect(second.verifiedDigest).toBe(f.indexDigest);
+  expect(second.reference).not.toBe(first.reference);
+  expect(f.requests.filter(request => request.path === f.controls.transientPath).at(-1)?.host).toBe("localhost:9");
+  expect(command.mock.calls.filter(([args]) => args[0] === "load")).toHaveLength(2);
+}, 15_000);
 
 test("a transient registry token failure retries without changing credentials or transport", async () => {
   const f = await fixture();

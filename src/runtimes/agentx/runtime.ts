@@ -1,4 +1,3 @@
-import { fetchNetworkResponse } from "../../infrastructure/network/retry.js";
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
@@ -12,7 +11,7 @@ import { buildFileManifest } from "../../core/artifacts/artifacts.js";
 import { fingerprintConfig } from "../../core/results/run-manifest.js";
 import { expectRecord } from "../../core/validation/input.js";
 import { DatasetCache } from "../../infrastructure/datasets/cache.js";
-import { huggingfaceTransport } from "../../infrastructure/datasets/sources/huggingface/endpoint.js";
+import { fetchHuggingFaceFile, fetchHuggingFaceMetadata, huggingfaceTransport } from "../../infrastructure/datasets/sources/huggingface/endpoint.js";
 import { AGENTX_VERSION } from "./versions.js";
 
 const execFileAsync = promisify(execFile);
@@ -94,8 +93,8 @@ export async function lockAgentXLexicon(name: string, revision: string | undefin
   const transport = huggingfaceTransport(process.env, network);
   const headers = process.env.HF_TOKEN ? { Authorization: `Bearer ${process.env.HF_TOKEN}` } : undefined;
   const pin = previous?.lexiconRevision ?? revision ?? "main";
-  const response = await fetchNetworkResponse(`${transport.apiBase}/api/models/${name}/revision/${encodeURIComponent(pin)}?blobs=true`,
-    { signal, ...(headers ? { headers } : {}) }, { ...(network ? { network } : {}) });
+  const response = await fetchHuggingFaceMetadata(`${transport.apiBase}/api/models/${name}/revision/${encodeURIComponent(pin)}?blobs=true`,
+    transport, signal, headers, network);
   if (!response.ok) throw new Error(`AgentX tokenizer metadata HTTP ${response.status}`);
   const metadata = expectRecord(await response.json(), "AgentX tokenizer metadata");
   if (typeof metadata.sha !== "string" || !/^[a-f0-9]{40}$/u.test(metadata.sha) || !Array.isArray(metadata.siblings))
@@ -111,7 +110,8 @@ export async function lockAgentXLexicon(name: string, revision: string | undefin
       throw new TypeError("Unsafe AgentX tokenizer asset path");
     const lfs = file.lfs === undefined ? null : expectRecord(file.lfs, "AgentX tokenizer LFS metadata");
     const digest = typeof lfs?.sha256 === "string" ? lfs.sha256 : null;
-    const cached = await cache.fetch(`${transport.fileBase}/${name}/resolve/${metadata.sha}/${filename.split("/").map(encodeURIComponent).join("/")}`, digest, signal, headers);
+    const url = `${transport.fileBase}/${name}/resolve/${metadata.sha}/${filename.split("/").map(encodeURIComponent).join("/")}`;
+    const cached = await fetchHuggingFaceFile(cache, url, transport, digest, signal, headers);
     const target = join(path, ...filename.split("/"));
     await mkdir(join(target, ".."), { recursive: true });
     await cp(cached.path, target);

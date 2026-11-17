@@ -89,6 +89,8 @@ Ray Jobs 部署与 RayScheduler 的任务调度处于不同层次。Jobs 入口�
 
 Docker 的 `materialize()` 和按需 `prepare()` 共用 `prepareDependencies()`，准备主容器、网关和 Compose 服务的镜像及运行时。`prepare()` 有凭证时先校验本地镜像，再把已确定的镜像交给 `startSession()`。启动主容器和网关时使用 `--pull never`，Compose 还使用 `--no-build`。启动失败时先清理已创建的容器、Compose 项目和网关，再释放镜像租约。启动成功时，容器、网关、Compose 项目和租约交给 `DockerSession.dispose()`。
 
+本地 `taskImage()` 在构建任务快照时启动[包源转发服务](../../src/infrastructure/containers/build-package-relay.ts)，通过构建参数指定原 Dockerfile 指令使用的公共 PyPI 或 npm 包源。服务按请求重试和回退，构建完成或取消时由 `taskImage()` 关闭。镜像命中本地缓存或从仓库下载时跳过这一步。
+
 ## Benchmark 与插件注册
 
 Benchmark 分为 `agent-harness/`、`inference-engine/`、`operator/`，各自保存所属 Profile 并在本类 `index.ts` 注册。分类不增加 YAML 类别字段，也不在核心执行流程中按类别分支。具体新增位置见 [Benchmark 开发指南](benchmarks.md#新需求的修改入口)。

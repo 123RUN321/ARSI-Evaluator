@@ -28,7 +28,7 @@ sources:
     index: https://pypi.org/simple
 ```
 
-This is an edit fragment, not a complete file. Update the existing `sources` block rather than adding a second one. Download and proxy fields are listed below. To also download task images from ModelScope, add `docker.benchmarks` as described in [combining mirrors with archives](../image-downloads.md#download-task-images-from-modelscope).
+Update the existing `sources` block using this fragment. Download and proxy fields are listed below. To also download task images from ModelScope, add `docker.benchmarks` to the same file. [Configure ModelScope task image downloads](../image-downloads.md#download-task-images-from-modelscope)
 
 Inspect the effective settings, then run your experiment:
 
@@ -43,13 +43,44 @@ arsi-evaluator run experiment.yaml --network network.yaml
 
 | Field | Downloads |
 | --- | --- |
-| `sources.huggingface` | Hub datasets, files and tokenizer assets |
+| `sources.huggingface` | Hub address for datasets, files, and tokenizer assets. Use `mirror` to declare a public mirror. |
 | `sources.python.index/extraIndexes` | pip and uv packages |
 | `sources.python.interpreter` | uv Python installations; null keeps uv's default |
 | `sources.npm.registry` | npm, pnpm, Corepack |
 | `sources.node.dist` | Node distributions |
 | `sources.github.api/raw/repository` | GitHub API, raw files and HTTPS Git |
 | `sources.apt` | Full `debian`, `debianSecurity`, `ubuntu`, `ubuntuSecurity`, `ubuntuPorts` repository roots |
+
+To use your own public Hugging Face mirror, put its address in the YAML file passed to `--network`.
+
+```yaml
+sources:
+  huggingface:
+    mirror: https://public-mirror.example
+```
+
+Evaluator tries the configured mirror first. After exhausting retries for a transient network failure, it tries the repository example's `https://hf-mirror.com` mirror, then `https://huggingface.co`. File requests also fall back after a `404`. Each request uses the same path and keeps the revision and digest checks. Fallback requests are anonymous, and tokens are sent only to the preferred address.
+
+The string value `https://hf-mirror.com` falls back directly to the official Hub. Use a string address for a self-hosted Hub to keep retries on that Hub. Select `https://huggingface.co` directly for authenticated access to official data. `HF_ENDPOINT` overrides the YAML setting and is treated as a string address.
+
+### Public package mirror fallback
+
+Use `mirror` to declare a custom public HTTPS mirror in the YAML file passed to the existing `--network network.yaml` option.
+
+```yaml
+sources:
+  python:
+    index:
+      mirror: https://pypi-mirror.example/simple
+  npm:
+    registry:
+      mirror: https://npm-mirror.example
+```
+
+- PyPI tries the configured public mirror, the Aliyun PyPI mirror in the repository example, then official PyPI. The Python verifier uses this order for uv and its locked dependencies. Existing strings for the supported Aliyun, Tsinghua, and USTC addresses still fall back to official PyPI.
+- npm tries the configured public mirror, npmmirror from the repository example, then `registry.npmjs.org`. This applies to Evaluator-managed lockfile installs with scripts disabled, DSH's npm resolution, and the network launcher's supported `pnpm fetch` and `pnpm install --frozen-lockfile` commands. Existing string settings for npmmirror and Taobao still fall back to the official registry.
+- Task-image builds fall back per package request for `RUN pip install` and `RUN npm ci`, with three attempts per source after a transient failure. Docker runs the build once, using the original lockfile and package digests. PyPI relay requests cover the selected mirror, recognized mirror file hosts, and official file hosts. Package managers still handle explicit extra indexes, private registries, and direct download URLs. The relay uses Evaluator's host proxy and requires Docker Desktop on Windows or Docker Engine with a local bridge on Linux.
+- APT keeps the existing URL strings under `sources.apt`. For supported Debian, Ubuntu, and Ubuntu Ports repositories, Docker builds use native APT mirror rules to try the configured mirror, the Aliyun mirror in the repository example, and the official distribution repository. Duplicate URLs are removed, and signature verification still applies.
 
 Docker image settings live under `docker`: `docker.pull` selects acquisition for shared images and task images without a benchmark-specific setting; `docker.benchmarks` selects acquisition for a specific benchmark's task images. See the [annotated example](../image-downloads.md#download-task-images-from-modelscope) for ModelScope task images alongside shared images acquired with `docker pull`. `docker.mirrors` only rewrites registry download addresses.
 

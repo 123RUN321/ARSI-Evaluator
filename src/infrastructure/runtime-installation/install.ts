@@ -1,4 +1,6 @@
 import { packageManagerCli } from "../network/package-manager.js";
+import { npmDependencyInstall, withNpmRegistryFallback } from "../network/package-mirror.mjs";
+import { redactDiagnostic } from "../../core/errors/diagnostics.js";
 import type { ErrorCode } from "../../core/errors/registry.js";
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
@@ -240,17 +242,23 @@ export async function runRuntimeCommand(
     localCommand.executable = process.execPath;
     localCommand.args.unshift(await npmCli());
   }
-  const processHandle = await startLocalProcess(localCommand, signal, { inheritEnv: false });
-  const [stdout, stderr, exit] = await Promise.all([
-    tail(processHandle.stdout),
-    tail(processHandle.stderr),
-    processHandle.done,
-  ]);
-  signal.throwIfAborted();
+  const run = async (env: NodeJS.ProcessEnv) => {
+    const processHandle = await startLocalProcess({ ...localCommand, env: Object.fromEntries(Object.entries(env)
+      .filter((entry): entry is [string, string] => entry[1] !== undefined)) }, signal, { inheritEnv: false });
+    const [stdout, stderr, exit] = await Promise.all([
+      tail(processHandle.stdout), tail(processHandle.stderr), processHandle.done,
+    ]);
+    signal.throwIfAborted();
+    return { stdout, stderr, exitCode: exit.code ?? -1, exit };
+  };
+  const environment = localCommand.env ?? {};
+  const { stdout, stderr, exit } = command.executable === "npm" && npmDependencyInstall(command.args)
+    ? await withNpmRegistryFallback(environment, run, signal, message => process.stderr.write(message + "\n"))
+    : await run(environment);
   if (exit.code !== 0 || exit.signal !== null)
     throw new RuntimeInstallationError(
       "ENV_RUNTIME_INSTALL_FAILED",
-      `${command.executable} exited ${exit.code ?? exit.signal}: ${(stderr || stdout).trim()}`,
+      redactDiagnostic(`${command.executable} exited ${exit.code ?? exit.signal}: ${(stderr || stdout).trim()}`, network?.secrets),
     );
 }
 

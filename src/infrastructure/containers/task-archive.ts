@@ -4,6 +4,7 @@ import { join } from "node:path";
 import type { ContainerPlatform, PreparationCacheSource } from "../../core/contracts/environment.js";
 import type { ArchiveImageAcquisition, ImageRequestContext, NetworkAccess } from "../../core/contracts/network.js";
 import { EvaluatorError } from "../../core/errors/evaluator-error.js";
+import { DatasetSourceUnavailableError } from "../datasets/cache.js";
 import { downloadArchiveImage, taskArchiveUrl } from "./archive-image.js";
 import type { DockerImageInventory } from "./image-inventory.js";
 import { dockerImageReference } from "./image-name.js";
@@ -12,6 +13,8 @@ import { dockerActivity } from "./progress.js";
 import type { DockerCommand } from "./runtime-contract.js";
 import { applicationCacheRoot } from "../runtime-installation/install.js";
 import { acquireRuntimeLock } from "../runtime-installation/lock.js";
+
+export class TaskArchiveUnavailableError extends EvaluatorError {}
 
 export class DockerTaskArchive {
   constructor(private readonly command: DockerCommand, private readonly inventory: DockerImageInventory, private readonly settings: ArchiveImageAcquisition,
@@ -66,7 +69,8 @@ export class DockerTaskArchive {
       }
     } catch (error) {
       signal.throwIfAborted();
-      throw new EvaluatorError("ENV_IMAGE_PULL_FAILED", `Cannot load task image archive for ${context.taskId}/${context.phase}`,
+      const Failure = error instanceof DatasetSourceUnavailableError ? TaskArchiveUnavailableError : EvaluatorError;
+      throw new Failure("ENV_IMAGE_PULL_FAILED", `Cannot load task image archive for ${context.taskId}/${context.phase}${context.service ? `/${context.service}` : ""} (${platform})`,
         { component: "docker", operation: "load" }, { cause: error });
     } finally { await release(); }
   }

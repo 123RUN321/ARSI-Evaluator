@@ -1,11 +1,10 @@
 import type { NetworkAccess } from "../../../../core/contracts/network.js";
-import { fetchNetworkResponse } from "../../../network/retry.js";
 import type { JsonValue, SourceLock } from "../../../../core/contracts/task.js";
 import { fingerprintConfig } from "../../../../core/results/run-manifest.js";
 import { redactDiagnostic } from "../../../../core/errors/diagnostics.js";
 import { DatasetCache } from "../../cache.js";
 import { datasetActivity } from "../../activity.js";
-import { huggingfaceTransport, type HuggingFaceTransport } from "./endpoint.js";
+import { fetchHuggingFaceFile, fetchHuggingFaceMetadata, huggingfaceTransport, type HuggingFaceTransport } from "./endpoint.js";
 import { hubFileUrl, safeHubPath } from "./file-path.js";
 
 export type SnapshotSelection = { path: string } | { prefix: string; suffix: string };
@@ -66,14 +65,14 @@ export class HuggingFaceSnapshotSource implements DatasetFileSource {
     signal.throwIfAborted();
     if (previous !== null) {
       this.assertLock(previous);
-      for (const file of previous.files) await this.cache.fetch(file.origin, file.sha256, signal, this.headers);
+      for (const file of previous.files) await fetchHuggingFaceFile(this.cache, file.origin, this.transport, file.sha256, signal, this.headers);
       return structuredClone(previous);
     }
     datasetActivity("Querying the Hugging Face document snapshot");
     const url = `${this.transport.apiBase}/api/datasets/${this.definition.dataset}/revision/${encodeURIComponent(this.definition.revision)}?blobs=true`;
     let data: unknown;
     try {
-      const response = await fetchNetworkResponse(url, { signal, ...(this.headers ? { headers: this.headers } : {}) }, { ...(this.network ? { network: this.network } : {}) });
+      const response = await fetchHuggingFaceMetadata(url, this.transport, signal, this.headers, this.network);
       if (!response.ok) throw new Error([401, 403].includes(response.status)
         ? `Hugging Face dataset ${this.definition.dataset} access denied (HTTP ${response.status}); check dataset access and HF token environment variable`
         : `Hub metadata HTTP ${response.status}`);
@@ -115,7 +114,7 @@ export class HuggingFaceSnapshotSource implements DatasetFileSource {
       const origin = this.origin(lock.revision, candidate.path);
       // Hub LFS metadata already pins the bytes. Fetch them lazily in file(), so
       // task enumeration need not download a multi-gigabyte document corpus.
-      const digest = candidate.digest ?? (await this.cache.fetch(origin, null, signal, this.headers)).sha256;
+      const digest = candidate.digest ?? (await fetchHuggingFaceFile(this.cache, origin, this.transport, null, signal, this.headers)).sha256;
       lock.files.push({ path: candidate.path, sha256: digest, origin });
     }
     this.assertLock(lock);
@@ -126,6 +125,6 @@ export class HuggingFaceSnapshotSource implements DatasetFileSource {
     this.assertLock(lock);
     const file = lock.files.find(item => item.path === path);
     if (!file) throw new Error(`File is absent from locked Hugging Face snapshot: ${path}`);
-    return (await this.cache.fetch(file.origin, file.sha256, signal, this.headers)).path;
+    return (await fetchHuggingFaceFile(this.cache, file.origin, this.transport, file.sha256, signal, this.headers)).path;
   }
 }

@@ -21,23 +21,45 @@ export function aptSourceInstructions(sources: AptSources): string[] {
     ["ubuntuSecurity", "https\\?://security\\.ubuntu\\.com/ubuntu"],
     ["ubuntuPorts", "https\\?://ports\\.ubuntu\\.com/ubuntu-ports"],
   ];
+  const official: Record<keyof AptSources, string> = {
+    debian: "deb.debian.org/debian",
+    debianSecurity: "deb.debian.org/debian-security",
+    ubuntu: "archive.ubuntu.com/ubuntu",
+    ubuntuSecurity: "security.ubuntu.com/ubuntu",
+    ubuntuPorts: "ports.ubuntu.com/ubuntu-ports",
+  };
+  const repositoryPaths: Record<keyof AptSources, string> = {
+    debian: "debian", debianSecurity: "debian-security",
+    ubuntu: "ubuntu", ubuntuSecurity: "ubuntu", ubuntuPorts: "ubuntu-ports",
+  };
   const escapePattern = (value: string) => value.replace(/[.*[\]^$\\]/gu, "\\$&");
   const rewrite = (bootstrap: boolean) => {
-    const replacements = repositories.flatMap(([key, pattern]) => {
+    const directory = "/etc/apt/evaluator-mirrors";
+    const lists: string[] = [];
+    const aliases = new Map<string, keyof AptSources>();
+    for (const key of Object.keys(official) as (keyof AptSources)[]) {
       const configured = sources[key];
-      if (!configured) return [];
+      if (!configured) continue;
       const http = configured.replace(/^https:/u, "http:");
-      const target = (bootstrap ? http : configured).replace(/&/gu, "\\&");
-      const alternate = bootstrap ? configured : http;
-      return [pattern, escapePattern(alternate)].map(source => `-e 's#${source}\\([/[:space:]]\\|$\\)#${target}\\1#g'`);
-    });
-    if (!replacements.length) return ":";
-    return `if [ "$(id -u)" = 0 ]; then for list in /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources; do if [ -f "$list" ]; then sed -i ${replacements.join(" ")} "$list"; fi; done; fi`;
+      const primary = bootstrap ? http : configured;
+      const scheme = primary.startsWith("https:") ? "https" : "http";
+      const upstream = `${scheme}://${official[key]}`;
+      const repositoryMirror = `${scheme}://mirrors.aliyun.com/${repositoryPaths[key]}`;
+      const entries = primary === upstream ? [primary] : [...new Set([primary, repositoryMirror, upstream])];
+      lists.push(`printf '%s\\n' ${entries.map((url, index) => `'${url}/'"$(printf '\\t')"'priority:${index + 1}'`).join(" ")} > ${directory}/${key}.list`);
+      for (const alias of [configured, http]) if (!aliases.has(alias)) aliases.set(alias, key);
+    }
+    if (!lists.length) return ":";
+    const patterns = [...repositories.filter(([key]) => sources[key]),
+      ...[...aliases].map(([url, key]) => [key, escapePattern(url)] as const)];
+    const replacements = patterns.map(([key, pattern]) =>
+      `-e 's#${pattern}\\(/\\)\\?\\([[:space:]]\\|$\\)#mirror+file:${directory}/${key}.list\\2#g'`);
+    return `if command -v apt-get >/dev/null 2>&1 && [ "$(id -u)" = 0 ]; then mkdir -p ${directory} && ${lists.join(" && ")} && for list in /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources; do if [ -f "$list" ]; then sed -i ${replacements.join(" ")} "$list" || exit $?; fi; done; fi`;
   };
   if (!Object.values(sources).some(value => value.startsWith("https:"))) return [downloads, ...(Object.keys(sources).length ? [`RUN ${rewrite(false)}`] : [])];
   return [
     downloads,
-    `RUN if command -v apt-get >/dev/null 2>&1 && [ "$(id -u)" = 0 ] && [ ! -s /etc/ssl/certs/ca-certificates.crt ]; then ${rewrite(true)}; apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*; fi`,
+    `RUN if command -v apt-get >/dev/null 2>&1 && [ "$(id -u)" = 0 ] && [ ! -s /etc/ssl/certs/ca-certificates.crt ]; then ${rewrite(true)} && apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*; fi`,
     `RUN ${rewrite(false)}`,
   ];
 }

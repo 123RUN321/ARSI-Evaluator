@@ -101,6 +101,8 @@ try {
 // reproduce the fixed hashes embedded in the AgentBundle CLI provenance.
 await normalizeRuntimeText(new URL("../dist/infrastructure/ray/python/", import.meta.url));
 const distribution = new URL("../dist/", import.meta.url);
+await cp(new URL("../src/infrastructure/network/package-mirror.mjs", import.meta.url),
+  new URL("infrastructure/network/package-mirror.mjs", distribution));
 // Keep third-party notices with the copied scoring templates and ports.
 await cp(new URL("../src/plugins/benchmarks/agent-harness/definitions/scoring/LICENSE-MIT", import.meta.url),
   new URL("plugins/benchmarks/agent-harness/definitions/scoring/LICENSE-MIT", distribution));

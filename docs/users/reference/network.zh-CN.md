@@ -43,13 +43,44 @@ arsi-evaluator run experiment.yaml --network network.yaml
 
 | 字段 | 用途 |
 | --- | --- |
-| `sources.huggingface` | 数据集、任务文件、tokenizer 的 Hub 地址 |
+| `sources.huggingface` | 数据集、任务文件、tokenizer 的 Hub 地址，可使用 `mirror` 声明公共镜像 |
 | `sources.python.index/extraIndexes` | pip 和 uv 包索引 |
 | `sources.python.interpreter` | uv 的 Python 解释器下载镜像；`null` 使用工具默认地址 |
 | `sources.npm.registry` | npm、pnpm 和 Corepack 包源 |
 | `sources.node.dist` | Node.js 发行文件地址 |
 | `sources.github.api/raw/repository` | GitHub API、文件和 HTTPS Git 仓库地址 |
 | `sources.apt` | `debian`、`debianSecurity`、`ubuntu`、`ubuntuSecurity`、`ubuntuPorts` 各自的完整仓库根地址 |
+
+通过 `--network` 使用自己的公共 Hugging Face 镜像时，在 YAML 中这样填写地址。
+
+```yaml
+sources:
+  huggingface:
+    mirror: https://public-mirror.example
+```
+
+Evaluator 先请求用户配置的镜像，临时网络故障重试耗尽后依次尝试仓库示例中的 `https://hf-mirror.com` 和 `https://huggingface.co`。文件请求遇到 `404` 时也可回退。各次请求使用同一路径，继续校验 revision 和摘要。回退请求均为匿名，token 只发送给首选地址。
+
+直接填写字符串 `https://hf-mirror.com` 时，Evaluator 从该镜像回退到官方站。自托管 Hub 使用字符串地址，失败时只重试该 Hub。需要认证访问官方数据时，直接填写 `https://huggingface.co`。设置 `HF_ENDPOINT` 会覆盖 YAML 中的 Hugging Face 配置，按字符串地址处理。
+
+### 公共包镜像回退
+
+通过原来的 `--network network.yaml` 使用自定义公共 PyPI 或 npm 镜像时，可在现有字段下用 `mirror` 填写 HTTPS 地址。
+
+```yaml
+sources:
+  python:
+    index:
+      mirror: https://pypi-mirror.example/simple
+  npm:
+    registry:
+      mirror: https://npm-mirror.example
+```
+
+- PyPI 依次尝试用户配置的公共镜像、仓库示例中的阿里云 PyPI 镜像、官方 PyPI。Python 验证镜像下载 uv 和锁定依赖时也使用这个顺序。已有字符串写法继续支持阿里云、清华和中科大指定镜像回退到官方 PyPI。
+- npm 依次尝试用户配置的公共镜像、仓库示例中的 npmmirror、`registry.npmjs.org`。这适用于 Evaluator 管理的无脚本锁定安装、DSH 的 npm 查询和锁定，以及网络启动器支持的 `pnpm fetch` 或 `pnpm install --frozen-lockfile`。已有字符串写法继续支持 npmmirror 和 npm 淘宝公共镜像回退到官方 registry。
+- 构建任务镜像时，`RUN pip install` 和 `RUN npm ci` 在包请求层回退，单个来源遇到临时网络故障会尝试三次。构建仍只执行一次，包的原有摘要和依赖锁继续有效。PyPI 转发覆盖镜像地址本身、已识别的镜像文件域名和官方文件域名。显式额外索引、私有 registry 和命令指定的下载地址继续由包管理器处理。此功能需要 Windows Docker Desktop，或带本机 bridge 的 Linux Docker Engine。转发通过 Evaluator 宿主代理访问上游。
+- APT 保留 `sources.apt` 的字符串写法。在 Docker 构建中，匹配到的 Debian、Ubuntu 和 Ubuntu Ports 仓库按 APT 规则尝试用户配置的镜像、仓库示例中的阿里云对应镜像和发行版官方仓库。相同地址只列一次，原签名校验继续生效。
 
 Docker 镜像另由 `docker` 配置：`docker.pull` 设置共享镜像及未单独配置的题库任务镜像的获取方式，`docker.benchmarks` 为指定题库的任务镜像单独选择方式。例如，任务镜像从 ModelScope 下载、共享镜像使用 `docker pull`，见[带注释的完整配置](../image-downloads.zh-CN.md#从-modelscope-下载任务镜像)。`docker.mirrors` 只修改 Registry 下载地址。
 

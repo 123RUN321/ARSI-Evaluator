@@ -8,9 +8,9 @@
 
 ## 如何配置镜像下载源和代理？
 
-使用独立的网络 YAML，通过 `--network network.yaml` 传入。`docker.pull.method` 选择 Docker 原生拉取或 Registry API 下载，`docker.mirrors` 临时替换 registry 地址，`docker.benchmarks` 可为指定题库选择 ModelScope/Hugging Face 镜像归档。
+使用独立的网络 YAML，通过 `--network network.yaml` 传入。`docker.pull.method` 选择 Docker 原生拉取或 Registry API 下载，`docker.mirrors` 指定要使用的 Registry 镜像源。要为指定题库从 ModelScope 或 Hugging Face 下载任务镜像，设置 `docker.benchmarks`。
 
-Registry API 支持内置 Node.js 下载器和用户预装的 skopeo。代理配置在 `proxy` 中；执行进程、daemon、构建步骤和安装容器分别使用 `host`、`daemon`、`build`、`runtime` 覆盖值。凭据和节点地址见[代理配置](../reference/network.zh-CN.md)，归档固定路径见[镜像下载](../image-downloads.zh-CN.md)。
+Registry API 支持内置 Node.js 下载器和用户预装的 skopeo。代理配置在 `proxy` 中，执行进程、daemon、构建步骤和安装容器分别使用 `host`、`daemon`、`build`、`runtime` 覆盖值。 [代理配置](../reference/network.zh-CN.md) · [任务镜像下载与回退](../image-downloads.zh-CN.md#任务镜像下载与回退)
 
 `FROM` 和外部 `COPY --from` 由 Docker 自带构建器下载，使用 daemon 已生效的网络设置。`doctor experiment.yaml` 检查镜像获取、`FROM` 和 `RUN`，并生成配置建议，不修改配置或重启 Docker；管理员应用建议后再次运行诊断。
 
@@ -39,7 +39,7 @@ Evaluator 生成的引用采用 `arsi-evaluator/<仓库路径>:<平台>-<用途>
 
 同名标签已指向另一镜像时，后续镜像使用 `-2`、`-3` 等序号。序号只用于区分同名镜像。多个任务或用途命中同一镜像 ID 时，沿用已登记的引用。例如两道题共用验证镜像时，可能只看到其中一道题的仓库路径。
 
-ModelScope 上的文件路径沿用归档规则。题目基础镜像的本地标签 `linux-amd64-base` 对应远端的 `linux/amd64/solve.tar.gz`。验证和 Sidecar 文件路径见[任务镜像归档](../../development/image-archives.md#文件布局)。
+从 ModelScope 下载题目基础镜像时，本地标签 `linux-amd64-base` 对应远端任务目录中的 `linux/amd64/solve.tar.gz`。 [验证镜像和 Sidecar 文件路径](../../development/image-archives.md#文件布局)
 
 Solver 安装和 Runtime 辅助程序在一次多阶段构建中加入最终解题镜像。安装阶段可在不同基础镜像之间复用 BuildKit 缓存，构建用的临时标签在准备结束时释放。独立验证只保留实际用于启动验证容器的镜像，以及其他任务仍在使用的来源引用。
 

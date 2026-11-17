@@ -1,6 +1,7 @@
 import { NetworkRuntime } from "../../src/infrastructure/network/runtime.js";
 import { networkDocument } from "../../src/config/network-schema.js";
 import { createDockerImagePuller } from "../../src/infrastructure/containers/image-pull.js";
+import { mirrorImageReference } from "../../src/infrastructure/containers/registry-image.js";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, expect, test, vi } from "vitest";
@@ -13,6 +14,10 @@ const runtimeWithMirror = (command: DockerCommand, platform: "linux/amd64" | "li
 const origin = "https://fixture.mirror.example.test";
 const mirrored = `${new URL(origin).host}/library/${PINNED_NODE_IMAGE}`;
 const digest = "sha256:" + "a".repeat(64);
+
+test.each(["docker.io", "registry-1.docker.io", "index.docker.io"])("does not rewrite a Docker Hub reference to its own alias %s", host => {
+  expect(mirrorImageReference(PINNED_NODE_IMAGE, { "docker.io": `https://${host}` })).toBe(PINNED_NODE_IMAGE);
+});
 
 test.each(["linux/amd64", "linux/arm64"] as const)("shares a configured Node mirror pull and builds with its pinned reference on %s", async platform => {
   vi.stubEnv("EVALUATOR_NODE_IMAGE_MIRROR", "");
@@ -62,15 +67,32 @@ test("an explicit mirror still rejects the wrong digest without falling back", a
   expect(calls.some(args => args[0] === "pull")).toBe(false);
 });
 
-test("fails on a configured mirror pull error without retrying Docker Hub", async () => {
+test("retries a transient mirror failure before pulling the original pinned Node image", async () => {
   vi.stubEnv("EVALUATOR_NODE_IMAGE_MIRROR", "");
   const pulls: string[] = [];
+  let installed = false;
   const command: DockerCommand = async args => {
-    if (args.at(-1) === "{{json .Config.User}}") return { stdout: JSON.stringify(""), stderr: "" };
-    if (args[0] === "info") return { stdout: JSON.stringify([origin]), stderr: "" };
-    if (args[0] === "pull") { pulls.push(args.at(-1)!); throw new Error("registry timeout"); }
+    if (args[0] === "pull") {
+      const ref = args.at(-1)!;
+      pulls.push(ref);
+      if (ref === mirrored) throw new Error("dial tcp: lookup fixture.mirror.example.test: no such host");
+      installed = true;
+      return { stdout: "", stderr: "" };
+    }
+    if (installed && args[4] === PINNED_NODE_IMAGE)
+      return { stdout: `${digest} ${JSON.stringify([PINNED_NODE_IMAGE])}`, stderr: "" };
     throw new Error("No such image");
   };
-  await expect(runtimeWithMirror(command).nodeImageDigest(AbortSignal.timeout(5000))).rejects.toThrow("registry timeout");
-  expect(pulls).toEqual([mirrored]);
+  const runtime = runtimeWithMirror(command);
+  await expect(runtime.nodeImageDigest(AbortSignal.timeout(10_000))).resolves.toBe(digest);
+  expect(runtime.nodeImage).toBe(PINNED_NODE_IMAGE);
+  expect(pulls).toEqual([mirrored, mirrored, mirrored, PINNED_NODE_IMAGE]);
+}, 15_000);
+
+test("a registry authorization error does not try the original source", async () => {
+  const command = vi.fn<DockerCommand>().mockImplementation(async args => {
+    throw new Error(args[0] === "pull" ? "Registry request failed (HTTP 403)" : "No such image");
+  });
+  await expect(runtimeWithMirror(command).nodeImageDigest(AbortSignal.timeout(5000))).rejects.toThrow("HTTP 403");
+  expect(command.mock.calls.map(([args]) => args).filter(args => args[0] === "pull")).toEqual([["pull", "--platform", "linux/amd64", mirrored]]);
 });

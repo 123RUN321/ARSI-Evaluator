@@ -18,7 +18,7 @@ async function withAptDirectory(run: (root: string, apply: (mirror: string) => P
     await writeFile(join(root, "bin/id"), `#!/bin/sh\nprintf '${uid}\\n'\n`, { mode: 0o755 });
     await writeFile(join(root, "bin/apt-config"), '#!/bin/sh\nif [ -f "$APT_TEST_ROOT/explicit-options" ] && grep -Fxq "$3" "$APT_TEST_ROOT/explicit-options"; then echo "evaluator_value=explicit"; fi\nexit 0\n', { mode: 0o755 });
     // Observe bootstrap ordering without accessing the machine's APT or trust store.
-    await writeFile(join(root, "bin/apt-get"), '#!/bin/sh\ncat "$APT_TEST_ROOT/sources.list.d/ubuntu.sources" >> "$APT_TEST_ROOT/calls"\nprintf "%s\\n" "$*" >> "$APT_TEST_ROOT/calls"\nif [ "$1" = install ]; then touch "$APT_TEST_ROOT/ca.crt"; fi\n', { mode: 0o755 });
+    await writeFile(join(root, "bin/apt-get"), '#!/bin/sh\ncat "$APT_TEST_ROOT/sources.list.d/ubuntu.sources" "$APT_TEST_ROOT/evaluator-mirrors/ubuntu.list" >> "$APT_TEST_ROOT/calls"\nprintf "%s\\n" "$*" >> "$APT_TEST_ROOT/calls"\nif [ "$1" = install ]; then touch "$APT_TEST_ROOT/ca.crt"; fi\n', { mode: 0o755 });
     await run(root, async mirror => {
       const script = aptSourceInstructions({ debian: String(mirror).replace(/\/$/u, "") + "/debian", debianSecurity: String(mirror).replace(/\/$/u, "") + "/debian-security", ubuntu: String(mirror).replace(/\/$/u, "") + "/ubuntu", ubuntuSecurity: String(mirror).replace(/\/$/u, "") + "/ubuntu", ubuntuPorts: String(mirror).replace(/\/$/u, "") + "/ubuntu-ports" }).map(instruction => instruction.slice(4)).join("\n")
         .replaceAll("/etc/apt", quote(root))
@@ -72,14 +72,22 @@ test.skipIf(process.platform === "win32").each(["http://mirror.example:8080", "h
     for (const [name, text] of Object.entries(inputs)) await writeFile(join(root, name), text);
     await apply(mirror);
     for (const [name, original] of Object.entries(inputs)) {
-      const expected = original.replaceAll("https://deb.debian.org/", mirror + "/")
-        .replaceAll("http://deb.debian.org/", mirror + "/").replaceAll("http://security.debian.org/", mirror + "/")
-        .replaceAll("http://archive.ubuntu.com/ubuntu/", mirror + "/ubuntu/")
-        .replaceAll("https://security.ubuntu.com/ubuntu/", mirror + "/ubuntu/")
-        .replaceAll("https://us.archive.ubuntu.com/ubuntu ", mirror + "/ubuntu ")
-        .replaceAll("http://ports.ubuntu.com/ubuntu-ports/", mirror + "/ubuntu-ports/");
+      const uri = (key: string) => "mirror+file:" + join(root, "evaluator-mirrors", key + ".list");
+      const expected = original.replace(/https?:\/\/(?:deb\.debian\.org|security\.debian\.org)\/debian-security\/?/gu, uri("debianSecurity"))
+        .replace(/https?:\/\/deb\.debian\.org\/debian\/?/gu, uri("debian"))
+        .replaceAll("http://archive.ubuntu.com/ubuntu/", uri("ubuntu"))
+        .replaceAll("https://security.ubuntu.com/ubuntu/", uri("ubuntuSecurity"))
+        .replaceAll("https://us.archive.ubuntu.com/ubuntu ", uri("ubuntu") + " ")
+        .replaceAll("http://ports.ubuntu.com/ubuntu-ports/", uri("ubuntuPorts"));
       expect(await readFile(join(root, name), "utf8")).toBe(name.endsWith(".txt") ? original : expected);
     }
+    const scheme = new URL(mirror).protocol;
+    expect(await readFile(join(root, "evaluator-mirrors/debianSecurity.list"), "utf8"))
+      .toBe(mirror + "/debian-security/\tpriority:1\n" + scheme + "//mirrors.aliyun.com/debian-security/\tpriority:2\n"
+        + scheme + "//deb.debian.org/debian-security/\tpriority:3\n");
+    expect(await readFile(join(root, "evaluator-mirrors/ubuntuSecurity.list"), "utf8"))
+      .toBe(mirror + "/ubuntu/\tpriority:1\n" + scheme + "//mirrors.aliyun.com/ubuntu/\tpriority:2\n"
+        + scheme + "//security.ubuntu.com/ubuntu/\tpriority:3\n");
   });
 });
 
@@ -87,9 +95,12 @@ test.skipIf(process.platform === "win32")("Ubuntu without CA bootstraps through 
   await withAptDirectory(async (root, apply) => {
     await writeFile(join(root, "sources.list.d/ubuntu.sources"), "URIs: http://archive.ubuntu.com/ubuntu/\nSuites: noble\n");
     await apply("https://mirror.example");
-    expect(await readFile(join(root, "calls"), "utf8")).toContain("URIs: http://mirror.example/ubuntu/\nSuites: noble\nupdate");
+    const calls = await readFile(join(root, "calls"), "utf8");
+    expect(calls).toContain("URIs: mirror+file:" + join(root, "evaluator-mirrors/ubuntu.list"));
+    expect(calls).toContain("http://mirror.example/ubuntu/\tpriority:1\nhttp://mirrors.aliyun.com/ubuntu/\tpriority:2\nhttp://archive.ubuntu.com/ubuntu/\tpriority:3\nupdate");
     expect(await readFile(join(root, "calls"), "utf8")).toContain("install -y --no-install-recommends ca-certificates");
-    expect(await readFile(join(root, "sources.list.d/ubuntu.sources"), "utf8")).toBe("URIs: https://mirror.example/ubuntu/\nSuites: noble\n");
+    expect(await readFile(join(root, "evaluator-mirrors/ubuntu.list"), "utf8"))
+      .toBe("https://mirror.example/ubuntu/\tpriority:1\nhttps://mirrors.aliyun.com/ubuntu/\tpriority:2\nhttps://archive.ubuntu.com/ubuntu/\tpriority:3\n");
   });
 });
 
@@ -105,10 +116,12 @@ test.skipIf(process.platform === "win32")("existing HTTPS mirror sources bootstr
     for (const [name, contents] of Object.entries(sources)) await writeFile(join(root, name), contents);
     await apply(origin);
     const calls = await readFile(join(root, "calls"), "utf8");
-    expect(calls).toContain("URIs: http://mirror.example:8443/ubuntu/");
+    expect(calls).toContain("http://mirror.example:8443/ubuntu/\tpriority:1");
     expect(calls).not.toContain("URIs: https://");
     expect(calls).toContain("install -y --no-install-recommends ca-certificates");
-    for (const [name, contents] of Object.entries(sources)) expect(await readFile(join(root, name), "utf8")).toBe(contents);
+    expect(await readFile(join(root, "sources.list.d/private.list"), "utf8")).toBe(sources["sources.list.d/private.list"]);
+    expect(await readFile(join(root, "sources.list.d/ubuntu.sources"), "utf8")).toContain("Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg");
+    expect(await readFile(join(root, "evaluator-mirrors/ubuntu.list"), "utf8")).toContain(origin + "/ubuntu/\tpriority:1");
   });
 });
 

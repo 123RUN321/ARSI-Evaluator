@@ -192,9 +192,12 @@ export function mirrorImageReference(reference: string, mirrors: Readonly<Record
   const image = imageReference(reference);
   const mirror = mirrors[image.registry];
   if (!mirror) return reference;
+  const host = new URL(mirror).host;
+  if (host === image.registry || host === new URL(image.origin).host || image.registry === "docker.io" && host === "index.docker.io")
+    return reference;
   const name = reference.split("@")[0]!;
   const tag = image.digest && name.lastIndexOf(":") > name.lastIndexOf("/") ? name.slice(name.lastIndexOf(":")) : "";
-  return `${new URL(mirror).host}/${image.repository}${tag}${image.digest ? "@" : ":"}${image.selector}`;
+  return `${host}/${image.repository}${tag}${image.digest ? "@" : ":"}${image.selector}`;
 }
 
 /** Docker-save drops compressed registry layers; prove its config against the original manifest chain. */

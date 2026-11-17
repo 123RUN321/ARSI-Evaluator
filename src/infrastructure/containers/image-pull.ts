@@ -1,4 +1,5 @@
 import { retryNetworkOperation } from "../network/retry.js";
+import { withSourceFallback } from "../network/source-fallback.js";
 import type { DockerCommand } from "./runtime-contract.js";
 import { createHash, randomUUID } from "node:crypto";
 import { lstat, mkdir, mkdtemp, readFile, rename, rm, writeFile } from "node:fs/promises";
@@ -85,18 +86,14 @@ async function importedImage(command: DockerCommand, tag: string, platform: Cont
 export function createDockerImagePuller(command: DockerCommand, options: {
   network?: NetworkAccess | undefined;
   acquisition?: RegistryImageAcquisition | undefined;
+  useMirrors?: boolean;
 } = {}): DockerImagePull {
   const network = options.network ?? new NetworkRuntime();
   const acquisition = options.acquisition ?? network.settings.docker.pull;
-  if (acquisition.method === "docker") return async (reference, platform, signal) => {
-    const source = mirrorImageReference(reference, network.settings.docker.mirrors);
-    if (source === reference || !await importedImage(command, source, platform, signal))
-      await pullDockerImage(command, source, platform, signal);
-    return { reference: source };
-  };
+  const mirrors = options.useMirrors === false ? {} : network.settings.docker.mirrors;
   const downloads = new DockerBuildCache<Awaited<ReturnType<DockerImagePull>>>(false);
-  return (reference, platform, signal, context) => downloads.get(JSON.stringify([reference, platform, context]), signal, async active => {
-    const key = createHash("sha256").update(JSON.stringify([reference, platform])).digest("hex");
+  const acquireRegistryImage: DockerImagePull = (reference, platform, signal, context) => downloads.get(JSON.stringify([reference, platform, context]), signal, async active => {
+    const key = createHash("sha256").update(JSON.stringify(["registry-source-v1", reference, platform])).digest("hex");
     const tag = `${DOCKER_IMAGE_NAMESPACE}/pull:${key}`;
     const cache = join(process.env.EVALUATOR_CACHE_DIR ?? applicationCacheRoot(), "docker-pulls");
     await mkdir(cache, { recursive: true, mode: 0o700 });
@@ -115,10 +112,9 @@ export function createDockerImagePuller(command: DockerCommand, options: {
       const report = activity ? (event: Parameters<NonNullable<typeof activity>>[0]) => activity({ ...event, operationId }) : undefined;
       report?.({ message: `Pulling image ${reference}`, status: "started", activity: true });
       try {
-        const source = mirrorImageReference(reference, network.settings.docker.mirrors);
-        const image = acquisition.backend === "skopeo"
-            ? await downloadSkopeoImage(source, platform, network, acquisition.skopeoExecutable, directory, tag, active, report)
-            : await downloadRegistryImage(source, platform, network.settings.proxy.host, directory, tag, active, report);
+        const image = acquisition.method === "registry-client" && acquisition.backend === "skopeo"
+          ? await downloadSkopeoImage(reference, platform, network, acquisition.skopeoExecutable, directory, tag, active, report)
+          : await downloadRegistryImage(reference, platform, network.settings.proxy.host, directory, tag, active, report);
         report?.({ message: "Importing verified image into Docker", activity: true });
         await command(["load", "--input", image.archive], { signal: active, maxBuffer: 8 * 1024 * 1024 });
         const id = await importedImage(command, tag, platform, active);
@@ -136,11 +132,28 @@ export function createDockerImagePuller(command: DockerCommand, options: {
         report?.({ status: active.aborted ? "cancelled" : "failed" });
         throw error;
       } finally { await rm(directory, { recursive: true, force: true }); }
-    } catch (error) {
-      active.throwIfAborted();
-      // Import/cache errors are generated locally; proxy and registry credentials never enter this message.
-      throw new EvaluatorError("ENV_IMAGE_PULL_FAILED", `Cannot acquire Docker image ${reference} using ${acquisition.method}`,
-        { component: "docker", operation: "pull" }, { cause: error });
     } finally { await release(); }
   });
+  return async (reference, platform, signal, context) => {
+    const preferred = mirrorImageReference(reference, mirrors);
+    const acquire = async (source: string) => {
+      if (acquisition.method === "registry-client") return acquireRegistryImage(source, platform, signal, context);
+      if (source === reference || !await importedImage(command, source, platform, signal))
+        await pullDockerImage(command, source, platform, signal);
+      return { reference: source };
+    };
+    try {
+      if (preferred === reference) return await acquire(reference);
+      return await withSourceFallback(() => acquire(preferred), () => acquire(reference), {
+        signal,
+        shouldFallback: error => error instanceof EvaluatorError && error.code === "NETWORK_FAILURE",
+        onFallback: () => dockerActivity()?.({ message: `Docker mirror ${preferred} unavailable; trying ${reference}`, activity: true }),
+      });
+    } catch (error) {
+      signal.throwIfAborted();
+      if (acquisition.method === "docker") throw error;
+      throw new EvaluatorError("ENV_IMAGE_PULL_FAILED", `Cannot acquire Docker image ${reference} using ${acquisition.method}`,
+        { component: "docker", operation: "pull" }, { cause: error });
+    }
+  };
 }
