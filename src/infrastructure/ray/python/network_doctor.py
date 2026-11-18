@@ -14,7 +14,7 @@ def probe_node(request):
         raise RuntimeError("Node Python/Ray version mismatch")
     with open(os.environ["EVALUATOR_NODE_CONFIG"], encoding="utf-8") as stream:
         node = json.load(stream)
-    payload = {"network": request["network"], "packageDigest": request["packageDigest"],
+    payload = {"network": request["network"], "plan": request["plan"], "packageDigest": request["packageDigest"],
                "location": ray.get_runtime_context().get_node_id() + "/" + socket.gethostname()}
     child = subprocess.Popen([node["nodeExecutable"], node["workerEntry"], "--network-doctor"],
                              stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)

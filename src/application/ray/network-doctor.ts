@@ -4,18 +4,19 @@ import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { NetworkAccess } from "../../core/contracts/network.js";
 import type { NetworkProbe } from "../diagnostics/network.js";
+import type { NetworkProbePlan } from "../diagnostics/network-plan.js";
 import { networkCommand } from "../../infrastructure/network/command.js";
 import { networkSnapshot } from "../../config/network-schema.js";
 import { parseRayConfig } from "../../config/ray.js";
 import { loadPackageDigest } from "../../infrastructure/provenance/package.js";
 
 export async function diagnoseRayNetwork(config: unknown, network: NetworkAccess, benchmark: string,
-  experimentPath: string, signal: AbortSignal): Promise<NetworkProbe[]> {
+  plan: NetworkProbePlan, experimentPath: string, signal: AbortSignal): Promise<NetworkProbe[]> {
   const settings = parseRayConfig(config);
   const directory = await mkdtemp(join(tmpdir(), "evaluator-ray-network-"));
   try {
     const payload = join(directory, "request.json");
-    await writeFile(payload, JSON.stringify({ network: networkSnapshot(network, benchmark), packageDigest: await loadPackageDigest(),
+    await writeFile(payload, JSON.stringify({ network: networkSnapshot(network, benchmark), plan, packageDigest: await loadPackageDigest(),
       endpoint: settings.endpoint, nodes: settings.nodes }), { mode: 0o600 });
     const executable = /[/\\]/u.test(settings.pythonExecutable) ? resolve(dirname(experimentPath), settings.pythonExecutable) : settings.pythonExecutable;
     const result = await networkCommand(executable, [fileURLToPath(new URL("../../infrastructure/ray/python/network_doctor.py", import.meta.url)), payload],

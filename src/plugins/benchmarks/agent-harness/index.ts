@@ -7,7 +7,7 @@ import { LocalZipJsonSource } from "../../../infrastructure/datasets/sources/loc
 import { localDatasetConfig, rejectLocalDatasetTransport } from "../shared/local-data.js";
 import { HuggingFaceFilesSource } from "../../../infrastructure/datasets/sources/huggingface/files-source.js";
 import { HttpZipJsonSource } from "../../../infrastructure/datasets/sources/http/zip-json-source.js";
-import { dropDefinition } from "./definitions/drop.js";
+import { dropDefinition, DROP_ARCHIVE_URL } from "./definitions/drop.js";
 import { expectRecord, rejectUnknown, expectNonEmptyString } from "../../../core/validation/input.js";
 import { EvaluatorError } from "../../../core/errors/evaluator-error.js";
 import { type PluginFactoryContext } from "../../../core/contracts/plugin.js";
@@ -26,7 +26,7 @@ export async function apply(ctx: Context): Promise<void> {
     rejectUnknown(config, ["cacheDir", "localPath"], "drop");
     return { cacheDir: expectNonEmptyString(config.cacheDir ?? ".cache/drop", "drop.cacheDir"), ...localDatasetConfig(config) };
   }, (config, runtime) => new DefinedBenchmark(dropDefinition, config.localPath === undefined ? new HttpZipJsonSource(runtime.resolvePath(config.cacheDir), {
-    url: "https://s3-us-west-2.amazonaws.com/allennlp/datasets/drop/drop_dataset.zip",
+    url: DROP_ARCHIVE_URL,
     sha256: "39d2278a29fd729de301b111a45f434c24834f40df8f4ff116d864589e3249d6",
     selections: { train: "drop_dataset/drop_dataset_train.json", test: "drop_dataset/drop_dataset_dev.json" },
   }, runtime.network) : new LocalZipJsonSource(runtime.resolvePath(config.localPath), {
