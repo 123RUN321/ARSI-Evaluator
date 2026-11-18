@@ -4,6 +4,8 @@ import { PythonRandom } from "./python-random.js";
 import { object, required, strings, task, verificationRecord } from "./records.js";
 import { scoreDropCandidates } from "./scoring/drop.js";
 
+export const DROP_ARCHIVE_URL = "https://s3-us-west-2.amazonaws.com/allennlp/datasets/drop/drop_dataset.zip";
+
 /** Keep annotations separate and preserve spans within each annotation. */
 function answerSpans(value: JsonValue): string[] {
   const answer = object(value, "DROP annotation");

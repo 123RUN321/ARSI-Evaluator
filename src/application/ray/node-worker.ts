@@ -293,6 +293,7 @@ export async function startNodeWorker(): Promise<void> {
   if (process.argv[2] === "--network-doctor") {
     const { NetworkRuntime } = await import("../../infrastructure/network/runtime.js");
     const { diagnoseNetwork } = await import("../diagnostics/network.js");
+    const { parseNetworkProbePlan } = await import("../diagnostics/network-plan.js");
     const { loadPackageDigest } = await import("../../infrastructure/provenance/package.js");
     const chunks: Buffer[] = [];
     let size = 0;
@@ -303,13 +304,14 @@ export async function startNodeWorker(): Promise<void> {
     }
     const input = JSON.parse(Buffer.concat(chunks).toString("utf8"));
     validateNetworkSnapshot(input.network);
+    const plan = parseNetworkProbePlan(input.plan);
     if (input.packageDigest !== await loadPackageDigest() || typeof input.location !== "string") throw new Error("Network diagnosis node package mismatch");
     const network = new NetworkRuntime(restoreNetworkTemplate(input.network.template, process.env));
     const controller = new AbortController();
     const cancel = () => controller.abort();
     process.once("SIGTERM", cancel); process.once("SIGINT", cancel);
     try {
-      const results = await diagnoseNetwork(network, controller.signal, { benchmark: input.network.benchmarkName,
+      const results = await diagnoseNetwork(network, controller.signal, { plan, benchmark: input.network.benchmarkName,
         location: input.location, ...(node.dockerExecutable ? { docker: node.dockerExecutable } : {}) });
       process.stdout.write(JSON.stringify(results) + "\n");
     } finally { process.removeListener("SIGTERM", cancel); process.removeListener("SIGINT", cancel); await network.dispose(); }

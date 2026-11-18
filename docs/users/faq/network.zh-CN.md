@@ -17,7 +17,9 @@ arsi-evaluator doctor experiment.yaml --network network.yaml
 
 `inspect` 显示网络文件路径和环境变量覆盖后的配置。修改 YAML 后没有生效时，先检查这里的实际值。
 
-`doctor` 显示每项检查的位置、访问地址、耗时和失败原因。Ray 实验在执行节点上检查；节点无法连接时也会单独报错。它不调用模型，也不会自动安装缺少的 Python、pip、uv、npm、pnpm 或 Git。
+`doctor` 根据生效的实验配置选择可确定的下载源，并显示访问位置、地址、耗时和失败原因。例如，本地 SimpleAgent 跑公开 GSM8K 时只探测 Hugging Face。包源探针直接检查对应索引，宿主无需安装额外的包管理器。Ray 实验把相同的探针选择发给执行节点。
+
+具体题目的镜像、Dockerfile 内的下载和外部 Bundle 或插件的依赖需要等任务准备时才能确认。使用下面的 `warmup` 检查这些依赖。`doctor` 不调用模型。
 
 | 状态 | 含义 |
 | --- | --- |

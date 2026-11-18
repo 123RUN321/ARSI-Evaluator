@@ -17,7 +17,9 @@ arsi-evaluator doctor experiment.yaml --network network.yaml
 
 `inspect` shows the network file path and settings after environment overrides. If editing YAML has no effect, check these effective values first.
 
-`doctor` shows each check's location, destination, duration, and failure cause. Ray experiments run checks on execution nodes and report unreachable nodes separately. It does not call models or install missing Python, pip, uv, npm, pnpm, or Git tools.
+`doctor` selects download sources it can identify from the resolved experiment and shows each check's location, destination, duration, and failure cause. For example, local SimpleAgent on public GSM8K only probes Hugging Face. Package source probes query the indexes directly, without requiring extra package managers on the host. Ray experiments send the same probe selection to the execution nodes.
+
+The task images, downloads in task Dockerfiles, and dependencies of external bundles or plugins are resolved during preparation. Use `warmup` below to check those dependencies. `doctor` does not call models.
 
 | Status | Meaning |
 | --- | --- |

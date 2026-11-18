@@ -4,6 +4,7 @@ import { recommendedNetworkConfigPath } from "../../config/network.js";
 import { redactNetwork } from "../../config/network-schema.js";
 import { NetworkRuntime } from "../../infrastructure/network/runtime.js";
 import { diagnoseNetwork, type NetworkProbe } from "./network.js";
+import { networkProbePlan } from "./network-plan.js";
 import { diagnoseRayNetwork } from "../ray/network-doctor.js";
 import { formatError } from "../../core/errors/diagnostics.js";
 
@@ -16,6 +17,7 @@ export async function diagnoseDownloads(options: { config: LoadedConfig; configP
   const { config } = options;
   const network = new NetworkRuntime(config.network);
   const configPath = network.document.origin;
+  const plan = networkProbePlan(config);
   const recommendedConfigPath = recommendedNetworkConfigPath();
   progress(`Network configuration: ${configPath}`);
   const report = (probe: NetworkProbe) => {
@@ -31,7 +33,7 @@ export async function diagnoseDownloads(options: { config: LoadedConfig; configP
     if (config.experiment.scheduler.name === "ray") {
       try {
         probes = await diagnoseRayNetwork(config.experiment.scheduler.config, network,
-          config.benchmarkName ?? config.experiment.benchmark.name, options.configPath, signal);
+          config.benchmarkName ?? config.experiment.benchmark.name, plan, options.configPath, signal);
       } catch (error) {
         signal.throwIfAborted();
         probes = [{ name: "ray-network", location: "execution nodes", target: "Ray network probes", route: "Ray",
@@ -41,13 +43,11 @@ export async function diagnoseDownloads(options: { config: LoadedConfig; configP
       probes.forEach(report);
     } else {
       const environment = config.experiment.environment;
-      const source = config.experiment.benchmark.config.source;
       probes = await diagnoseNetwork(network, signal, {
+        plan,
         benchmark: config.benchmarkName ?? config.experiment.benchmark.name,
-        ...(environment.name === "local" ? { docker: false } : typeof environment.config.dockerExecutable === "string"
+        ...(plan.docker && typeof environment.config.dockerExecutable === "string"
           ? { docker: environment.config.dockerExecutable } : {}),
-        ...(source && typeof source === "object" && "kind" in source && source.kind === "archive" && "url" in source && typeof source.url === "string"
-          ? { datasetUrl: source.url } : {}),
         progress: report,
       });
     }
@@ -60,7 +60,7 @@ export async function diagnoseDownloads(options: { config: LoadedConfig; configP
     if (status !== "passed") {
       progress(`Retry after editing the fields above: ${retryCommand}`);
       progress(`To try the bundled mirror configuration: ${recommendedCommand}`);
-      progress("The mirror configuration is optional; missing tools, credentials and Docker/Ray deployment failures require their own fixes.");
+      progress("The mirror configuration is optional. Credentials and Docker/Ray deployment failures require their own fixes.");
     }
     const proxy = network.settings.proxy.daemon;
     const dockerAdvice = redactNetwork({

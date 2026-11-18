@@ -43,7 +43,7 @@ test("experiment doctor preserves configuration checks and uses the selected net
   await writeFile(network, "sources:\n  huggingface: https://hub.test\n");
   vi.mocked(diagnoseNetwork).mockImplementation(async (runtime, _signal, options) => {
     expect(runtime.settings.sources.huggingface).toBe("https://hub.test");
-    expect(options?.docker).toBe(false);
+    expect(options.plan).toEqual({ host: ["huggingface"], docker: false, dockerBuild: false });
     return [];
   });
   const out: string[] = [], errors: string[] = [];
@@ -52,6 +52,22 @@ test("experiment doctor preserves configuration checks and uses the selected net
     network: { configPath: resolve(network), status: "passed" } });
   vi.mocked(diagnoseNetwork).mockResolvedValue([{ name: "cached", location: "host", target: "fixture", route: "direct", status: "not-checked", elapsedMs: 0, evidence: "cache" }]);
   expect(await runCli(["doctor", file, "--network", network], { out: () => {}, error: () => {} })).toBe(1);
+});
+
+test.each([
+  ["gsm8k local data", "benchmark:\n  name: gsm8k\n  config:\n    localPath: ./data\nenvironment: local\n",
+    { host: [], docker: false, dockerBuild: false }],
+  ["Terminal-Bench 4 archive", "benchmark:\n  name: terminalbench\n  version: '4.0'\nenvironment: docker\n",
+    { host: ["npm"], docker: true, dockerBuild: false,
+      datasetUrl: "https://github.com/harbor-framework/terminal-bench/releases/download/v4.0.0/terminal-bench-prebuilt-v4.0.0.tar.gz" }],
+] as const)("doctor scopes probes to %s", async (_label, experiment, plan) => {
+  const root = await mkdtemp(join(tmpdir(), "doctor-probe-plan-")); roots.push(root);
+  await mkdir(join(root, "data"));
+  const file = join(root, "experiment.yaml");
+  await writeFile(file, "services:\n  default:\n    model: fixture\n    base_url: https://model.invalid/v1\n    api_key: ${TEST_KEY}\n" + experiment);
+  vi.mocked(diagnoseNetwork).mockResolvedValue([]);
+  await runCli(["doctor", file], { out: () => {}, error: () => {} });
+  expect(diagnoseNetwork).toHaveBeenCalledWith(expect.anything(), expect.anything(), expect.objectContaining({ plan }));
 });
 
 
