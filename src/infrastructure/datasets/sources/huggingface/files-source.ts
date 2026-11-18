@@ -1,13 +1,11 @@
 import type { NetworkAccess } from "../../../../core/contracts/network.js";
-import { fetchNetworkResponse } from "../../../network/retry.js";
 import type { JsonValue, SourceLock } from "../../../../core/contracts/task.js";
 import { fingerprintConfig } from "../../../../core/results/run-manifest.js";
 import { redactDiagnostic } from "../../../../core/errors/diagnostics.js";
 import { DatasetCache } from "../../cache.js";
 import { datasetActivity } from "../../activity.js";
 import { readRows } from "../../input-readers/rows.js";
-import { huggingfaceTransport } from "./endpoint.js";
-import type { HuggingFaceTransport } from "./endpoint.js";
+import { fetchHuggingFaceFile, fetchHuggingFaceMetadata, huggingfaceTransport, type HuggingFaceTransport } from "./endpoint.js";
 import type { DatasetRecordSource } from "../../record-source.js";
 import { hubFileUrl, safeHubPath } from "./file-path.js";
 
@@ -115,13 +113,13 @@ export class HuggingFaceFilesSource implements DatasetRecordSource {
     signal.throwIfAborted();
     if (previous !== null) {
       this.assertLock(previous);
-      for (const file of previous.files) await this.cache.fetch(file.origin, file.sha256, signal, this.headers);
+      for (const file of previous.files) await fetchHuggingFaceFile(this.cache, file.origin, this.transport, file.sha256, signal, this.headers);
       return structuredClone(previous);
     }
     const url = `${this.transport.apiBase}/api/datasets/${this.definition.dataset}/revision/${encodeURIComponent(this.definition.revision)}?blobs=true`;
     let data: { sha?: unknown; siblings?: unknown };
     try {
-      const response = await fetchNetworkResponse(url, { signal, ...(this.headers === undefined ? {} : { headers: this.headers }) }, { ...(this.network ? { network: this.network } : {}) });
+      const response = await fetchHuggingFaceMetadata(url, this.transport, signal, this.headers, this.network);
       if (!response.ok)
         throw new Error(
           response.status === 401 || response.status === 403
@@ -165,7 +163,7 @@ export class HuggingFaceFilesSource implements DatasetRecordSource {
       datasetActivity(`Preparing data file ${lock.files.length + 1}/${candidates.length}`);
       if (!safeHubPath(candidate.rfilename)) throw new Error("Unsafe dataset path");
       const origin = this.origin(lock.revision, candidate.rfilename);
-      const file = await this.cache.fetch(origin, candidate.lfs?.sha256 ?? null, signal, this.headers);
+      const file = await fetchHuggingFaceFile(this.cache, origin, this.transport, candidate.lfs?.sha256 ?? null, signal, this.headers);
       lock.files.push({ path: candidate.rfilename, sha256: file.sha256, origin });
     }
     this.assertLock(lock);
@@ -177,7 +175,7 @@ export class HuggingFaceFilesSource implements DatasetRecordSource {
     const selection = this.definition.selections.find(item => item.key === key);
     if (!selection) throw new TypeError(`Unknown Hugging Face selection: ${key}`);
     for (const file of lock.files.filter(item => matching(item.path, selection))) {
-      const cached = await this.cache.fetch(file.origin, file.sha256, signal, this.headers);
+      const cached = await fetchHuggingFaceFile(this.cache, file.origin, this.transport, file.sha256, signal, this.headers);
       for await (const row of readRows(cached.path, selection.format)) {
         signal.throwIfAborted();
         yield row;

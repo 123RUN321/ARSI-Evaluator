@@ -1,7 +1,7 @@
 import { fileURLToPath } from "node:url";
 import type { NetworkSettings, NetworkLocation } from "../../core/contracts/network.js";
 
-const controlled = /^(?:https?_proxy|all_proxy|no_proxy|hf_endpoint|git_ssh_command|evaluator_ssh_proxy|pip_(?:index_url|extra_index_url|trusted_host|config_file)|uv_(?:default_index|index_url|extra_index_url|index|python_install_mirror)|npm_config_(?:registry|proxy|https_proxy|noproxy)|corepack_npm_registry|evaluator_(?:debian_mirror|github_mirror|node_mirror|node_image_mirror|docker_build_network|network_config))$/iu;
+const controlled = /^(?:https?_proxy|all_proxy|no_proxy|hf_endpoint|git_ssh_command|evaluator_ssh_proxy|pip_(?:index_url|extra_index_url|trusted_host|config_file)|uv_(?:default_index|index_url|extra_index_url|index|python_install_mirror)|npm_config_(?:registry|proxy|https_proxy|noproxy)|corepack_npm_registry|evaluator_(?:debian_mirror|github_mirror|node_mirror|node_image_mirror|docker_build_network|network_config|pypi_public_mirror|npm_public_mirror))$/iu;
 
 export function networkEnvironment(settings: NetworkSettings, location: NetworkLocation, base: NodeJS.ProcessEnv = {}, target: "host" | "container" = location === "build" ? "container" : "host"): Record<string, string> {
     const env: Record<string, string> = Object.fromEntries(Object.entries(base).filter((entry): entry is [string, string] => entry[1] !== undefined && !controlled.test(entry[0])));
@@ -18,6 +18,8 @@ export function networkEnvironment(settings: NetworkSettings, location: NetworkL
       EVALUATOR_GITHUB_MIRROR: sources.github.repository, EVALUATOR_NODE_MIRROR: sources.node.dist,
       GIT_CONFIG_COUNT: "1", GIT_CONFIG_KEY_0: `url.${sources.github.repository}/.insteadOf`, GIT_CONFIG_VALUE_0: "https://github.com/",
     });
+    if (sources.python.indexPublicMirror) env.EVALUATOR_PYPI_PUBLIC_MIRROR = sources.python.index;
+    if (sources.npm.registryPublicMirror) env.EVALUATOR_NPM_PUBLIC_MIRROR = sources.npm.registry;
     if (sources.python.interpreter) env.UV_PYTHON_INSTALL_MIRROR = sources.python.interpreter;
     // Do not inherit package-manager config files with unrelated indexes.
     env.PIP_CONFIG_FILE = target === "host" && process.platform === "win32" ? "NUL" : "/dev/null";

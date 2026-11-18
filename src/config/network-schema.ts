@@ -63,6 +63,13 @@ function dictionary(value: unknown, label: string): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
+function packageAddress(value: unknown, label: string): { address: string; publicMirror: boolean } {
+  if (typeof value !== "object" || Array.isArray(value)) return { address: url(value, label), publicMirror: false };
+  const address = url(record(value, ["mirror"], label).mirror, label + ".mirror");
+  if (!address.startsWith("https:")) throw new TypeError(label + ".mirror must use HTTPS");
+  return { address, publicMirror: true };
+}
+
 export function parseNetworkSettings(value: unknown): NetworkSettings {
   const raw = record(value, ["proxy", "sources", "docker", "git"], "network");
   const common = proxy(raw.proxy, { http: null, https: null, noProxy: [] }, "network.proxy", true);
@@ -70,8 +77,16 @@ export function parseNetworkSettings(value: unknown): NetworkSettings {
   const overrides = record(proxyObject.overrides, locations, "network.proxy.overrides");
   const resolvedProxy = Object.fromEntries(locations.map(location => [location, proxy(overrides[location], common, `network.proxy.overrides.${location}`)])) as Record<NetworkLocation, NetworkProxy>;
   const sources = record(raw.sources, ["huggingface", "python", "npm", "node", "github", "apt"], "network.sources");
+  const hub = sources.huggingface ?? "https://huggingface.co";
+  const hubLabel = "network.sources.huggingface";
+  const publicMirror = typeof hub === "object" && !Array.isArray(hub);
+  const huggingface = publicMirror
+    ? url(record(hub, ["mirror"], hubLabel).mirror, hubLabel + ".mirror", false, true)
+    : url(hub, hubLabel, false, true);
   const python = record(sources.python, ["index", "extraIndexes", "interpreter"], "network.sources.python");
   const npm = record(sources.npm, ["registry"], "network.sources.npm");
+  const index = packageAddress(python.index ?? "https://pypi.org/simple", "network.sources.python.index");
+  const registry = packageAddress(npm.registry ?? "https://registry.npmjs.org", "network.sources.npm.registry");
   const node = record(sources.node, ["dist"], "network.sources.node");
   const github = record(sources.github, ["api", "raw", "repository"], "network.sources.github");
   const apt = record(sources.apt, aptKeys, "network.sources.apt");
@@ -99,11 +114,12 @@ export function parseNetworkSettings(value: unknown): NetworkSettings {
   return {
     proxy: resolvedProxy,
     sources: {
-      huggingface: url(sources.huggingface ?? "https://huggingface.co", "network.sources.huggingface", false, true),
-      python: { index: url(python.index ?? "https://pypi.org/simple", "network.sources.python.index"),
+      huggingface,
+      ...(publicMirror ? { huggingfacePublicMirror: true } : {}),
+      python: { index: index.address, ...(index.publicMirror ? { indexPublicMirror: true } : {}),
         extraIndexes: python.extraIndexes === undefined ? [] : list(python.extraIndexes, "network.sources.python.extraIndexes", true),
         interpreter: python.interpreter === undefined || python.interpreter === null ? null : url(python.interpreter, "network.sources.python.interpreter") },
-      npm: { registry: url(npm.registry ?? "https://registry.npmjs.org", "network.sources.npm.registry") },
+      npm: { registry: registry.address, ...(registry.publicMirror ? { registryPublicMirror: true } : {}) },
       node: { dist: url(node.dist ?? "https://nodejs.org/dist", "network.sources.node.dist") },
       github: { api: url(github.api ?? "https://api.github.com", "network.sources.github.api"),
         raw: url(github.raw ?? "https://raw.githubusercontent.com", "network.sources.github.raw"),

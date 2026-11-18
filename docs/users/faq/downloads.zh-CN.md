@@ -12,7 +12,7 @@
 
 `sources.apt` 分别设置 Debian 主仓库、安全仓库及 Ubuntu archive、security、ports 的完整地址。构建时会使用这些地址，同时保留原发行版和签名设置；第三方仓库需要另行配置，原始任务文件不会被修改。
 
-共享镜像默认使用 `docker.pull` 指定的方式，`docker.mirrors` 可设置 Registry 镜像源。任务镜像还可以通过 `docker.benchmarks` 单独指定 ModelScope/Hugging Face 归档来源。Dockerfile 中的 `FROM` 使用 Docker daemon 的网络设置。具体配置见[镜像下载](../image-downloads.zh-CN.md)。
+共享镜像默认使用 `docker.pull` 指定的方式，`docker.mirrors` 可设置 Registry 镜像源。通过 `docker.benchmarks` 可为指定题库从 ModelScope 或 Hugging Face 下载任务镜像。Dockerfile 中的 `FROM` 使用 Docker daemon 的网络设置。 [镜像下载配置](../image-downloads.zh-CN.md)
 
 Evaluator 和 Pi runner 默认使用 HTTP/1.1。在**启动进程前**设置 `EVALUATOR_HTTP2=1` 可允许 HTTP/2；不设置或设为 `0` 则保持 HTTP/1.1。服务器不支持 HTTP/2 时仍可使用 HTTP/1.1。
 

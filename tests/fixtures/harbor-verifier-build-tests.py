@@ -86,5 +86,49 @@ class VerifierBuildTests(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError, "changed the upstream dependency lock"):
                     build.install_dependencies(root, root / "harbor", run=run)
 
+    def test_public_index_retries_only_the_download_with_the_same_requirements(self):
+        mirror = "https://mirrors.aliyun.com/pypi/simple"
+        calls = []
+        def run(args, **options):
+            calls.append(args)
+            if len(calls) == 1:
+                raise subprocess.CalledProcessError(1, args, output=mirror + " HTTP 503")
+        build.install_from_public_index(
+            lambda index: ["uv", "pip", "install", "--require-hashes", "-r", "locked.txt", "--default-index", index],
+            mirror, run=run, timeout=5, env={},
+        )
+        self.assertEqual(calls[0][:-1], calls[1][:-1])
+        self.assertEqual([call[-1] for call in calls], [mirror, build.OFFICIAL_PYPI])
+
+    def test_private_indices_and_integrity_errors_keep_the_configured_source(self):
+        for index, diagnostic in [
+            ("https://private.example/simple", "HTTP 503"),
+            ("https://mirrors.aliyun.com/pypi/simple", "hash mismatch"),
+        ]:
+            calls = []
+            def run(args, **options):
+                calls.append(args)
+                raise subprocess.CalledProcessError(1, args, output=index + " " + diagnostic)
+            with self.assertRaises(subprocess.CalledProcessError):
+                build.install_from_public_index(lambda source: ["pip", "download", "--index-url", source], index,
+                                                run=run, timeout=5, env={})
+            self.assertEqual(len(calls), 1)
+
+    def test_declared_public_index_tries_repository_mirror_then_official(self):
+        index = "https://public.example/simple"
+        calls = []
+        def run(args, **options):
+            calls.append((args[-1], options["env"]))
+            if args[-1] != build.OFFICIAL_PYPI:
+                raise subprocess.CalledProcessError(1, args, output=args[-1] + " HTTP 503")
+        build.install_from_public_index(lambda source: ["pip", "download", "--index-url", source],
+                                        index, run=run, timeout=5,
+                                        env={"EVALUATOR_PYPI_PUBLIC_MIRROR": index, "UV_INDEX_USER_PASSWORD": "fixture"})
+        self.assertEqual([source for source, _ in calls], [index, build.REPOSITORY_PYPI_MIRROR, build.OFFICIAL_PYPI])
+        self.assertEqual(calls[0][1]["UV_INDEX_USER_PASSWORD"], "fixture")
+        for source, environment in calls[1:]:
+            self.assertNotIn("UV_INDEX_USER_PASSWORD", environment)
+            self.assertEqual(environment["PIP_INDEX_URL"], source)
+
 
 unittest.main()

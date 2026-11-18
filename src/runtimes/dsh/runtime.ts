@@ -13,6 +13,8 @@ import { agentBundleRuntimeFiles, agentBundleVersionProbe, hashRuntimeSource } f
 import { AgentBundleError } from "../agentbundle/cli.js";
 import { assertHarnessVersionCompatible } from "../agentbundle/sdk.js";
 import { packageManagerCli } from "../../infrastructure/network/package-manager.js";
+import { withNpmRegistryFallback } from "../../infrastructure/network/package-mirror.mjs";
+import { redactDiagnostic } from "../../core/errors/diagnostics.js";
 import { inspectLocalDsh, type LocalDsh } from "./local-runtime.js";
 
 export type DshBundleRuntime = { installation: RuntimeInstallation; version: string; localDsh?: LocalDsh; directory?: string };
@@ -84,11 +86,24 @@ export async function selectDshVersion(versionRange: string, published: () => Pr
 
 async function npm(args: string[], signal: AbortSignal, network?: NetworkAccess, cwd?: string): Promise<string> {
   try {
-    const registry = network ? ["--registry", network.settings.sources.npm.registry] : [];
-    const { stdout } = await execFileAsync(process.execPath, [await packageManagerCli("npm"), ...args, ...registry], {
-      cwd, signal, env: network?.environment("runtime", process.env, "host"), timeout: 180_000,
-    });
-    return stdout;
+    const cli = await packageManagerCli("npm");
+    // Keep one budget across metadata resolution and all configured registries.
+    const active = AbortSignal.any([signal, AbortSignal.timeout(180_000)]);
+    const env = network?.environment("runtime", process.env, "host") ?? process.env;
+    const result = await withNpmRegistryFallback(env, async environment => {
+      const registry = network && environment.npm_config_registry ? ["--registry", environment.npm_config_registry] : [];
+      try {
+        const output = await execFileAsync(process.execPath, [cli, ...args, ...registry], { cwd, signal: active, env: environment });
+        return { ...output, exitCode: 0 };
+      } catch (error) {
+        active.throwIfAborted();
+        if (!(error instanceof Error) || !("code" in error) || typeof error.code !== "number") throw error;
+        return { exitCode: error.code, stdout: "stdout" in error ? String(error.stdout ?? "") : "",
+          stderr: "stderr" in error ? String(error.stderr ?? "") : error.message };
+      }
+    }, active, message => process.stderr.write(message + "\n"));
+    if (result.exitCode !== 0) throw new Error(redactDiagnostic((result.stderr || result.stdout).trim(), network?.secrets));
+    return result.stdout;
   } catch (cause) {
     signal.throwIfAborted();
     throw new AgentBundleError("ENV_RUNTIME_INSTALL_FAILED", `npm ${args[0]} failed while preparing DSH`, { cause });

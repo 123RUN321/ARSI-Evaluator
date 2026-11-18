@@ -8,9 +8,9 @@ Run shell commands from the Evaluator root and merge YAML fragments into actual 
 
 ## Configure image sources and proxies
 
-Pass a separate network YAML with `--network network.yaml`. `docker.pull.method` selects native Docker or Registry API downloads, `docker.mirrors` rewrites the registry for explicit acquisition, and `docker.benchmarks` can select ModelScope/Hugging Face image archives.
+Pass a separate network YAML with `--network network.yaml`. `docker.pull.method` selects native Docker or Registry API downloads, and `docker.mirrors` specifies registry mirrors. Set `docker.benchmarks` to download a benchmark's task images from ModelScope or Hugging Face.
 
-Registry API acquisition supports the built-in Node.js client and user-installed skopeo. Configure proxies under `proxy`, with separate `host`, `daemon`, `build`, and `runtime` overrides. See [proxy configuration](../reference/network.md) for credentials and node addresses, and [image downloads](../image-downloads.md) for archive paths.
+Registry API acquisition supports the built-in Node.js client and user-installed skopeo. Configure proxies under `proxy`, with separate `host`, `daemon`, `build`, and `runtime` overrides. [Proxy configuration](../reference/network.md) · [Task image downloads and fallback](../image-downloads.md#task-image-downloads-and-fallback)
 
 `FROM` and external `COPY --from` use Docker's built-in builder and the daemon's active network settings. `doctor experiment.yaml` generates application guidance without changing files or restarting Docker. After an administrator applies it, use `doctor experiment.yaml` to check explicit acquisition, `FROM`, and `RUN` independently.
 
@@ -39,7 +39,7 @@ Evaluator generates references in the form `arsi-evaluator/<repository-path>:<pl
 
 When a tag already points to a different image, the next image gets a suffix such as `-2` or `-3`. The suffix distinguishes images that would otherwise have the same tag. Tasks and roles that resolve to the same image ID share its registered reference. For example, a verifier image shared by two tasks may appear under just one task path.
 
-ModelScope uses its archive file layout. A local `linux-amd64-base` tag for a task base corresponds to `linux/amd64/solve.tar.gz` in the dataset repository. See the [archive layout](../../development/image-archives.md#文件布局) for verification and sidecar paths.
+For a task base downloaded from ModelScope, the local `linux-amd64-base` tag corresponds to `linux/amd64/solve.tar.gz` under the task's directory. [Verification and sidecar image paths (Chinese)](../../development/image-archives.md#文件布局)
 
 One multi-stage build adds the Solver installation and runtime helpers to the final solve image. Different solve bases can reuse the installation stage in BuildKit. Preparation releases temporary build tags. Separate verification retains the image used to start the verifier and any sources still used by other tasks.
 

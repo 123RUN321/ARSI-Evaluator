@@ -9,13 +9,39 @@ import sys
 import time
 import tomllib
 from pathlib import Path
+from tempfile import TemporaryDirectory, TemporaryFile
+from urllib.error import HTTPError
+from urllib.request import Request, urlopen
 from urllib.parse import urlsplit
 
 WORKBUDDY_REPOSITORY = "https://github.com/Tencent/workbuddy-bench.git"
 WORKBUDDY_COMMIT = "625b2233093ae4f23e76be28c1f341d41cc70373"
+OFFICIAL_PYPI = "https://pypi.org/simple"
+REPOSITORY_PYPI_MIRROR = "https://mirrors.aliyun.com/pypi/simple"
+PUBLIC_PYPI_MIRRORS = {
+    REPOSITORY_PYPI_MIRROR,
+    "https://pypi.tuna.tsinghua.edu.cn/simple",
+    "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple",
+    "https://pypi.mirrors.ustc.edu.cn/simple",
+    "https://mirrors.ustc.edu.cn/pypi/simple",
+}
 
 
-def run_bounded(args: list[str], *, timeout: float, check: bool = True, **options) -> subprocess.CompletedProcess:
+def run_bounded(args: list[str], *, timeout: float, check: bool = True,
+                capture_failure: bool = False, **options) -> subprocess.CompletedProcess:
+    if capture_failure:
+        with TemporaryFile() as log:
+            result = run_bounded(args, timeout=timeout, check=False, stdout=log, stderr=subprocess.STDOUT, **options)
+            size = log.seek(0, os.SEEK_END)
+            log.seek(max(size - 65536, 0))
+            diagnostic = log.read().decode(errors="replace")
+            # Proxy authentication belongs to the process environment, not the build log.
+            diagnostic = re.sub(r"(https?://)[^/\s@]+@", r"\1[redacted]@", diagnostic)
+            if check and result.returncode:
+                raise subprocess.CalledProcessError(result.returncode, args, output=diagnostic)
+            if diagnostic:
+                print(diagnostic, end="", file=sys.stderr, flush=True)
+            return result
     process = subprocess.Popen(args, start_new_session=os.name == "posix", **options)
     try:
         code = process.wait(timeout=timeout)
@@ -32,6 +58,85 @@ def run_bounded(args: list[str], *, timeout: float, check: bool = True, **option
     if check and code:
         raise subprocess.CalledProcessError(code, args)
     return subprocess.CompletedProcess(args, code)
+
+
+def transient_pypi_error(output: str) -> bool:
+    return bool(re.search(r"\b(?:408|429|500|502|503|504) (?:Server Error|Service Unavailable|Bad Gateway|Gateway Timeout|error responses)|"
+                          r"(?:HTTP|status(?: code)?)[: =]+(?:408|429|500|502|503|504)\b|"
+                          r"too many (?:408|429|500|502|503|504) error responses|"
+                          r"connection (?:refused|reset|timed out|aborted)|timed out|temporary failure in name resolution|"
+                          r"failed to resolve|name or service not known|failed to establish a new connection|"
+                          r"network is unreachable|remote end closed connection", output, re.IGNORECASE))
+
+
+def pypi_mirror_failure(error: subprocess.CalledProcessError, index: str, remaining: float) -> bool:
+    output = error.output or ""
+    host = urlsplit(index).hostname
+    if not host or host not in output:
+        return False
+    if re.search(r"\b(?:401|403|407) (?:Client Error|Forbidden|Unauthorized)|(?:HTTP|status(?: code)?)[: =]+(?:401|403|407)\b|"
+                 r"certificate verify failed|invalid peer certificate|hash(?:es)? (?:do not match|mismatch)|"
+                 r"THESE PACKAGES DO NOT MATCH THE HASHES", output, re.IGNORECASE):
+        return False
+    if transient_pypi_error(output):
+        return True
+    if "tunnel error: unsuccessful" not in output:
+        return False
+    # uv omits the CONNECT response code. A probe distinguishes temporary
+    # proxy failures from access denial before trying another index.
+    try:
+        with urlopen(Request(index + "/", method="HEAD"), timeout=min(remaining, 10)):
+            return False
+    except HTTPError as probe:
+        return probe.code in (408, 429, 500, 502, 503, 504)
+    except OSError as probe:
+        return transient_pypi_error(str(probe))
+
+
+def install_from_public_index(command, index: str, *, run=run_bounded, timeout: float, env: dict) -> None:
+    index = index.rstrip("/")
+    declared = index.startswith("https:") and index == env.get("EVALUATOR_PYPI_PUBLIC_MIRROR")
+    if index == OFFICIAL_PYPI or (not declared and index not in PUBLIC_PYPI_MIRRORS) or any(
+            env.get(key) for key in ("PIP_EXTRA_INDEX_URL", "UV_INDEX", "UV_EXTRA_INDEX_URL")):
+        run(command(index), check=True, env=env, timeout=timeout)
+        return
+    candidates = list(dict.fromkeys([index, *([REPOSITORY_PYPI_MIRROR] if declared else []), OFFICIAL_PYPI]))
+    deadline = time.monotonic() + timeout
+    failures = []
+    for position, source in enumerate(candidates):
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise subprocess.TimeoutExpired(command(source), timeout)
+        selected = env
+        if position:
+            print("PyPI mirror unavailable; trying " + source, file=sys.stderr, flush=True)
+            selected = {key: value for key, value in env.items()
+                        if not re.fullmatch(r"UV_INDEX_.*_(?:USERNAME|PASSWORD)", key)}
+            selected.update(PIP_INDEX_URL=source, UV_INDEX_URL=source, UV_DEFAULT_INDEX=source,
+                            NETRC=os.devnull, PIP_KEYRING_PROVIDER="disabled", UV_KEYRING_PROVIDER="disabled")
+        try:
+            run(command(source), check=True, env=selected, timeout=remaining, capture_failure=True)
+            return
+        except subprocess.CalledProcessError as failure:
+            failures.append(failure.output or "")
+            remaining = deadline - time.monotonic()
+            if position == len(candidates) - 1 or remaining <= 0 or not pypi_mirror_failure(failure, source, remaining):
+                print(*failures, sep="\n", end="", file=sys.stderr, flush=True)
+                raise
+
+
+def install_uv(*, run=run_bounded) -> None:
+    env = {**os.environ, "PIP_DISABLE_PIP_VERSION_CHECK": "1"}
+    index = env.get("PIP_INDEX_URL", OFFICIAL_PYPI)
+    with TemporaryDirectory(prefix="evaluator-uv-wheels-") as wheels:
+        install_from_public_index(
+            lambda source: [sys.executable, "-m", "pip", "download", "--no-cache-dir", "--retries", "3",
+                            "--timeout", "60", "--only-binary=:all:", "--no-deps", "--verbose",
+                            "--index-url", source, "--dest", wheels, "uv==0.10.2"],
+            index, run=run, timeout=300, env=env,
+        )
+        run([sys.executable, "-m", "pip", "install", "--no-index", "--no-deps", "--find-links", wheels, "uv==0.10.2"],
+            check=True, env=env, timeout=120)
 
 
 def fetch_checkout(repository: str, commit: str, target: Path, *, run=run_bounded, sleep=time.sleep) -> None:
@@ -93,8 +198,11 @@ def install_dependencies(runtime: Path, harbor: Path, *, run=run_bounded) -> Non
                    check=True, timeout=60)
     index = os.environ["PIP_INDEX_URL"]
     environment = {**os.environ, "UV_HTTP_TIMEOUT": "60", "UV_HTTP_RETRIES": "3", "UV_PYTHON_DOWNLOADS": "never"}
-    run(["uv", "pip", "install", "--python", python, "--no-config", "--no-deps", "--require-hashes",
-                    "--default-index", index, "--requirements", requirements], check=True, env=environment, timeout=900)
+    install_from_public_index(
+        lambda source: ["uv", "pip", "install", "--python", python, "--no-config", "--no-deps", "--require-hashes",
+                        "--default-index", source, "--requirements", requirements],
+        index, run=run, timeout=900, env=environment,
+    )
     run(["uv", "pip", "install", "--python", python, "--no-config", "--no-deps", "--default-index", index,
                     str(harbor), str(runtime)], check=True, env=environment, timeout=300)
     if (runtime / "uv.lock").read_bytes() != original_lock:
@@ -102,4 +210,7 @@ def install_dependencies(runtime: Path, harbor: Path, *, run=run_bounded) -> Non
 
 
 if __name__ == "__main__":
-    main()
+    if sys.argv[1:] == ["install-uv"]:
+        install_uv()
+    else:
+        main()

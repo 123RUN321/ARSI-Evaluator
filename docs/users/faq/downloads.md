@@ -12,7 +12,7 @@ Downloads use official sources by default. Select Hugging Face, GitHub, pip/uv, 
 
 `sources.apt` independently sets full Debian main/security and Ubuntu archive/security/ports URLs. Builds use those addresses while keeping the original distribution and signing settings. Configure third-party repositories separately; original task files are not modified.
 
-Shared images use the method in `docker.pull`; `docker.mirrors` can select registry mirrors. Task images can additionally select ModelScope/Hugging Face archives through `docker.benchmarks`. Dockerfile `FROM` uses the Docker daemon's network settings. See [image downloads](../image-downloads.md) for examples.
+Shared images use the method in `docker.pull`, and `docker.mirrors` selects registry mirrors. Set `docker.benchmarks` to download a benchmark's task images from ModelScope or Hugging Face. Dockerfile `FROM` uses the Docker daemon's network settings. [Image download configuration](../image-downloads.md)
 
 Evaluator and the Pi runner default to HTTP/1.1. Set `EVALUATOR_HTTP2=1` **before starting the process** to allow HTTP/2; omit it or set `0` to retain HTTP/1.1. Servers without HTTP/2 support can still use HTTP/1.1.
 

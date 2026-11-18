@@ -7,12 +7,16 @@ import { setTimeout as delay } from "node:timers/promises";
 import { redactDiagnostic } from "../../core/errors/diagnostics.js";
 import type { ActivityListener, ComponentActivity } from "../../core/contracts/activity.js";
 import { byteSize, datasetActivity, datasetActivityListener, withDatasetActivity } from "./activity.js";
+import { withSourceFallbacks } from "../network/source-fallback.js";
+import { HUGGING_FACE_OFFICIAL_ORIGIN, huggingFaceFallbackUrls } from "./sources/huggingface/origins.js";
 
 class DatasetHttpError extends Error {
   constructor(readonly status: number) {
     super(`Dataset HTTP ${status}`);
   }
 }
+
+export class DatasetSourceUnavailableError extends Error {}
 
 class DatasetIdleTimeoutError extends Error {
   readonly code: ErrorCode = "NETWORK_FAILURE";
@@ -28,7 +32,7 @@ function retryable(error: unknown, seen = new Set<unknown>()): boolean {
   if (error instanceof DatasetHttpError) return [408, 429, 500, 502, 503, 504].includes(error.status);
   if ("code" in error && typeof error.code === "string" && [
     "NETWORK_FAILURE", "UND_ERR_HEADERS_TIMEOUT", "UND_ERR_BODY_TIMEOUT", "UND_ERR_CONNECT_TIMEOUT",
-    "UND_ERR_SOCKET", "UND_ERR_RES_CONTENT_LENGTH_MISMATCH", "ECONNRESET", "ECONNREFUSED", "ETIMEDOUT", "EAI_AGAIN", "ENETUNREACH", "EPIPE",
+    "UND_ERR_SOCKET", "UND_ERR_RES_CONTENT_LENGTH_MISMATCH", "ECONNRESET", "ECONNREFUSED", "ETIMEDOUT", "EAI_AGAIN", "ENOTFOUND", "ENETUNREACH", "EPIPE",
   ].includes(error.code)) return true;
   if (error instanceof AggregateError && error.errors.some(item => retryable(item, seen))) return true;
   return "cause" in error && retryable(error.cause, seen);
@@ -98,15 +102,23 @@ export class DatasetCache {
     expected: string | null,
     signal: AbortSignal,
     headers?: Record<string, string>,
+    fallbacks: readonly string[] = [],
   ): Promise<{ path: string; sha256: string }> {
     signal.throwIfAborted();
-    url = this.network?.sourceUrl(url) ?? url;
+    const preferred = this.network?.sourceUrl(url) ?? url;
+    if (preferred !== url) {
+      const sources = this.network?.settings.sources;
+      fallbacks = url.startsWith(HUGGING_FACE_OFFICIAL_ORIGIN + "/")
+        ? huggingFaceFallbackUrls(preferred, sources?.huggingfacePublicMirror ? sources.huggingface : undefined) : [];
+    }
+    const primaryHeaders = headers && (preferred === url || new URL(preferred).origin === new URL(url).origin) ? headers : undefined;
+    url = preferred;
     let flights = this.flights.get(signal);
     if (!flights) {
       flights = new Map();
       this.flights.set(signal, flights);
     }
-    const key = `${url}\n${expected ?? ""}`;
+    const key = [url, expected ?? "", ...fallbacks].join("\n");
     const existing = flights.get(key);
     const listener = datasetActivityListener();
     if (existing) {
@@ -122,7 +134,12 @@ export class DatasetCache {
       promise: Promise.resolve().then(() => withDatasetActivity(event => {
         flight.latest = event;
         for (const observe of listeners) observe(event);
-      }, () => this.download(url, expected, signal, headers))).finally(() => flights!.delete(key)),
+      }, () => withSourceFallbacks(url, fallbacks, target =>
+        this.download(target, expected, signal, target === url ? primaryHeaders : undefined), {
+        signal,
+        shouldFallback: error => error instanceof DatasetSourceUnavailableError,
+        onFallback: (source, fallback) => datasetActivity(`Data source ${new URL(source).hostname} unavailable; trying ${new URL(fallback).hostname}`),
+      }))).finally(() => flights!.delete(key)),
     };
     flights.set(key, flight);
     try { return await flight.promise; }
@@ -146,8 +163,10 @@ export class DatasetCache {
         return await this.downloadAttempt(url, expected, signal, headers);
       } catch (cause) {
         if (signal.aborted) throw signal.reason;
-        if (attempt >= 3 || !retryable(cause)) {
-          throw new Error(
+        const canRetry = retryable(cause);
+        if (attempt >= 3 || !canRetry) {
+          const Failure = canRetry || cause instanceof DatasetHttpError && cause.status === 404 ? DatasetSourceUnavailableError : Error;
+          throw new Failure(
             `Dataset download failed after ${attempt} attempt(s): ${redactDiagnostic(url)} (${redactDiagnostic(cause instanceof Error ? cause.message : String(cause))})`,
             { cause },
           );

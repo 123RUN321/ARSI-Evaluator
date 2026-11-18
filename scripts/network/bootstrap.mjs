@@ -7478,6 +7478,12 @@ function dictionary(value, label) {
   if (value === null || typeof value !== "object" || Array.isArray(value)) throw new TypeError(`${label} must be an object`);
   return value;
 }
+function packageAddress(value, label) {
+  if (typeof value !== "object" || Array.isArray(value)) return { address: url(value, label), publicMirror: false };
+  const address = url(record(value, ["mirror"], label).mirror, label + ".mirror");
+  if (!address.startsWith("https:")) throw new TypeError(label + ".mirror must use HTTPS");
+  return { address, publicMirror: true };
+}
 function parseNetworkSettings(value) {
   const raw = record(value, ["proxy", "sources", "docker", "git"], "network");
   const common = proxy(raw.proxy, { http: null, https: null, noProxy: [] }, "network.proxy", true);
@@ -7485,19 +7491,25 @@ function parseNetworkSettings(value) {
   const overrides = record(proxyObject.overrides, locations, "network.proxy.overrides");
   const resolvedProxy = Object.fromEntries(locations.map((location) => [location, proxy(overrides[location], common, `network.proxy.overrides.${location}`)]));
   const sources = record(raw.sources, ["huggingface", "python", "npm", "node", "github", "apt"], "network.sources");
+  const hub = sources.huggingface ?? "https://huggingface.co";
+  const hubLabel = "network.sources.huggingface";
+  const publicMirror = typeof hub === "object" && !Array.isArray(hub);
+  const huggingface = publicMirror ? url(record(hub, ["mirror"], hubLabel).mirror, hubLabel + ".mirror", false, true) : url(hub, hubLabel, false, true);
   const python = record(sources.python, ["index", "extraIndexes", "interpreter"], "network.sources.python");
   const npm = record(sources.npm, ["registry"], "network.sources.npm");
+  const index = packageAddress(python.index ?? "https://pypi.org/simple", "network.sources.python.index");
+  const registry = packageAddress(npm.registry ?? "https://registry.npmjs.org", "network.sources.npm.registry");
   const node = record(sources.node, ["dist"], "network.sources.node");
   const github = record(sources.github, ["api", "raw", "repository"], "network.sources.github");
   const apt = record(sources.apt, aptKeys, "network.sources.apt");
   const docker = record(raw.docker, ["pull", "mirrors", "benchmarks", "buildNetwork"], "network.docker");
   const pull = acquisition(docker.pull, "network.docker.pull", false);
-  const mirrors = Object.fromEntries(Object.entries(dictionary(docker.mirrors, "network.docker.mirrors")).map(([registry, value2]) => {
-    if (!/^(?:[a-z0-9]+(?:[.-][a-z0-9]+)*|\[[a-f0-9:]+\])(?::[0-9]+)?$/u.test(registry)) throw new TypeError("network.docker.mirrors keys must be registry hosts");
-    const origin = url(value2, `network.docker.mirrors.${registry}`, false, true);
+  const mirrors = Object.fromEntries(Object.entries(dictionary(docker.mirrors, "network.docker.mirrors")).map(([registry2, value2]) => {
+    if (!/^(?:[a-z0-9]+(?:[.-][a-z0-9]+)*|\[[a-f0-9:]+\])(?::[0-9]+)?$/u.test(registry2)) throw new TypeError("network.docker.mirrors keys must be registry hosts");
+    const origin = url(value2, `network.docker.mirrors.${registry2}`, false, true);
     if (!origin.startsWith("https:") && !["localhost", "127.0.0.1", "[::1]"].includes(new URL(origin).hostname))
       throw new TypeError("Docker mirrors require HTTPS except for loopback registries");
-    return [registry, origin];
+    return [registry2, origin];
   }));
   const benchmarks = Object.fromEntries(Object.entries(dictionary(docker.benchmarks, "network.docker.benchmarks")).map(([name, value2]) => {
     if (!name.trim() || /[\s\u0000-\u001f]/u.test(name)) throw new TypeError("Docker benchmark names must be nonempty identifiers");
@@ -7514,13 +7526,15 @@ function parseNetworkSettings(value) {
   return {
     proxy: resolvedProxy,
     sources: {
-      huggingface: url(sources.huggingface ?? "https://huggingface.co", "network.sources.huggingface", false, true),
+      huggingface,
+      ...publicMirror ? { huggingfacePublicMirror: true } : {},
       python: {
-        index: url(python.index ?? "https://pypi.org/simple", "network.sources.python.index"),
+        index: index.address,
+        ...index.publicMirror ? { indexPublicMirror: true } : {},
         extraIndexes: python.extraIndexes === void 0 ? [] : list(python.extraIndexes, "network.sources.python.extraIndexes", true),
         interpreter: python.interpreter === void 0 || python.interpreter === null ? null : url(python.interpreter, "network.sources.python.interpreter")
       },
-      npm: { registry: url(npm.registry ?? "https://registry.npmjs.org", "network.sources.npm.registry") },
+      npm: { registry: registry.address, ...registry.publicMirror ? { registryPublicMirror: true } : {} },
       node: { dist: url(node.dist ?? "https://nodejs.org/dist", "network.sources.node.dist") },
       github: {
         api: url(github.api ?? "https://api.github.com", "network.sources.github.api"),
@@ -7662,7 +7676,7 @@ function defaultNetworkConfigPath() {
 
 // src/infrastructure/network/environment.ts
 import { fileURLToPath } from "node:url";
-var controlled = /^(?:https?_proxy|all_proxy|no_proxy|hf_endpoint|git_ssh_command|evaluator_ssh_proxy|pip_(?:index_url|extra_index_url|trusted_host|config_file)|uv_(?:default_index|index_url|extra_index_url|index|python_install_mirror)|npm_config_(?:registry|proxy|https_proxy|noproxy)|corepack_npm_registry|evaluator_(?:debian_mirror|github_mirror|node_mirror|node_image_mirror|docker_build_network|network_config))$/iu;
+var controlled = /^(?:https?_proxy|all_proxy|no_proxy|hf_endpoint|git_ssh_command|evaluator_ssh_proxy|pip_(?:index_url|extra_index_url|trusted_host|config_file)|uv_(?:default_index|index_url|extra_index_url|index|python_install_mirror)|npm_config_(?:registry|proxy|https_proxy|noproxy)|corepack_npm_registry|evaluator_(?:debian_mirror|github_mirror|node_mirror|node_image_mirror|docker_build_network|network_config|pypi_public_mirror|npm_public_mirror))$/iu;
 function networkEnvironment(settings, location, base = {}, target = location === "build" ? "container" : "host") {
   const env2 = Object.fromEntries(Object.entries(base).filter((entry) => entry[1] !== void 0 && !controlled.test(entry[0])));
   const proxy2 = settings.proxy[location];
@@ -7687,6 +7701,8 @@ function networkEnvironment(settings, location, base = {}, target = location ===
     GIT_CONFIG_KEY_0: `url.${sources.github.repository}/.insteadOf`,
     GIT_CONFIG_VALUE_0: "https://github.com/"
   });
+  if (sources.python.indexPublicMirror) env2.EVALUATOR_PYPI_PUBLIC_MIRROR = sources.python.index;
+  if (sources.npm.registryPublicMirror) env2.EVALUATOR_NPM_PUBLIC_MIRROR = sources.npm.registry;
   if (sources.python.interpreter) env2.UV_PYTHON_INSTALL_MIRROR = sources.python.interpreter;
   env2.PIP_CONFIG_FILE = target === "host" && process.platform === "win32" ? "NUL" : "/dev/null";
   env2.UV_NO_CONFIG = "1";
@@ -7700,6 +7716,114 @@ function networkEnvironment(settings, location, base = {}, target = location ===
   return env2;
 }
 
+// src/infrastructure/network/package-mirror.mjs
+import { request as requestHttp } from "node:http";
+import { request as requestHttps } from "node:https";
+import { stripVTControlCharacters } from "node:util";
+var officialRegistry = "https://registry.npmjs.org";
+var repositoryMirror = "https://registry.npmmirror.com";
+var publicMirrors = /* @__PURE__ */ new Set([repositoryMirror, "https://registry.npm.taobao.org"]);
+var transientStatus = [408, 429, 500, 502, 503, 504];
+var transport = /\b(?:ENOTFOUND|EAI_AGAIN|ECONNREFUSED|ECONNRESET|ENETUNREACH|UND_ERR_SOCKET|ETIMEDOUT|ESOCKETTIMEDOUT|ERR_SOCKET_TIMEOUT)\b|socket hang up|tunneling socket could not be established/iu;
+function npmRegistrySources(env2) {
+  const source = (env2.npm_config_registry ?? env2.NPM_CONFIG_REGISTRY)?.replace(/\/$/u, "");
+  if (!source || source === officialRegistry) return [];
+  if (source.startsWith("https:") && source === env2.EVALUATOR_NPM_PUBLIC_MIRROR)
+    return [.../* @__PURE__ */ new Set([source, repositoryMirror, officialRegistry])];
+  return publicMirrors.has(source) ? [source, officialRegistry] : [];
+}
+function publicNpmMirror(env2) {
+  return npmRegistrySources(env2)[0];
+}
+function npmDependencyInstall(args2) {
+  return args2[0] === "ci" && args2.includes("--ignore-scripts") && !args2.some((arg) => /^--(?:registry|userconfig|globalconfig|no-ignore-scripts)(?:=|$)|^--ignore-scripts=/u.test(arg));
+}
+async function npmMirrorFailure(result, mirror, env2, signal) {
+  if (result.exitCode <= 0) return false;
+  const host = new URL(mirror).hostname;
+  const diagnostic = stripVTControlCharacters(result.stderr + "\n" + result.stdout);
+  if (/\b(?:E401|E403|EAUTH|EINTEGRITY|ERR_PNPM_TARBALL_INTEGRITY|ERESOLVE|ERR_PNPM_(?:OUTDATED|BROKEN)_LOCKFILE)\b|certificate|integrity checksum/iu.test(diagnostic)) return false;
+  const lines = diagnostic.split(/\r?\n/u);
+  const terminalLines = lines.filter((line) => !/\b(?:WARN|warning)\b/iu.test(line));
+  const details = terminalLines.filter((line) => line.includes(host));
+  if (details.some((line) => {
+    const safeStatus = /\b(?:E|ERR_PNPM_FETCH_|HTTP(?: status)?[: ]+)(?:408|429|500|502|503|504)\b|\b(?:408|429|500|502|503|504) (?:Server Error|Service Unavailable|Bad Gateway|Gateway Timeout|Too Many Requests)\b/iu;
+    return safeStatus.test(line) || transport.test(line);
+  })) return true;
+  const pnpmFetchFailed = terminalLines.some((line) => /^\[ERROR\] fetch failed\s*$/u.test(line)) && lines.some((line) => line.includes(host) && /^\[WARN\] GET https?:\/\/\S+ error \(0\)\. Will retry/iu.test(line));
+  const pnpmTunnelFailed = details.length > 0 && /tunnel error:\s*unsuccessful/iu.test(terminalLines.join("\n"));
+  return (pnpmFetchFailed || pnpmTunnelFailed) && await probeMirror(new URL(mirror), env2, signal);
+}
+async function probeMirror(target, env2, signal) {
+  const host = target.hostname;
+  const proxyValue = env2.https_proxy || env2.HTTPS_PROXY;
+  const bypass = (env2.no_proxy ?? env2.NO_PROXY ?? "").split(",").some((value) => {
+    const domain = value.trim().toLowerCase().replace(/^\.|:443$/gu, "");
+    return domain === "*" || host === domain || host.endsWith("." + domain);
+  });
+  const authority = target.port ? target.host : host + ":443";
+  let request = requestHttps;
+  let options = { hostname: host.replace(/^\[|\]$/gu, ""), port: target.port || void 0, method: "HEAD", path: target.pathname };
+  if (proxyValue && !bypass) {
+    let proxy2;
+    try {
+      proxy2 = new URL(proxyValue);
+    } catch {
+      return false;
+    }
+    if (proxy2.protocol !== "http:" && proxy2.protocol !== "https:") return false;
+    const headers = { host: authority };
+    if (proxy2.username || proxy2.password) {
+      const credentials = decodeURIComponent(proxy2.username) + ":" + decodeURIComponent(proxy2.password);
+      headers["proxy-authorization"] = "Basic " + Buffer.from(credentials).toString("base64");
+    }
+    request = proxy2.protocol === "https:" ? requestHttps : requestHttp;
+    options = {
+      hostname: proxy2.hostname.replace(/^\[|\]$/gu, ""),
+      port: proxy2.port || void 0,
+      method: "CONNECT",
+      path: authority,
+      headers
+    };
+  }
+  const deadline = AbortSignal.timeout(1e4);
+  const active = signal ? AbortSignal.any([signal, deadline]) : deadline;
+  const retryable = await new Promise((resolve2) => {
+    const probe = request({ ...options, agent: false, signal: active });
+    probe.once("connect", (response, socket) => {
+      socket.destroy();
+      resolve2(transientStatus.includes(response.statusCode));
+    });
+    probe.once("response", (response) => {
+      response.destroy();
+      resolve2(transientStatus.includes(response.statusCode));
+    });
+    probe.once("error", (error) => resolve2(transport.test(error.code ?? "")));
+    probe.end();
+  });
+  signal?.throwIfAborted();
+  return retryable;
+}
+async function withNpmRegistryFallback(env2, run2, signal, log) {
+  signal?.throwIfAborted();
+  const sources = npmRegistrySources(env2);
+  let result = await run2(env2);
+  const priorFailures = [];
+  for (let index = 1; index < sources.length; index++) {
+    if (!await npmMirrorFailure(result, sources[index - 1], env2, signal)) break;
+    signal?.throwIfAborted();
+    const registry = sources[index];
+    log("npm registry mirror unavailable; trying " + registry);
+    priorFailures.push(result.stderr || result.stdout);
+    const fallbackEnv = Object.fromEntries(Object.entries(env2).filter(([key]) => !/^(?:NPM_TOKEN|NODE_AUTH_TOKEN|NPM_CONFIG_(?:_AUTH|_AUTHTOKEN|_PASSWORD|USERNAME))$/iu.test(key)));
+    result = await run2({ ...fallbackEnv, NPM_CONFIG_REGISTRY: registry, npm_config_registry: registry, COREPACK_NPM_REGISTRY: registry });
+  }
+  return result.exitCode === 0 || !priorFailures.length ? result : {
+    ...result,
+    stderr: [...priorFailures, result.stderr || result.stdout].join("\n")
+  };
+}
+
 // src/application/network/bootstrap.ts
 var args = process.argv.slice(2);
 var separator = args.indexOf("--");
@@ -7708,22 +7832,63 @@ if (separator < 0 || !args[separator + 1] || separator !== 0 && (separator !== 2
 var document = await loadNetworkConfig(separator === 2 ? args[1] : void 0);
 var env = networkEnvironment(document.settings, "host", process.env);
 env.EVALUATOR_NETWORK_CONFIG = document.origin;
-var executable = args[separator + 1];
+var command = args[separator + 1];
 var commandArgs = args.slice(separator + 2);
-if (process.platform === "win32" && (executable === "npm" || executable === "pnpm")) {
-  commandArgs.unshift(await packageManagerCli(executable));
+var executable = command;
+var packageManagerArgs = [];
+if (process.platform === "win32" && (command === "npm" || command === "pnpm")) {
+  packageManagerArgs = [await packageManagerCli(command)];
   executable = process.execPath;
 }
-var child = spawn(executable, commandArgs, { env, stdio: "inherit", shell: false, windowsHide: true });
-var cancel = () => child.kill("SIGTERM");
+var controller = new AbortController();
+var cancel = () => controller.abort();
 process.once("SIGINT", cancel);
 process.once("SIGTERM", cancel);
-child.once("error", () => {
-  process.stderr.write("Cannot start the requested network-configured command\n");
-  process.exitCode = 1;
-});
-child.once("close", (code) => {
+async function run(args2, environment, capture = false) {
+  const child = spawn(executable, [...packageManagerArgs, ...args2], {
+    env: environment,
+    stdio: capture ? ["inherit", "pipe", "pipe"] : "inherit",
+    shell: false,
+    windowsHide: true,
+    signal: controller.signal
+  });
+  let stdout = "", stderr = "";
+  child.stdout?.on("data", (chunk) => {
+    process.stdout.write(chunk);
+    stdout = (stdout + chunk).slice(-32768);
+  });
+  child.stderr?.on("data", (chunk) => {
+    process.stderr.write(chunk);
+    stderr = (stderr + chunk).slice(-32768);
+  });
+  const exitCode = await new Promise((resolve2, reject) => {
+    child.once("error", reject);
+    child.once("close", (code) => resolve2(code ?? 1));
+  });
+  return { stdout, stderr, exitCode };
+}
+try {
+  const [operation, ...flags] = commandArgs;
+  const mirror = publicNpmMirror(env);
+  const pnpmPrefetch = mirror && command === "pnpm" && operation === "install" && flags.includes("--frozen-lockfile") && flags.every((flag) => ["--frozen-lockfile", "--prod", "--dev"].includes(flag));
+  const pnpmFetch = mirror && command === "pnpm" && operation === "fetch" && !flags.some((flag) => /^--registry(?:=|$)/u.test(flag));
+  const npmInstall = mirror && command === "npm" && npmDependencyInstall(commandArgs);
+  if (pnpmPrefetch || pnpmFetch || npmInstall) {
+    const download = pnpmPrefetch ? ["fetch", ...flags.filter((flag) => flag !== "--frozen-lockfile")] : commandArgs;
+    let selectedEnvironment = env;
+    const fetched = await withNpmRegistryFallback(env, (environment) => {
+      selectedEnvironment = environment;
+      const registry = command === "pnpm" && environment.npm_config_registry ? ["--registry", environment.npm_config_registry] : [];
+      return run([...download, ...registry], environment, true);
+    }, controller.signal, (message) => process.stderr.write(message + "\n"));
+    process.exitCode = fetched.exitCode === 0 && pnpmPrefetch ? (await run([...commandArgs, "--offline"], selectedEnvironment)).exitCode : fetched.exitCode;
+  } else {
+    process.exitCode = (await run(commandArgs, env)).exitCode;
+  }
+} catch {
+  if (!controller.signal.aborted) process.stderr.write("Cannot start the requested network-configured command\n");
+  process.exitCode = controller.signal.aborted ? 130 : 1;
+} finally {
   process.removeListener("SIGINT", cancel);
   process.removeListener("SIGTERM", cancel);
-  process.exitCode = code ?? 1;
-});
+}

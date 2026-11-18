@@ -6,6 +6,7 @@ import { declaredErrorCode } from "../../../core/errors/classify.js";
 import { createHash, randomUUID } from "node:crypto";
 import { performance } from "node:perf_hooks";
 import { dockerBuildNetwork } from "../../../infrastructure/containers/build-network.js";
+import { buildPackageSources, localPackageRelayBinding, openBuildPackageRelay } from "../../../infrastructure/containers/build-package-relay.js";
 import { constants } from "node:fs";
 import { access, chmod, cp, lstat, mkdir, mkdtemp, open, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -15,7 +16,8 @@ import { assertDockerCapacity, readDockerCapacity, type DockerCapacity } from ".
 import { applyBuildPipConstraints, parseBuildPipConstraints } from "../../../infrastructure/containers/pip-constraints.js";
 import { readDirectoryModes, restoreDirectoryModes } from "../../../infrastructure/filesystem/directory-modes.js";
 import { createDockerImagePuller, type DockerImagePull } from "../../../infrastructure/containers/image-pull.js";
-import { DockerTaskArchive } from "../../../infrastructure/containers/task-archive.js";
+import { DockerTaskArchive, TaskArchiveUnavailableError } from "../../../infrastructure/containers/task-archive.js";
+import { withSourceFallback } from "../../../infrastructure/network/source-fallback.js";
 import { acquireBaseImage } from "../../../infrastructure/containers/base-image.js";
 import { dockerImageName, dockerImageReference, type DockerImageScope } from "../../../infrastructure/containers/image-name.js";
 import { dockerActivity, observeDockerCommand, withDockerActivity } from "../../../infrastructure/containers/progress.js";
@@ -136,7 +138,7 @@ async function validateBuildContext(
 }
 
 
-type ResolvedBaseImage = { reference: string; pinnedReference: string; id: string };
+type ResolvedBaseImage = { reference: string; pinnedReference: string; id: string; fromArchiveFallback?: true };
 
 type DockerPreparationReceipt = {
   kind: "docker";
@@ -327,7 +329,7 @@ export class DockerEnvironment implements Environment {
   private readonly network: NetworkAccess;
   private readonly pullImage: DockerImagePull;
   private readonly pullTaskImage: DockerImagePull;
-  private readonly taskArchive: DockerTaskArchive | undefined;
+  private readonly taskArchive: { loader: DockerTaskArchive; pullDeclaredImage: DockerImagePull } | undefined;
   private readonly platformSelection: DockerPlatformSelection;
   private readonly allowEmulation: boolean;
   private readonly capabilities: PlatformCapabilityDetector;
@@ -363,7 +365,10 @@ export class DockerEnvironment implements Environment {
     this.solverName = options.solverName ?? "runtime";
     this.pullImage = createDockerImagePuller(this.command, { network: this.network });
     const acquisition = options.benchmarkName ? this.network.settings.docker.benchmarks[options.benchmarkName] : undefined;
-    this.taskArchive = acquisition?.method === "archive" ? new DockerTaskArchive(this.command, this.imageInventory, acquisition, this.network) : undefined;
+    this.taskArchive = acquisition?.method === "archive" ? {
+      loader: new DockerTaskArchive(this.command, this.imageInventory, acquisition, this.network),
+      pullDeclaredImage: createDockerImagePuller(this.command, { network: this.network, useMirrors: false }),
+    } : undefined;
     this.pullTaskImage = createDockerImagePuller(this.command, { network: this.network,
       acquisition: acquisition?.method === "archive" ? undefined : acquisition });
     this.nodeImage = new DockerRuntime(this.command, options.nodeImage, DOCKER_PLATFORM, this.pullImage, this.dockerExecutable).nodeImage;
@@ -420,6 +425,7 @@ export class DockerEnvironment implements Environment {
     let network;
     try { network = dockerBuildNetwork(this.network); }
     catch (cause) { throw new DockerEnvironmentError("CONFIG_INVALID", "Invalid Docker build network settings", cause); }
+    const packageSources = buildPackageSources(this.network);
     const key = createHash("sha256")
       .update(
         JSON.stringify({
@@ -428,6 +434,7 @@ export class DockerEnvironment implements Environment {
           mirrorPolicy: "ca-bootstrap-v5-apt-network-defaults",
           platform,
           network: network.identity,
+          ...(packageSources.python || packageSources.npm ? { packageRelay: 1, packageProxy: this.network.settings.proxy.host } : {}),
           dockerfile: relative(context.context, context.dockerfile).replaceAll("\\", "/"),
           ...(pipConstraints.length ? { pipConstraints } : {}),
           ...(spec.build.noCache ? { freshBuild: randomUUID() } : {}),
@@ -437,7 +444,7 @@ export class DockerEnvironment implements Environment {
     const buildTag = spec.build.visibility === "public" || !scope
       ? dockerImageName("solve-task", key)
       : dockerImageName("task", key, scope);
-    return { context, sourceModes, pipConstraints, network, buildTag };
+    return { context, sourceModes, pipConstraints, network, packageSources, buildTag };
   }
 
   private async taskImage(spec: EnvironmentSpec, platform: ContainerPlatform, signal: AbortSignal,
@@ -447,7 +454,7 @@ export class DockerEnvironment implements Environment {
       observe?.("reference");
       return useImageOverrides && Object.hasOwn(this.imageOverrides, spec.image) ? this.imageOverrides[spec.image]! : spec.image;
     }
-    const { context, sourceModes, pipConstraints, network, buildTag } = described ?? await this.describeTaskBuild(spec, platform, signal, scope);
+    const { context, sourceModes, pipConstraints, network, packageSources, buildTag } = described ?? await this.describeTaskBuild(spec, platform, signal, scope);
     const buildInput = scope?.phase === "verify" && !scope.service;
     return await this.taskImageCache.getImage(this.dockerExecutable, buildTag, signal, async buildSignal => {
       const cached = await this.imageInventory.cached(buildTag, platform, buildSignal, buildInput ? undefined : preferred);
@@ -491,13 +498,19 @@ export class DockerEnvironment implements Environment {
           dockerfile: relative(snapshot, dockerfile).replaceAll("\\", "/") } }, buildSignal, dockerActivity());
         buildSignal.throwIfAborted();
         await applyBuildPipConstraints(snapshot, dockerfile, pipConstraints, buildSignal);
-        const buildArgs = network.buildArgs;
-        await writeFile(dockerfile, network.recipe(await readFile(dockerfile, "utf8")));
-        await this.command(["build", "--platform", platform, ...(spec.build?.noCache ? ["--no-cache"] : []), ...buildArgs, "--tag", output, "--file", dockerfile, snapshot], {
-          env: network.environment,
-          signal: buildSignal,
-          maxBuffer: 8 * 1024 * 1024,
-        });
+        const binding = packageSources.python || packageSources.npm ? await localPackageRelayBinding(this.command, buildSignal) : undefined;
+        if ((packageSources.python || packageSources.npm) && !binding)
+          dockerActivity()?.({ message: "Task build package relay is unavailable for this Docker endpoint; using the configured package sources", activity: true });
+        const relay = binding ? await openBuildPackageRelay(this.network, packageSources, binding, buildSignal) : undefined;
+        try {
+          const build = relay ? dockerBuildNetwork(this.network, process.env, relay) : network;
+          await writeFile(dockerfile, build.recipe(await readFile(dockerfile, "utf8")));
+          await this.command(["build", "--platform", platform, ...(spec.build?.noCache ? ["--no-cache"] : []), ...build.buildArgs, "--tag", output, "--file", dockerfile, snapshot], {
+            env: build.environment,
+            signal: buildSignal,
+            maxBuffer: 8 * 1024 * 1024,
+          });
+        } finally { await relay?.close(); }
         observe?.("built");
         const retained = await this.imageInventory.retain(output, platform, buildSignal,
           { key: buildTag, removeAlias: true, buildInput, acquiredInput: buildInput, ...(preferred ? { preferred } : {}),
@@ -515,7 +528,31 @@ export class DockerEnvironment implements Environment {
   private async baseImage(spec: EnvironmentSpec, platform: ContainerPlatform, signal: AbortSignal,
     observe?: (source: PreparationCacheSource) => void, scope?: DockerImageScope, usesTaskSource = true,
     described?: Awaited<ReturnType<DockerEnvironment["describeTaskBuild"]>>, preferred?: string): Promise<ResolvedBaseImage> {
-    if (this.taskArchive && scope && usesTaskSource) return this.taskArchive.load(scope, platform, signal, observe, preferred);
+    const archive = this.taskArchive;
+    if (archive && scope && usesTaskSource) {
+      const reference = spec.image;
+      const activity = dockerActivity();
+      const load = () => archive.loader.load(scope, platform, signal, observe, preferred);
+      if (reference === null) return load().catch((error: unknown) => {
+        if (error instanceof TaskArchiveUnavailableError) {
+          const image = `${scope.taskId}/${scope.phase}${scope.service ? `/${scope.service}` : ""}`;
+          throw new DockerEnvironmentError("ENV_IMAGE_PULL_FAILED", `Task image archive unavailable for ${image} (${platform}); no registry image declared for fallback`, error);
+        }
+        throw error;
+      });
+      return withSourceFallback<ResolvedBaseImage>(load, async () => {
+        const key = "source:" + createHash("sha256").update(JSON.stringify(["archive-fallback", reference, platform, this.network.settings.docker.pull])).digest("hex");
+        const image = await this.imageInventory.withSource(reference, platform, signal,
+          () => acquireBaseImage(this.imageInventory, reference, platform, key, archive.pullDeclaredImage, signal, scope, preferred));
+        activity?.({ message: `Task image ready from ${reference} (${image.digest})`, activity: true });
+        observe?.("reference");
+        return { reference, pinnedReference: image.reference, id: image.digest, fromArchiveFallback: true };
+      }, {
+        signal,
+        shouldFallback: error => error instanceof TaskArchiveUnavailableError,
+        onFallback: () => activity?.({ message: `Task image archive unavailable; trying ${reference}`, activity: true }),
+      });
+    }
     const reference = await this.taskImage(spec, platform, signal, observe, usesTaskSource, scope, described, preferred);
     const key = "source:" + createHash("sha256").update(JSON.stringify([reference, platform, usesTaskSource,
       this.network.settings.docker])).digest("hex");
@@ -582,7 +619,7 @@ export class DockerEnvironment implements Environment {
       imageMs = performance.now() - imageStarted;
       onImageReady?.({ imageMs, ...(cache.image === undefined ? {} : { cache: cache.image }) });
     };
-    const archive = this.taskArchive && context && hasTaskSource ? this.taskArchive.source(context, platform) : undefined;
+    const archive = this.taskArchive && context && hasTaskSource ? this.taskArchive.loader.source(context, platform) : undefined;
     const describe = baseSpec.image === null && !archive
       ? await this.describeTaskBuild(baseSpec, platform, signal, context) : undefined;
     const reference = baseSpec.image !== null && hasTaskSource && Object.hasOwn(this.imageOverrides, baseSpec.image)
@@ -607,7 +644,8 @@ export class DockerEnvironment implements Environment {
       try {
         const runtime = await nodeRuntime.prepare(baseImage.pinnedReference, spec.runtime, active,
           source => { if (spec.installation) cache.solver = source; else cache.runtime = source; }, context, spec.installation, baseImage.id, finalName);
-        if (verifyKey) await this.imageInventory.retain(runtime.image, platform, active,
+        // A registry result must not satisfy the archive verification cache on the next preparation.
+        if (verifyKey && !baseImage.fromArchiveFallback) await this.imageInventory.retain(runtime.image, platform, active,
           { key: verifyKey, source: { reference: baseImage.reference, id: baseImage.id } });
         return { baseImage, runtime };
       } finally {
@@ -660,7 +698,7 @@ export class DockerEnvironment implements Environment {
       const scope: DockerImageScope = { taskId: context?.taskId ?? "shared", phase: context?.phase ?? "solve", service: name };
       const describeSidecar = sidecar.image === null && !this.taskArchive
         ? await this.describeTaskBuild(sidecar, platform, signal, scope) : undefined;
-      const sidecarSource = this.taskArchive ? this.taskArchive.source(scope, platform) : describeSidecar?.buildTag ??
+      const sidecarSource = this.taskArchive ? this.taskArchive.loader.source(scope, platform) : describeSidecar?.buildTag ??
         (sidecar.image === null ? null : this.imageOverrides[sidecar.image] ?? sidecar.image);
       if (sidecarSource === null) throw new DockerEnvironmentError("ENV_IMAGE_REFERENCE_INVALID", `Missing Docker image for service ${name}`);
       const resolved = await this.imageInventory.withSource(sidecarSource, platform, signal,

@@ -29,12 +29,17 @@ const args = process.argv.slice(1);
 const log = process.env.EVALUATOR_TEST_BUILD_LOG;
 const digest = "sha256:" + "a".repeat(64);
 const isPin = ref => ref.startsWith("arsi-evaluator/") && !ref.startsWith("arsi-evaluator/shared:");
+const isRegistryFixture = ref => /^(?:mirror\.example\.test\/)?fixture\/registry-/u.test(ref);
 const pinFile = ref => log + ".pin-" + require("node:crypto").createHash("sha256").update(ref).digest("hex");
 if (process.env.EVALUATOR_TEST_COMMAND_LOG) fs.appendFileSync(process.env.EVALUATOR_TEST_COMMAND_LOG, JSON.stringify(args) + "\n");
 if (args[0] === process.env.EVALUATOR_TEST_FAILED_OPERATION) {
   console.error(process.env.EVALUATOR_TEST_DOCKER_ERROR); process.exit(17);
 }
-if (args[0] === "load") {
+if (args[0] === "pull" && isRegistryFixture(args.at(-1))) {
+  const reference = args.at(-1);
+  fs.writeFileSync(pinFile(reference), "sha256:" + require("node:crypto").createHash("sha256").update(reference).digest("hex"));
+}
+else if (args[0] === "load") {
   const bytes = fs.readFileSync(args.at(-1));
   const text = bytes.toString("utf8");
   const tag = text.match(/arsi-evaluator\/staging:[a-f0-9-]{36}/u)[0];
@@ -72,7 +77,7 @@ else if (args[0] === "build") {
   if (process.env.EVALUATOR_TEST_NODE_MIRROR && reference.startsWith("node:")) { console.error("No such image"); process.exit(1); }
   if (reference.includes(":solve-task-") || process.env.EVALUATOR_TEST_RUNTIME_ID && reference.includes("-runtime-")) { console.error("No such image"); process.exit(1); }
   if (args.some(arg => arg.includes("-archive-")) && !fs.existsSync(log + ".loaded")) { console.error("No such image"); process.exit(1); }
-  if (isPin(reference) && !fs.existsSync(pinFile(reference))) { console.error("No such image"); process.exit(1); }
+  if ((isPin(reference) || isRegistryFixture(reference)) && !fs.existsSync(pinFile(reference))) { console.error("No such image"); process.exit(1); }
   if (process.env.EVALUATOR_TEST_SIDECAR_INDEX) {
     const selected = "sha256:" + "e".repeat(64);
     const root = "sha256:" + "b".repeat(64);
@@ -89,7 +94,7 @@ else if (args[0] === "build") {
   }
   const id = reference === "fixture/mutable" && process.env.EVALUATOR_TEST_MUTABLE_ID ||
     reference.includes("-runtime-") && process.env.EVALUATOR_TEST_RUNTIME_ID ||
-    isPin(reference) && fs.readFileSync(pinFile(reference), "utf8") || digest;
+    (isPin(reference) || isRegistryFixture(reference)) && fs.readFileSync(pinFile(reference), "utf8") || digest;
   if (format === "[{{json .Id}},{{json .RepoTags}},{{json .RepoDigests}}]") { console.log(JSON.stringify([id, [reference], []])); process.exit(0); }
   if (format === "[{{json .Id}},{{json .Os}},{{json .Architecture}}]") { console.log(JSON.stringify([id, ...actual.split("/")])); process.exit(0); }
   if (args.at(-1) === "{{json .Config.User}}") { console.log(JSON.stringify("")); process.exit(0); }
@@ -673,3 +678,80 @@ test("archive selection uses the requested platform and bypasses an existing pin
     expect(calls.some(args => args[0] === "pull")).toBe(false);
   } finally { await network.dispose(); }
 }, 20000);
+
+test.each(["solve", "verify"] as const)("falls back to declared %s and Compose images when archives return 404", async phase => {
+  const { spec, log } = await fixture("FROM fixture/base\n");
+  vi.stubEnv("EVALUATOR_TEST_COMMAND_LOG", log + ".commands");
+  const network = new NetworkRuntime(networkDocument({ docker: {
+    mirrors: { "docker.io": "https://mirror.example.test" },
+    benchmarks: { terminalbench: { method: "archive", provider: "modelscope", baseUrl: "https://modelscope.cn/fixture" } },
+  } }, {}));
+  const fetch = vi.spyOn(network, "fetch").mockImplementation(async () => new Response(null, { status: 404 }));
+  const source = `fixture/registry-${phase}@sha256:${"d".repeat(64)}`;
+  const service = `fixture/registry-service@sha256:${"e".repeat(64)}`;
+  const environment = new DockerEnvironment({ dockerExecutable: "fixture-docker", benchmarkName: "terminalbench", network });
+  const materialize = () => environment.materialize({ ...spec, image: source, services: { db: { image: service, properties: {} } } },
+    AbortSignal.timeout(20_000), undefined, undefined, { taskId: "terminal-bench/task-a", phase });
+  const calls = async (): Promise<string[][]> => (await readFile(log + ".commands", "utf8")).trim().split("\n").map(line => JSON.parse(line));
+  try {
+    const prepared = await materialize();
+    expect(fetch.mock.calls.map(([url]) => new URL(String(url)).pathname)).toEqual([
+      `/fixture/task-a/linux/amd64/${phase}.tar.gz`, `/fixture/task-a/linux/amd64/${phase}/services/db.tar.gz`,
+    ]);
+    expect((await calls()).filter(args => args[0] === "pull")).toEqual([
+      ["pull", "--platform", "linux/amd64", source], ["pull", "--platform", "linux/amd64", service],
+    ]);
+    expect(prepared.prepared).toMatchObject({ baseImage: { reference: source }, serviceImages: { db: expect.stringMatching(/^sha256:/u) } });
+    if (phase === "verify") {
+      const config = JSON.stringify({ architecture: "amd64", os: "linux" });
+      const archive = join(spec.build.context, "fixture.tar.gz");
+      await writeFile(join(spec.build.context, "config.json"), config);
+      await writeFile(join(spec.build.context, "manifest.json"), JSON.stringify([{ Config: "config.json", Layers: [], RepoTags: [] }]));
+      await create({ cwd: spec.build.context, file: archive, gzip: true }, ["config.json", "manifest.json"]);
+      const archiveId = "sha256:" + createHash("sha256").update(config).digest("hex");
+      vi.stubEnv("EVALUATOR_TEST_ARCHIVE_ID", archiveId);
+      const bytes = await readFile(archive);
+      fetch.mockImplementation(async () => new Response(bytes));
+      const recovered = await materialize();
+      expect(recovered.prepared).toMatchObject({ baseImage: { id: archiveId } });
+      expect(fetch).toHaveBeenCalledTimes(4);
+      expect((await calls()).filter(args => args[0] === "load")).toHaveLength(2);
+    }
+  } finally { await network.dispose(); }
+}, 45_000);
+
+test.each([404, 403, 200])("reports an unusable archive (HTTP %i) with its own failure", async status => {
+  const { spec, log } = await fixture("FROM fixture/base\n");
+  vi.stubEnv("EVALUATOR_TEST_COMMAND_LOG", log + ".commands");
+  const network = new NetworkRuntime(networkDocument({ docker: { benchmarks: {
+    terminalbench: { method: "archive", provider: "modelscope", baseUrl: "https://modelscope.cn/fixture" },
+  } } }, {}));
+  const fetch = vi.spyOn(network, "fetch").mockImplementation(async () => new Response("not an archive", { status }));
+  try {
+    const environment = new DockerEnvironment({ dockerExecutable: "fixture-docker", benchmarkName: "terminalbench", network });
+    const image = status === 404 ? null : "fixture/registry-solve:fixed";
+    await expect(environment.materialize({ ...spec, image }, AbortSignal.timeout(15_000), undefined, undefined,
+      { taskId: "terminal-bench/task-a", phase: "solve" })).rejects.toThrow(status === 404 ? "no registry image declared" : "Cannot load task image archive");
+    expect(fetch).toHaveBeenCalledTimes(1);
+    const calls: string[][] = (await readFile(log + ".commands", "utf8")).trim().split("\n").map(line => JSON.parse(line));
+    expect(calls.some(args => ["build", "pull", "load"].includes(args[0]!))).toBe(false);
+  } finally { await network.dispose(); }
+});
+
+test("keeps configured registry mirrors for images prepared without task archive context", async () => {
+  const { spec, log } = await fixture("FROM fixture/base\n");
+  vi.stubEnv("EVALUATOR_TEST_COMMAND_LOG", log + ".commands");
+  const network = new NetworkRuntime(networkDocument({ docker: {
+    mirrors: { "docker.io": "https://mirror.example.test" },
+    benchmarks: { terminalbench: { method: "archive", provider: "modelscope", baseUrl: "https://modelscope.cn/fixture" } },
+  } }, {}));
+  const fetch = vi.spyOn(network, "fetch");
+  try {
+    const environment = new DockerEnvironment({ dockerExecutable: "fixture-docker", benchmarkName: "terminalbench", network });
+    const image = "fixture/registry-unscoped:fixed";
+    await environment.materialize({ ...spec, image }, AbortSignal.timeout(15_000));
+    expect(fetch).not.toHaveBeenCalled();
+    const calls: string[][] = (await readFile(log + ".commands", "utf8")).trim().split("\n").map(line => JSON.parse(line));
+    expect(calls.filter(args => args[0] === "pull")).toEqual([["pull", "--platform", "linux/amd64", "mirror.example.test/" + image]]);
+  } finally { await network.dispose(); }
+});

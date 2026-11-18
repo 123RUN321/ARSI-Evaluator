@@ -5,6 +5,8 @@ import { tmpdir } from "node:os";
 import { createHash } from "node:crypto";
 import { registryProxyFixture } from "../fixtures/registry-proxy.js";
 import { downloadSkopeoImage } from "../../src/infrastructure/containers/skopeo-image.js";
+import { createDockerImagePuller } from "../../src/infrastructure/containers/image-pull.js";
+import type { DockerCommand } from "../../src/infrastructure/containers/runtime-contract.js";
 import { NetworkRuntime } from "../../src/infrastructure/network/runtime.js";
 import { networkDocument } from "../../src/config/network-schema.js";
 import { networkCommand } from "../../src/infrastructure/network/command.js";
@@ -49,3 +51,25 @@ test("missing skopeo reports the missing executable without using the Node downl
   expect(networkCommand).toHaveBeenCalledTimes(1);
   await runtime.dispose();
 });
+
+test("keeps skopeo and both diagnostics when the fallback registry denies access", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "skopeo-fallback-test-"));
+  cleanup.push(() => rm(directory, { recursive: true, force: true }));
+  vi.stubEnv("EVALUATOR_CACHE_DIR", directory);
+  vi.stubEnv("DOCKER_CONFIG", join(directory, "no-auth"));
+  const network = new NetworkRuntime(networkDocument({ docker: { pull: { method: "registry-client", backend: "skopeo" },
+    mirrors: { "docker.io": "https://mirror.example.test" } } }, {}));
+  cleanup.push(() => network.dispose());
+  vi.mocked(networkCommand).mockImplementation(async (_executable, args) => ({ stdout: "", exitCode: 1,
+    stderr: args.at(-1)?.startsWith("docker://mirror.example.test/") ? "Registry returned HTTP 503" : "Registry returned HTTP 403" }));
+  const command = vi.fn<DockerCommand>();
+  const digest = `sha256:${"a".repeat(64)}`;
+  const pull = createDockerImagePuller(command, { network });
+  await expect(pull(`fixture/image@${digest}`, "linux/amd64", AbortSignal.timeout(10_000))).rejects.toMatchObject({
+    cause: { errors: [expect.objectContaining({ code: "NETWORK_FAILURE" }), expect.objectContaining({ message: expect.stringContaining("HTTP 403") })] },
+  });
+  expect(vi.mocked(networkCommand).mock.calls.map(([, args]) => args.at(-1))).toEqual([
+    ...Array(3).fill(`docker://mirror.example.test/fixture/image@${digest}`), `docker://docker.io/fixture/image@${digest}`,
+  ]);
+  expect(command).not.toHaveBeenCalled();
+}, 15_000);

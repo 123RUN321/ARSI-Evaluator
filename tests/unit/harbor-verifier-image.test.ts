@@ -226,5 +226,5 @@ const pythonExecutable = process.platform === "win32" ? "python" : "python3";
 const pythonAvailable = spawnSync(pythonExecutable, ["-c", "import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)"], { timeout: 5000, windowsHide: true }).status === 0;
 test.skipIf(!pythonAvailable)("upstream checkout retries and frozen install preserve source and dependency pins", async () => {
   const result = await promisify(execFile)(pythonExecutable, [resolve("tests/fixtures/harbor-verifier-build-tests.py"), resolve("src/plugins/verifiers/python/runtime/build-runtime.py")], { timeout: 10000, windowsHide: true });
-  expect(result.stderr).toContain("Ran 7 tests"); expect(result.stderr).toContain("OK");
+  expect(result.stderr).toContain("Ran 10 tests"); expect(result.stderr).toContain("OK");
 });

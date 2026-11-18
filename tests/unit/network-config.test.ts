@@ -95,6 +95,29 @@ test("source and build environment overrides preserve unrelated YAML configurati
   expect(document.settings.docker).toMatchObject({ buildNetwork: "host", pull: { method: "registry-client" }, mirrors: { "docker.io": "https://mirror.test" } });
 });
 
+test("declares a public Hugging Face mirror without changing the HF_ENDPOINT override", () => {
+  const template = { sources: { huggingface: { mirror: "${PUBLIC_HF_MIRROR}" } } };
+  const document = networkDocument(template, { PUBLIC_HF_MIRROR: "https://mirror.test/" });
+  expect(document.settings.sources).toMatchObject({ huggingface: "https://mirror.test", huggingfacePublicMirror: true });
+  const overridden = networkDocument(template, { HF_ENDPOINT: "https://private.test" });
+  expect(overridden.settings.sources.huggingface).toBe("https://private.test");
+  expect(overridden.settings.sources).not.toHaveProperty("huggingfacePublicMirror");
+  expect(() => parseNetworkSettings({ sources: { huggingface: { mirror: "https://mirror.test/path" } } }))
+    .toThrow("network.sources.huggingface.mirror");
+});
+
+test("declares public package mirrors without changing existing environment overrides", () => {
+  const template = { sources: { python: { index: { mirror: "https://pypi.example/simple/" } },
+    npm: { registry: { mirror: "https://npm.example/" } } } };
+  const network = new NetworkRuntime(networkDocument(template, {}));
+  expect(network.environment("build")).toMatchObject({ PIP_INDEX_URL: "https://pypi.example/simple",
+    EVALUATOR_PYPI_PUBLIC_MIRROR: "https://pypi.example/simple", NPM_CONFIG_REGISTRY: "https://npm.example",
+    EVALUATOR_NPM_PUBLIC_MIRROR: "https://npm.example" });
+  const override = networkDocument(template, { PIP_INDEX_URL: "https://private.test/simple", NPM_CONFIG_REGISTRY: "https://npm.private.test" });
+  expect(override.settings.sources.python).not.toHaveProperty("indexPublicMirror");
+  expect(override.settings.sources.npm).toEqual({ registry: "https://npm.private.test" });
+});
+
 test.each([
   [{ PIP_INDEX_URL: "https://pip.test/simple" }, "https://pip.test/simple"],
   [{ UV_INDEX_URL: "https://uv.test/simple", PIP_INDEX_URL: "https://pip.test/simple" }, "https://uv.test/simple"],

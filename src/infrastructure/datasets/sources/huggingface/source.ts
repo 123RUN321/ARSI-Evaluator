@@ -1,9 +1,8 @@
 import type { NetworkAccess } from "../../../../core/contracts/network.js";
-import { fetchNetworkResponse } from "../../../network/retry.js";
 import type { JsonValue, SourceLock } from "../../../../core/contracts/task.js";
 import { DatasetCache } from "../../cache.js";
 import { datasetActivity } from "../../activity.js";
-import { huggingfaceTransport, type HuggingFaceTransport } from "./endpoint.js";
+import { fetchHuggingFaceFile, fetchHuggingFaceMetadata, huggingfaceTransport, type HuggingFaceTransport } from "./endpoint.js";
 import { readRows } from "../../input-readers/rows.js";
 import { redactDiagnostic } from "../../../../core/errors/diagnostics.js";
 
@@ -51,14 +50,14 @@ export class HuggingFaceSource {
     signal.throwIfAborted();
     if (previous !== null) {
       this.assertLock(previous);
-      for (const file of previous.files) await this.cache.fetch(file.origin, file.sha256, signal);
+      for (const file of previous.files) await fetchHuggingFaceFile(this.cache, file.origin, this.transport, file.sha256, signal);
       return structuredClone(previous);
     }
     const { dataset, subset, split, revision } = this.definition;
     const url = `${this.transport.apiBase}/api/datasets/${dataset}/revision/${encodeURIComponent(revision)}?blobs=true`;
     let data: { sha?: unknown; siblings?: unknown };
     try {
-      const response = await fetchNetworkResponse(url, { signal }, { ...(this.network ? { network: this.network } : {}) });
+      const response = await fetchHuggingFaceMetadata(url, this.transport, signal, undefined, this.network);
       if (!response.ok) throw new Error(`Hugging Face metadata HTTP ${response.status}`);
       data = (await response.json()) as { sha?: unknown; siblings?: unknown };
     } catch (cause) {
@@ -88,7 +87,7 @@ export class HuggingFaceSource {
       if (candidate.rfilename.split("/").some(part => !part || part === "." || part === ".."))
         throw new Error("Unsafe dataset path");
       const origin = this.origin(lock.revision, candidate.rfilename);
-      const file = await this.cache.fetch(origin, candidate.lfs?.sha256 ?? null, signal);
+      const file = await fetchHuggingFaceFile(this.cache, origin, this.transport, candidate.lfs?.sha256 ?? null, signal);
       lock.files.push({ path: candidate.rfilename, sha256: file.sha256, origin });
     }
     this.assertLock(lock);
@@ -98,7 +97,7 @@ export class HuggingFaceSource {
   async *rows(lock: SourceLock, signal: AbortSignal): AsyncIterable<JsonValue> {
     this.assertLock(lock);
     for (const file of lock.files) {
-      const cached = await this.cache.fetch(file.origin, file.sha256, signal);
+      const cached = await fetchHuggingFaceFile(this.cache, file.origin, this.transport, file.sha256, signal);
       for await (const row of readRows(cached.path, "parquet")) {
         signal.throwIfAborted();
         yield row;
