@@ -15,11 +15,12 @@ import { fetchHuggingFaceFile, fetchHuggingFaceMetadata, huggingfaceTransport } 
 import { AGENTX_VERSION } from "./versions.js";
 
 const execFileAsync = promisify(execFile);
-export const agentXAssets = fileURLToPath(new URL("./assets/", import.meta.url));
+// Source-mode and packaged runs both install the bridge assembled by package-runtime.
+export const agentXAssets = fileURLToPath(new URL("../../../dist/runtimes/agentx/assets/", import.meta.url));
 
 export async function agentXBridgeDigest(signal: AbortSignal): Promise<string> {
   signal.throwIfAborted();
-  const manifest = await buildFileManifest(agentXAssets, []);
+  const manifest = await buildFileManifest(agentXAssets, ["reasoning_effort.py", "Dockerfile", "runner.py"]);
   if (manifest.missing.length) throw new Error("AgentX bridge assets are incomplete");
   return fingerprintConfig(manifest.files);
 }
